@@ -5,9 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ Thống Quản Lý Lịch Trực Thông Minh</title>
-    <!-- Favicon -->
-    <link rel="icon" href="logo.ico" type="image/x-icon">
-
+    
     <!-- Thư viện CSS & JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -207,7 +205,7 @@
     <div id="login-screen" class="fixed inset-0 bg-medical-900 z-50 flex items-center justify-center fade-in">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
-                <img src="logo.ico" alt="Logo KHTH" class="w-20 h-20 mx-auto mb-4 object-contain drop-shadow-sm">
+                <img src="logo.ico" alt="Logo BV" class="w-20 h-20 mx-auto mb-4 object-contain drop-shadow-sm">
                 <h1 class="text-2xl font-bold text-slate-800">Bệnh viện ĐKKV Cầu Ngang</h1>
                 <p class="text-slate-500 text-sm mt-1">Hệ thống Lịch trực Điện tử</p>
                 <div id="initial-loading"
@@ -247,10 +245,10 @@
         class="w-64 bg-white border-r border-slate-200 flex-col hidden fixed md:relative h-full shadow-2xl md:shadow-sm z-[80] shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-4 border-b border-slate-200 flex items-center justify-between md:justify-start space-x-3">
             <div class="flex items-center space-x-3">
-                <img src="logo.ico" alt="Smart Roster Logo" class="w-10 h-10 object-contain drop-shadow-sm">
+                <img src="logo.ico" alt="Logo BV" class="w-10 h-10 object-contain drop-shadow-sm shrink-0">
                 <div>
                     <h2 class="font-bold text-slate-800 leading-tight">Hệ thống lên lịch trực</h2>
-                    <p class="text-[10px] text-slate-500 uppercase tracking-wider">Bệnh viện ĐKKV Cầu Ngang</p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wider">BVĐKKV Cầu Ngang</p>
                 </div>
             </div>
             <!-- Nút đóng sidebar trên mobile -->
@@ -266,11 +264,13 @@
             <!-- Nút bấm vào trang Hồ sơ cá nhân -->
             <div class="flex items-center space-x-3 mb-4 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition"
                 onclick="switchView('view-user-profile')" title="Chỉnh sửa thông tin cá nhân">
-                <img src="logo.ico" alt="User Avatar" id="user-avatar"
-                    class="w-10 h-10 rounded-full object-cover bg-slate-100 border border-slate-200">
-                <div>
-                    <p class="text-sm font-semibold text-slate-800" id="user-fullname"></p>
-                    <p class="text-xs text-slate-500 truncate w-32" id="user-role"></p>
+                <!-- ICON USER AVATAR -->
+                <div class="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500 shrink-0">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-semibold text-slate-800 truncate w-full" id="user-fullname"></p>
+                    <p class="text-xs text-slate-500 truncate w-full" id="user-role"></p>
                 </div>
             </div>
             <button onclick="logout()"
@@ -536,17 +536,20 @@
 
             <!-- MODULE: QUẢN LÝ NHÂN SỰ -->
             <div id="view-admin-users" class="hidden fade-in space-y-4">
-                <div
-                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h3 class="font-bold text-lg text-slate-800">Danh sách Nhân viên</h3>
-                        <p class="text-sm text-slate-500 mt-1">Quản lý thông tin, SĐT, điều chuyển khoa, cấp tài khoản
-                        </p>
+                        <h3 class="font-bold text-lg text-slate-800" id="users-module-title">Danh sách Nhân viên</h3>
+                        <p class="text-sm text-slate-500 mt-1">Quản lý thông tin, SĐT, điều chuyển khoa, cấp tài khoản</p>
                     </div>
-                    <button onclick="openUserModal()"
-                        class="px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center shadow">
-                        <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Thêm Nhân viên
-                    </button>
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="search-user" oninput="renderAdminUsersTable()" placeholder="Tìm tên, mã NV, SĐT..." class="w-full px-3 py-2 pl-9 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        </div>
+                        <button onclick="openUserModal()" class="w-full sm:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
+                            <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Thêm Nhân viên
+                        </button>
+                    </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="overflow-x-auto">
@@ -723,7 +726,7 @@
                             class="hidden absolute top-2 right-2 bg-yellow-100 border border-yellow-400 text-yellow-800 text-xs px-3 py-1 rounded shadow z-10 font-medium animate-pulse">
                             Đang chọn...</div>
                         <div class="overflow-y-auto overflow-x-auto flex-1 p-0">
-                            <table class="w-full text-sm text-left border-collapse min-w-[600px] md:min-w-0">
+                            <table class="w-full text-sm text-left border-collapse min-w-[600px] md:min-min-w-0">
                                 <thead class="text-xs text-slate-600 bg-slate-100 uppercase sticky top-0 z-10 shadow-sm"
                                     id="khoa-schedule-thead">
                                     <!-- Dynamic Roles generated here -->
@@ -915,13 +918,13 @@
                                 <!-- Chữ ký cá nhân (Nằm Dưới - z-10) -->
                                 <img id="personal-signature" src="sonthichanhtria.png"
                                     class="hidden absolute w-40 h-auto object-contain z-10"
-                                    style="top: -5px; left: 50%; transform: translateX(-50%);" alt="Chữ ký">
+                                    style="top: -5px; left: 50%; transform: translateX(-50%);" alt="Chữ ký" onerror="this.style.display='none'">
 
                                 <!-- Con dấu (Nằm Trên - z-20) có mix-blend-mode để nét mực quyện vào nhau -->
                                 <img id="official-stamp" src="condau.png"
                                     class="hidden absolute w-32 h-32 object-contain z-20"
                                     style="top: -15px; left: 15%; transform: translateX(-30%) rotate(-5deg); mix-blend-mode: multiply;"
-                                    alt="Con dấu BV">
+                                    alt="Con dấu BV" onerror="this.style.display='none'">
 
                                 <!-- Khung hiển thị text Ký số (chỉ hiện khi ký SmartCA) -->
                                 <div id="smartca-signature-area" class="w-full relative h-full z-30"></div>
@@ -1028,7 +1031,7 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ NHÂN VIÊN (DÀNH CHO ADMIN KHTH) -->
+    <!-- MODAL QUẢN LÝ NHÂN VIÊN (DÀNH CHO ADMIN KHTH HOẶC ADMIN KHOA) -->
     <div id="user-modal"
         class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
@@ -1040,9 +1043,12 @@
             <form onsubmit="saveUser(event)" class="p-6 space-y-4">
                 <input type="hidden" id="form-mode" value="add">
                 <div class="grid grid-cols-2 gap-4">
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Mã NV <span
-                                class="text-red-500">*</span></label><input type="text" id="u-manv"
-                            class="w-full px-3 py-2 border rounded-lg text-sm uppercase" required></div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã NV (Tự động) <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="u-manv"
+                            class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed" required readonly title="Mã NV tự động 9 số, không thể sửa.">
+                    </div>
                     <div><label class="block text-xs font-medium text-slate-600 mb-1">Họ và Tên <span
                                 class="text-red-500">*</span></label><input type="text" id="u-hoten"
                             class="w-full px-3 py-2 border rounded-lg text-sm" required></div>
@@ -1080,12 +1086,13 @@
                         <div><label class="block text-xs font-medium text-slate-600 mb-1">Tên đăng nhập</label><input
                                 type="text" id="u-username" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
                         <div><label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu</label><input
-                                type="text" id="u-password" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
+                                type="password" id="u-password" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
                     </div>
                     <div class="flex items-center justify-between">
                         <label class="text-sm font-medium text-slate-700">Quyền truy cập:</label>
                         <select id="u-role" class="px-3 py-1.5 border rounded outline-none text-sm">
                             <option value="User_Khoa">Nhân viên / Khoa</option>
+                            <option value="Admin_Khoa">Admin Quản lý Khoa</option>
                             <option value="Admin_KHTH">Admin KHTH</option>
                         </select>
                     </div>
@@ -1096,9 +1103,9 @@
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t mt-4">
                     <button type="button" onclick="closeUserModal()"
-                        class="px-4 py-2 text-sm bg-slate-100 rounded-lg">Hủy</button>
+                        class="px-4 py-2 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">Hủy</button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm text-white bg-medical-600 rounded-lg flex items-center shadow"><i
+                        class="px-4 py-2 text-sm text-white bg-medical-600 rounded-lg flex items-center shadow hover:bg-medical-700"><i
                             data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu</button>
                 </div>
             </form>
@@ -1397,7 +1404,7 @@
 
             for (const maNV in shiftsByNV) {
                 let userShifts = shiftsByNV[maNV].sort((a, b) => a.NgayTruc.localeCompare(b.NgayTruc));
-                const user = MOCK_DB.users.find(u => u.MaNV === maNV);
+                const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                 const hoTen = user ? (user.TenHienThi || user.HoTen) : maNV;
 
                 for (let i = 0; i < userShifts.length; i++) {
@@ -1406,7 +1413,7 @@
                         const s2 = userShifts[j];
 
                         if (s1.NgayTruc === s2.NgayTruc && s1.MaKhoa !== s2.MaKhoa) {
-                            const exists = violations.some(v => v.Type === 'Trùng Lịch' && v.MaNV === maNV && v.Ngay1 === s1.NgayTruc);
+                            const exists = violations.some(v => v.Type === 'Trùng Lịch' && String(v.MaNV) === String(maNV) && v.Ngay1 === s1.NgayTruc);
                             if (!exists) {
                                 violations.push({
                                     Type: 'Trùng Lịch',
@@ -1423,7 +1430,7 @@
 
                         if (s1.ChucDanh === 'BS' && s2.ChucDanh === 'BS') {
                             if (getDaysDiff(s1.NgayTruc, s2.NgayTruc) === 1) {
-                                const exists = violations.some(v => v.Type === 'Luật LĐ' && v.MaNV === maNV && v.Ngay1 === s1.NgayTruc && v.Ngay2 === s2.NgayTruc);
+                                const exists = violations.some(v => v.Type === 'Luật LĐ' && String(v.MaNV) === String(maNV) && v.Ngay1 === s1.NgayTruc && v.Ngay2 === s2.NgayTruc);
                                 if (!exists) {
                                     violations.push({
                                         Type: 'Luật LĐ',
@@ -1486,11 +1493,12 @@
                 const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
                 const results = await Promise.all(promises);
 
+                // FIX LỖI ÉP KIỂU STRING ĐỂ TRÁNH LỖI KHI TÌM KIẾM NHÂN VIÊN CÓ MÃ SỐ (VÍ DỤ "80120231")
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
-                if (results[1] && results[1].status === "success") MOCK_DB.users = (results[1].data || []).map(u => ({ ...u, ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' }));
+                if (results[1] && results[1].status === "success") MOCK_DB.users = (results[1].data || []).map(u => ({ ...u, MaNV: String(u.MaNV), ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' }));
                 if (results[2] && results[2].status === "success") MOCK_DB.loaiCa = results[2].data || [];
                 if (results[3] && results[3].status === "success") MOCK_DB.phieu = (results[3].data || []).map(p => ({ ...p, TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                if (results[4] && results[4].status === "success") MOCK_DB.shifts = (results[4].data || []).map(s => ({ ...s, NgayTruc: normalizeDateStr(s.NgayTruc) }));
+                if (results[4] && results[4].status === "success") MOCK_DB.shifts = (results[4].data || []).map(s => ({ ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc) }));
                 if (results[5] && results[5].status === "success") MOCK_DB.thongBao = (results[5].data || []).map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
                 if (results[6] && results[6].status === "success") MOCK_DB.auditLogs = results[6].data || [];
                 if (results[7] && results[7].status === "success") MOCK_DB.cauHinhKySo = results[7].data || [];
@@ -1506,7 +1514,7 @@
 
                 if (currentUser) {
                     checkAndRenderNotifications();
-                    if (currentUser.Role === 'User_Khoa') {
+                    if (currentUser.Role === 'User_Khoa' || currentUser.Role === 'Admin_Khoa') {
                         checkWeeklyStatus();
                     }
                     else {
@@ -1595,7 +1603,7 @@
                 document.getElementById('main-content').classList.remove('hidden');
 
                 document.getElementById('user-fullname').textContent = user.HoTen;
-                document.getElementById('user-role').textContent = user.Role === 'Admin_KHTH' ? "Admin KHTH" : "Phụ trách: " + currentUser.KhoaList.join(', ');
+                document.getElementById('user-role').textContent = (user.Role === 'Admin_KHTH' ? "Admin KHTH" : (user.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
 
                 logActivity("Đăng nhập hệ thống");
 
@@ -1630,6 +1638,9 @@
             if (!document.getElementById('view-xem-lich-khoa').classList.contains('hidden')) {
                 renderXemLichKhoaTable();
             }
+            if (!document.getElementById('view-admin-users').classList.contains('hidden')) {
+                 renderAdminUsersTable();
+            }
         }
 
         function buildMenu() {
@@ -1652,6 +1663,14 @@
                     <li><button onclick="switchView('view-user-master-schedule')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="globe" class="w-4 h-4 mr-3"></i> Lịch Toàn Viện</button></li>
                     <li><button onclick="switchView('view-contacts')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="contact" class="w-4 h-4 mr-3"></i> Danh bạ Liên hệ</button></li>
                 `);
+                
+                // Bổ sung menu Quản lý Nhân sự cho Admin Khoa
+                if (currentUser.Role === 'Admin_Khoa') {
+                    menuHtml.push(`
+                    <li class="mt-4"><div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 ml-2">Cấu hình Khoa</div></li>
+                    <li><button onclick="switchView('view-admin-users')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="users-cog" class="w-4 h-4 mr-3"></i> Quản lý Nhân sự</button></li>
+                    `);
+                }
             }
             document.getElementById('menu-items').innerHTML = menuHtml.join('');
             lucide.createIcons();
@@ -1672,12 +1691,18 @@
             views.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
             document.getElementById(viewId).classList.remove('hidden');
 
-            const titles = { 'view-dashboard': 'Bảng Điều Khiển Tổng Hợp', 'view-khoa-schedule': 'Quản lý Lịch trực Khoa', 'view-admin-review': 'Phê duyệt Lịch trực', 'view-admin-users': 'Quản lý Hệ thống Nhân sự', 'view-admin-departments': 'Quản lý Danh mục Khoa / Phòng', 'view-admin-thongbao': 'Quản lý Thông báo Hệ thống', 'view-master-print': 'Lịch Trực Toàn Viện', 'view-xem-lich-khoa': 'Tra Cứu Lịch Trực', 'view-user-master-schedule': 'Tra Cứu Lịch Toàn Viện', 'view-contacts': 'Danh Bạ Nhân Sự Trực', 'view-admin-audit': 'Nhật ký Hệ thống', 'view-user-profile': 'Hồ sơ cá nhân & Cài đặt bảo mật' };
+            const titles = { 'view-dashboard': 'Bảng Điều Khiển Tổng Hợp', 'view-khoa-schedule': 'Quản lý Lịch trực Khoa', 'view-admin-review': 'Phê duyệt Lịch trực', 'view-admin-users': currentUser && currentUser.Role === 'Admin_Khoa' ? 'Quản lý Nhân sự Khoa' : 'Quản lý Hệ thống Nhân sự', 'view-admin-departments': 'Quản lý Danh mục Khoa / Phòng', 'view-admin-thongbao': 'Quản lý Thông báo Hệ thống', 'view-master-print': 'Lịch Trực Toàn Viện', 'view-xem-lich-khoa': 'Tra Cứu Lịch Trực', 'view-user-master-schedule': 'Tra Cứu Lịch Toàn Viện', 'view-contacts': 'Danh Bạ Nhân Sự Trực', 'view-admin-audit': 'Nhật ký Hệ thống', 'view-user-profile': 'Hồ sơ cá nhân & Cài đặt bảo mật' };
             document.getElementById('page-title').textContent = titles[viewId] || '';
 
             if (viewId === 'view-dashboard') { setTimeout(() => updateDashboardStats(), 50); }
             else if (viewId === 'view-khoa-schedule') { checkWeeklyStatus(); }
-            else if (viewId === 'view-admin-users') { populateDeptDropdown(); renderAdminUsersTable(); }
+            else if (viewId === 'view-admin-users') { 
+                populateDeptDropdown(); 
+                renderAdminUsersTable(); 
+                if(currentUser && currentUser.Role === 'Admin_Khoa') {
+                    document.getElementById('users-module-title').textContent = `Danh sách Nhân viên (${MOCK_DB.khoa.find(k=>k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa})`;
+                }
+            }
             else if (viewId === 'view-admin-departments') { renderAdminDepartmentsTable(); }
             else if (viewId === 'view-admin-review') { renderAdminApprovalTable(); }
             else if (viewId === 'view-master-print') { renderMasterTable(); }
@@ -1752,7 +1777,7 @@
             currentUser.Password = finalPassword;
 
             // Tìm và cập nhật vào mảng MOCK_DB
-            const idx = MOCK_DB.users.findIndex(u => u.MaNV === currentUser.MaNV);
+            const idx = MOCK_DB.users.findIndex(u => String(u.MaNV) === String(currentUser.MaNV));
             if (idx > -1) {
                 MOCK_DB.users[idx] = currentUser;
             }
@@ -1885,7 +1910,7 @@
             }
 
             const weekDates = getDatesInWeek(tuan);
-            const myShifts = MOCK_DB.shifts.filter(s => s.MaNV === currentUser.MaNV && weekDates.includes(s.NgayTruc));
+            const myShifts = MOCK_DB.shifts.filter(s => String(s.MaNV) === String(currentUser.MaNV) && weekDates.includes(s.NgayTruc));
 
             if (myShifts.length === 0) {
                 return showToast("Bạn không có ca trực nào trong tuần này!");
@@ -1976,7 +2001,7 @@
             const hsccShifts = shiftDataArray.filter(s => s.MaKhoa === 'HSCC' && weekDates.includes(s.NgayTruc));
             let violations = [];
             hsccShifts.forEach(s => {
-                const user = MOCK_DB.users.find(u => u.MaNV === s.MaNV);
+                const user = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                 if (user && user.ChungChiHS === false) violations.push({ MaNV: user.MaNV, HoTen: user.TenHienThi || user.HoTen, NgayTruc: s.NgayTruc, ChucDanh: s.ChucDanh });
             });
             return violations;
@@ -2022,7 +2047,7 @@
                 if (weekDates.includes(s.NgayTruc)) userShiftsCount[s.MaNV] = (userShiftsCount[s.MaNV] || 0) + 1;
             });
             let sortedUsers = Object.entries(userShiftsCount).map(([maNV, count]) => {
-                const u = MOCK_DB.users.find(x => x.MaNV === maNV);
+                const u = MOCK_DB.users.find(x => String(x.MaNV) === String(maNV));
                 return { name: u ? (u.TenHienThi || u.HoTen) : maNV, count: count };
             }).sort((a, b) => b.count - a.count).slice(0, 10);
 
@@ -2128,7 +2153,14 @@
 
         function populateDeptDropdown() {
             const container = document.getElementById('u-khoa-container');
-            container.innerHTML = MOCK_DB.khoa.map(d => `
+            let khoaToRender = MOCK_DB.khoa;
+
+            // Nếu là Admin Khoa, chỉ hiển thị những khoa mà Admin này đang phụ trách
+            if (currentUser && currentUser.Role === 'Admin_Khoa') {
+                khoaToRender = MOCK_DB.khoa.filter(d => currentUser.KhoaList.includes(d.MaKhoa));
+            }
+
+            container.innerHTML = khoaToRender.map(d => `
                 <label class="flex items-center space-x-2 cursor-pointer hover:bg-slate-50 p-1 rounded">
                     <input type="checkbox" name="u-khoa-cb" value="${d.MaKhoa}" class="rounded text-medical-600 focus:ring-medical-500">
                     <span class="truncate">${d.TenKhoa}</span>
@@ -2142,31 +2174,99 @@
         }
 
         function renderAdminUsersTable() {
+            // Lấy từ khóa tìm kiếm
+            const keyword = (document.getElementById('search-user')?.value || "").toLowerCase().trim();
             const tbody = document.getElementById('admin-users-table-body');
-            tbody.innerHTML = MOCK_DB.users.map(u => {
+            
+            // Lọc danh sách nhân viên: 
+            // - Nếu là Admin Khoa -> chỉ xem được nhân viên thuộc khoa mình
+            // - Lọc theo từ khóa tìm kiếm
+            const filteredUsers = MOCK_DB.users.filter(u => {
+                // Kiểm tra phân quyền Admin Khoa
+                if (currentUser && currentUser.Role === 'Admin_Khoa') {
+                    if (!(u.MaKhoa || "").includes(currentUser.ActiveKhoa)) return false;
+                }
+
+                // Kiểm tra từ khóa
+                if(!keyword) return true;
+                const searchStr = `${u.MaNV} ${u.HoTen} ${u.TenHienThi || ''} ${u.SDT || ''}`.toLowerCase();
+                return searchStr.includes(keyword);
+            });
+
+            if (filteredUsers.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 italic">Không tìm thấy nhân viên nào.</td></tr>`;
+                 return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(u => {
                 const k = u.MaKhoa ? u.MaKhoa.split(',').join(', ') : '';
                 const hasAccount = u.Username && u.Username.trim() !== "";
                 const sdtHtml = u.SDT ? formatSDT(u.SDT) : 'Chưa có SĐT';
                 const mailHtml = u.Email ? u.Email : 'Chưa có Email';
 
-                return `<tr class="border-b hover:bg-slate-50 transition"><td class="px-4 py-3 font-medium text-slate-700">${u.MaNV}</td><td class="px-4 py-3">${u.HoTen}<br/><span class="text-[10px] text-slate-500"><i data-lucide="phone" class="w-3 h-3 inline"></i> ${sdtHtml}</span><br/><span class="text-[10px] text-slate-500"><i data-lucide="mail" class="w-3 h-3 inline"></i> ${mailHtml}</span></td><td class="px-4 py-3 text-xs max-w-xs truncate" title="${k}">${k}</td><td class="px-4 py-3">${u.ChucDanh}</td><td class="px-4 py-3 text-center">${hasAccount ? `<span class="text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded">Có</span>` : `<span class="text-slate-400 text-xs">Không</span>`}</td><td class="px-4 py-3 text-right space-x-2"><button onclick="openUserModal('${u.MaNV}')" class="text-blue-500 hover:text-blue-700 p-1"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteUser('${u.MaNV}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
+                return `<tr class="border-b hover:bg-slate-50 transition"><td class="px-4 py-3 font-medium text-slate-700">${u.MaNV}</td><td class="px-4 py-3">${u.HoTen}<br/><span class="text-[10px] text-slate-500"><i data-lucide="phone" class="w-3 h-3 inline"></i> ${sdtHtml}</span><br/><span class="text-[10px] text-slate-500"><i data-lucide="mail" class="w-3 h-3 inline"></i> ${mailHtml}</span></td><td class="px-4 py-3 text-xs max-w-xs truncate" title="${k}">${k}</td><td class="px-4 py-3">${u.ChucDanh}</td><td class="px-4 py-3 text-center">${hasAccount ? `<span class="text-green-600 text-xs font-medium bg-green-50 px-2 py-1 rounded">Có</span>` : `<span class="text-slate-400 text-xs">Không</span>`}</td><td class="px-4 py-3 text-right space-x-2"><button onclick="openUserModal('${u.MaNV}')" class="text-blue-500 hover:text-blue-700 p-1" title="Sửa"><i data-lucide="edit-2" class="w-4 h-4"></i></button><button onclick="deleteUser('${u.MaNV}')" class="text-red-400 hover:text-red-600 p-1" title="Xóa"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`;
             }).join('');
             lucide.createIcons();
         }
 
         function openUserModal(maNV = null) {
-            const cbs = document.querySelectorAll('input[name="u-khoa-cb"]'); cbs.forEach(c => c.checked = false);
+            const isKhoaAdmin = currentUser && currentUser.Role === 'Admin_Khoa';
+            
+            // Render lại danh sách để chắc chắn hiển thị đúng theo quyền
+            populateDeptDropdown();
+            const cbs = document.querySelectorAll('input[name="u-khoa-cb"]'); 
+            
+            cbs.forEach(c => {
+                c.checked = false;
+                // Nếu là Admin Khoa, mặc định tích chọn và khóa lại
+                if (isKhoaAdmin) {
+                    c.checked = true;
+                    c.disabled = true;
+                }
+            });
+
+            // Khóa Role Selection cho Admin Khoa
+            const roleSelect = document.getElementById('u-role');
+            if (isKhoaAdmin) {
+                roleSelect.value = 'User_Khoa';
+                roleSelect.disabled = true;
+            } else {
+                roleSelect.disabled = false;
+            }
+
             if (maNV) {
                 document.getElementById('form-mode').value = "edit";
                 document.getElementById('u-manv').readOnly = true;
-                const user = MOCK_DB.users.find(u => u.MaNV === maNV);
+                const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                 if (user) {
-                    document.getElementById('u-manv').value = user.MaNV; document.getElementById('u-hoten').value = user.HoTen; document.getElementById('u-chucdanh').value = user.ChucDanh; document.getElementById('u-sdt').value = user.SDT ? formatSDT(user.SDT) : ""; document.getElementById('u-email').value = user.Email || ""; document.getElementById('u-username').value = user.Username || ""; document.getElementById('u-password').value = user.Password || ""; document.getElementById('u-role').value = user.Role || "User_Khoa"; document.getElementById('u-cchs').checked = user.ChungChiHS;
-                    if (user.MaKhoa) { const arr = user.MaKhoa.split(',').map(s => s.trim()); cbs.forEach(c => { if (arr.includes(c.value)) c.checked = true; }); }
+                    document.getElementById('u-manv').value = user.MaNV; 
+                    document.getElementById('u-hoten').value = user.HoTen; 
+                    document.getElementById('u-chucdanh').value = user.ChucDanh; 
+                    document.getElementById('u-sdt').value = user.SDT ? formatSDT(user.SDT) : ""; 
+                    document.getElementById('u-email').value = user.Email || ""; 
+                    document.getElementById('u-username').value = user.Username || ""; 
+                    document.getElementById('u-password').value = user.Password || ""; 
+                    
+                    if(!isKhoaAdmin) {
+                        document.getElementById('u-role').value = user.Role || "User_Khoa"; 
+                    }
+                    
+                    document.getElementById('u-cchs').checked = user.ChungChiHS;
+                    
+                    // Chỉ set check lại nếu không phải Admin Khoa (vì Admin Khoa đã check sẵn ở trên)
+                    if (user.MaKhoa && !isKhoaAdmin) { 
+                        const arr = user.MaKhoa.split(',').map(s => s.trim()); 
+                        cbs.forEach(c => { if (arr.includes(c.value)) c.checked = true; }); 
+                    }
                 }
             } else {
-                document.getElementById('form-mode').value = "add"; document.getElementById('u-manv').readOnly = false;
-                ['u-manv', 'u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password'].forEach(id => document.getElementById(id).value = "");
+                document.getElementById('form-mode').value = "add"; 
+                // Khi thêm mới thì tự động sinh 9 số và khóa ô nhập
+                document.getElementById('u-manv').readOnly = true;
+                document.getElementById('u-manv').value = Math.floor(100000000 + Math.random() * 900000000).toString();
+
+                ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password'].forEach(id => document.getElementById(id).value = "");
+                document.getElementById('u-cchs').checked = false;
             }
             document.getElementById('user-modal').classList.remove('hidden');
         }
@@ -2176,16 +2276,38 @@
         function saveUser(e) {
             e.preventDefault();
             const maNV = document.getElementById('u-manv').value.toUpperCase().trim();
-            const selectedKhoas = Array.from(document.querySelectorAll('input[name="u-khoa-cb"]:checked')).map(c => c.value).join(', ');
+            
+            // Lấy dữ liệu checkbox bất kể bị disabled hay không bằng thuộc tính .checked
+            const selectedKhoas = Array.from(document.querySelectorAll('input[name="u-khoa-cb"]'))
+                                      .filter(c => c.checked)
+                                      .map(c => c.value)
+                                      .join(', ');
+            
             if (!selectedKhoas) return showToast("Phải chọn ít nhất 1 khoa cho nhân viên!");
 
-            const newUser = { MaNV: maNV, HoTen: document.getElementById('u-hoten').value.trim(), MaKhoa: selectedKhoas, ChucDanh: document.getElementById('u-chucdanh').value, SDT: document.getElementById('u-sdt').value.trim(), Email: document.getElementById('u-email').value.trim(), Username: document.getElementById('u-username').value.trim(), Password: document.getElementById('u-password').value.trim(), Role: document.getElementById('u-role').value, ChungChiHS: document.getElementById('u-cchs').checked };
+            let userRole = document.getElementById('u-role').value;
+            if (currentUser && currentUser.Role === 'Admin_Khoa') {
+                userRole = 'User_Khoa'; // Ép buộc nếu là Admin Khoa thì chỉ tạo/sửa người dùng cấp dưới
+            }
+
+            const newUser = { 
+                MaNV: maNV, 
+                HoTen: document.getElementById('u-hoten').value.trim(), 
+                MaKhoa: selectedKhoas, 
+                ChucDanh: document.getElementById('u-chucdanh').value, 
+                SDT: document.getElementById('u-sdt').value.trim(), 
+                Email: document.getElementById('u-email').value.trim(), 
+                Username: document.getElementById('u-username').value.trim(), 
+                Password: document.getElementById('u-password').value.trim(), 
+                Role: userRole, 
+                ChungChiHS: document.getElementById('u-cchs').checked 
+            };
 
             if (document.getElementById('form-mode').value === 'add') {
-                if (MOCK_DB.users.some(u => u.MaNV === maNV)) return showToast("Mã NV đã tồn tại trong hệ thống!");
+                if (MOCK_DB.users.some(u => String(u.MaNV) === String(maNV))) return showToast("Mã NV đã tồn tại trong hệ thống! Vui lòng thử lại.");
                 MOCK_DB.users.push(newUser); logActivity("Thêm nhân sự", `Mã: ${maNV}`); showToast("Thêm nhân viên thành công.");
             } else {
-                const idx = MOCK_DB.users.findIndex(u => u.MaNV === maNV);
+                const idx = MOCK_DB.users.findIndex(u => String(u.MaNV) === String(maNV));
                 if (idx > -1) { MOCK_DB.users[idx] = newUser; logActivity("Sửa nhân sự", `Mã: ${maNV}`); showToast("Cập nhật thành công."); }
             }
             closeUserModal(); renderAdminUsersTable(); syncWithGAS('sync_NhanVien', MOCK_DB.users);
@@ -2193,7 +2315,7 @@
 
         function deleteUser(maNV) {
             if (confirm(`Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`)) {
-                MOCK_DB.users = MOCK_DB.users.filter(u => u.MaNV !== maNV); logActivity("Xóa nhân sự", `Mã: ${maNV}`); renderAdminUsersTable(); syncWithGAS('sync_NhanVien', MOCK_DB.users);
+                MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV)); logActivity("Xóa nhân sự", `Mã: ${maNV}`); renderAdminUsersTable(); syncWithGAS('sync_NhanVien', MOCK_DB.users);
             }
         }
 
@@ -2326,7 +2448,8 @@
         function renderChips(shifts, isLocked) {
             if (shifts.length === 0) return '';
             return shifts.map(s => {
-                const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
+                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); 
+                const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
                 return `<div class="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-1 rounded mb-1 mr-1"><span>${ten}</span>${isLocked ? '' : `<button onclick="event.stopPropagation(); removeShift('${s.MaChiTiet}')" class="ml-1 text-red-400 hover:text-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>`}</div>`;
             }).join('');
         }
@@ -2342,9 +2465,9 @@
             if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!");
             if (chucDanh !== selectedCell.role) return showToast("Không thể xếp nhân viên này vào cột chức danh khác!");
 
-            const isConflict = MOCK_DB.shifts.some(s => s.MaNV === maNV && s.NgayTruc === selectedCell.date && s.MaKhoa !== currentUser.ActiveKhoa);
+            const isConflict = MOCK_DB.shifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date && s.MaKhoa !== currentUser.ActiveKhoa);
             if (isConflict) {
-                const confShift = MOCK_DB.shifts.find(s => s.MaNV === maNV && s.NgayTruc === selectedCell.date);
+                const confShift = MOCK_DB.shifts.find(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date);
                 const kName = MOCK_DB.khoa.find(k => k.MaKhoa === confShift.MaKhoa)?.TenKhoa || confShift.MaKhoa;
                 showToast(`CẢNH BÁO TRÙNG LỊCH: Nhân sự này đã xếp trực ở ${kName} hôm nay!`);
             }
@@ -2354,12 +2477,12 @@
                 const p = new Date(dSelect); p.setDate(dSelect.getDate() - 1);
                 const n = new Date(dSelect); n.setDate(dSelect.getDate() + 1);
                 const pStr = p.toISOString().split('T')[0]; const nStr = n.toISOString().split('T')[0];
-                const isConsLocal = localShifts.some(s => s.MaNV === maNV && (s.NgayTruc === pStr || s.NgayTruc === nStr));
-                const isConsGlobal = MOCK_DB.shifts.some(s => s.MaNV === maNV && (s.NgayTruc === pStr || s.NgayTruc === nStr));
+                const isConsLocal = localShifts.some(s => String(s.MaNV) === String(maNV) && (s.NgayTruc === pStr || s.NgayTruc === nStr));
+                const isConsGlobal = MOCK_DB.shifts.some(s => String(s.MaNV) === String(maNV) && (s.NgayTruc === pStr || s.NgayTruc === nStr));
                 if (isConsLocal || isConsGlobal) showToast("CẢNH BÁO LUẬT LĐ: BS này đã trực ngày liền kề!");
             }
 
-            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.floor(Math.random() * 100), NgayTruc: selectedCell.date, MaNV: maNV, MaKhoa: currentUser.ActiveKhoa, ChucDanh: chucDanh });
+            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.floor(Math.random() * 100), NgayTruc: selectedCell.date, MaNV: String(maNV), MaKhoa: currentUser.ActiveKhoa, ChucDanh: chucDanh });
             logActivity("Xếp lịch", `Gán NV ${maNV} vào ${selectedCell.date}`); renderWeeklyGrid("Nháp");
         }
 
@@ -2378,7 +2501,7 @@
                         const usersInRole = nvs.filter(u => u.ChucDanh === role);
                         if (usersInRole.length > 0) {
                             const randomUser = usersInRole[Math.floor(Math.random() * usersInRole.length)];
-                            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.random(), NgayTruc: date, MaNV: randomUser.MaNV, MaKhoa: currentUser.ActiveKhoa, ChucDanh: role });
+                            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.random(), NgayTruc: date, MaNV: String(randomUser.MaNV), MaKhoa: currentUser.ActiveKhoa, ChucDanh: role });
                         }
                     }
                 });
@@ -2410,19 +2533,19 @@
             const sNV = document.getElementById('swap-source-user').value; const tNV = document.getElementById('swap-target-user').value; const sDate = document.getElementById('swap-source-date').value;
             if (sNV === tNV) return showToast("Không thể đổi cho cùng một người!");
 
-            const shiftIndex = localShifts.findIndex(s => s.MaNV === sNV && s.NgayTruc === sDate);
+            const shiftIndex = localShifts.findIndex(s => String(s.MaNV) === String(sNV) && s.NgayTruc === sDate);
             if (shiftIndex === -1) return showToast("Người này không có ca trực vào ngày đã chọn!");
 
             const tuan = document.getElementById('tuan-bat-dau').value; const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
             const isApproved = phieu && phieu.TrangThai === 'Đã duyệt';
 
             if (isApproved) {
-                const sUser = MOCK_DB.users.find(u => u.MaNV === sNV); const tUser = MOCK_DB.users.find(u => u.MaNV === tNV);
+                const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(sNV)); const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(tNV));
                 const today = new Date().toISOString().split('T')[0]; let nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
                 const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - Khoa ${currentUser.ActiveKhoa}`, NoiDung: `Khoa ${currentUser.ActiveKhoa} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: nextWeek.toISOString().split('T')[0] };
                 MOCK_DB.thongBao.push(newTB); syncWithGAS('sync_ThongBao', MOCK_DB.thongBao); logActivity("Xin trực thế", `Ngày ${sDate}: ${sNV} -> ${tNV}`); showToast("Lịch đã khóa. Đã gửi yêu cầu trực thế lên KHTH!");
             } else {
-                localShifts[shiftIndex].MaNV = tNV; const targetUser = MOCK_DB.users.find(u => u.MaNV === tNV);
+                localShifts[shiftIndex].MaNV = String(tNV); const targetUser = MOCK_DB.users.find(u => String(u.MaNV) === String(tNV));
                 if (targetUser) localShifts[shiftIndex].ChucDanh = targetUser.ChucDanh;
                 logActivity("Đổi ca trực", `${sNV} đổi cho ${tNV} ngày ${sDate}`); renderWeeklyGrid("Nháp"); showToast("Đã đổi ca nội bộ thành công!");
             }
@@ -2520,7 +2643,7 @@
                 rolesInKhoa.forEach(r => {
                     const shiftsRole = shifts.filter(s => s.ChucDanh === r);
                     const renderStatic = (arr) => arr.length === 0 ? '<span class="text-slate-400 italic text-xs p-1">Trống</span>' : arr.map(s => {
-                        const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV);
+                        const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                         return `<span class="inline-block bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">${nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV}</span>`;
                     }).join('');
                     html += `<td class="px-4 py-2 border-r align-top"><div class="min-h-[40px] content-start">${renderStatic(shiftsRole)}</div></td>`;
@@ -2541,7 +2664,7 @@
             let chotRecord = MOCK_DB.phieu.find(p => p.MaKhoa === 'ALL' && p.TuanTruc === tuan);
 
             if (chotRecord && chotRecord.TrangThai === 'Chốt') {
-                // Mở chốt
+                // M mở chốt
                 if (confirm("Bạn muốn MỞ CHỐT lịch tuần này? User các Khoa sẽ KHÔNG XEM ĐƯỢC lịch tổng hợp nữa.")) {
                     MOCK_DB.phieu = MOCK_DB.phieu.filter(p => p.MaPhieu !== chotRecord.MaPhieu);
                     syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
@@ -2613,7 +2736,7 @@
                         btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Duyệt')" class="px-3 py-1 bg-medical-600 text-white rounded text-xs mr-2 shadow-sm">Duyệt</button><button onclick="adminAction('${phieu.MaPhieu}', 'Mở Trả')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs shadow-sm">Trả lại</button>`;
                     } else if (phieu.TrangThai === "Đã duyệt") {
                         st = `<span class="px-2 py-1 bg-green-100 text-green-800 font-bold rounded text-xs"><i data-lucide="check-check" class="w-3 h-3 inline"></i> Đã duyệt</span>`;
-                        let app = MOCK_DB.users.find(u => u.MaNV === phieu.NguoiDuyet);
+                        let app = MOCK_DB.users.find(u => String(u.MaNV) === String(phieu.NguoiDuyet));
                         btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Hủy')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded text-xs mr-2 shadow-sm hover:bg-slate-200">Hủy Duyệt</button> <span class="text-xs text-slate-400 block mt-1">Bởi: ${app ? app.HoTen : phieu.NguoiDuyet}</span>`;
                     } else if (phieu.TrangThai === "Trả lại") {
                         st = `<span class="px-2 py-1 bg-red-100 text-red-800 font-bold rounded text-xs">Đã Trả lại</span>`;
@@ -2722,7 +2845,7 @@
                     `;
 
                     for (let maNV in khoaGroups[maKhoa]) {
-                        const nvInfo = MOCK_DB.users.find(u => u.MaNV === maNV) || { TenHienThi: maNV, HoTen: maNV, SDT: '', ChucDanh: '' };
+                        const nvInfo = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV)) || { TenHienThi: maNV, HoTen: maNV, SDT: '', ChucDanh: '' };
                         const ten = nvInfo.TenHienThi || nvInfo.HoTen;
                         const daysOnDuty = khoaGroups[maKhoa][maNV].join(', ');
 
@@ -2820,13 +2943,13 @@
 
                 officialOrder.forEach(col => {
                     if (col.type === 'single') {
-                        const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa)).map(s => { const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); return nv ? (nv.TenHienThi || nv.HoTen) : ''; }).filter(Boolean);
+                        const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa)).map(s => { const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return nv ? (nv.TenHienThi || nv.HoTen) : ''; }).filter(Boolean);
                         rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                     }
                     else if (col.type === 'multi') {
                         col.roles.forEach(role => {
                             const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa) && s.ChucDanh === role).map(s => {
-                                const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); return nv ? (nv.TenHienThi || nv.HoTen) : '';
+                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return nv ? (nv.TenHienThi || nv.HoTen) : '';
                             }).filter(Boolean);
                             rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                         });
@@ -2834,7 +2957,7 @@
                     else if (col.type === 'group') {
                         col.children.forEach(child => {
                             const txtArray = shiftsToDay.filter(s => child.maKhoas.includes(s.MaKhoa)).map(s => {
-                                const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); return nv ? (nv.TenHienThi || nv.HoTen) : '';
+                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return nv ? (nv.TenHienThi || nv.HoTen) : '';
                             }).filter(Boolean);
                             rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                         });
@@ -2900,7 +3023,7 @@
                 rolesInKhoa.forEach(r => {
                     const shiftsRole = shifts.filter(s => s.ChucDanh === r);
                     const renderStatic = (arr) => arr.length === 0 ? '<span class="text-slate-400 italic text-xs p-1">Trống</span>' : arr.map(s => {
-                        const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); return `<span class="inline-block bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">${nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV}</span>`;
+                        const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return `<span class="inline-block bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">${nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV}</span>`;
                     }).join('');
                     html += `<td class="px-4 py-2 border-r align-top"><div class="min-h-[40px] content-start">${renderStatic(shiftsRole)}</div></td>`;
                 });
@@ -2929,7 +3052,7 @@
                 html += `<tr><td class="border border-slate-800 p-2 font-bold">${days[i]}<br/><span class="text-xs font-normal">${disp}</span></td>`;
                 rolesInKhoa.forEach(r => {
                     const shiftsRole = shifts.filter(s => s.ChucDanh === r);
-                    const namesArray = shiftsRole.map(s => { const nv = MOCK_DB.users.find(u => u.MaNV === s.MaNV); return nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV; }).filter(Boolean);
+                    const namesArray = shiftsRole.map(s => { const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV; }).filter(Boolean);
                     html += `<td class="border border-slate-800 p-2">${formatNames(namesArray)}</td>`;
                 });
                 html += `</tr>`;
