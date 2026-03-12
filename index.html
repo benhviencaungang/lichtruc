@@ -3344,20 +3344,17 @@
             let shiftsAll = MOCK_DB.shifts.filter(s => managedKhoas.includes(s.MaKhoa) && weekDates.includes(s.NgayTruc) && s.MaKhoa !== currentUser.ActiveKhoa);
             shiftsAll = shiftsAll.concat(localShifts); 
 
-            let rolesInKhoas = [...new Set(usersInKhoas.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
-            if (rolesInKhoas.length === 0) rolesInKhoas = ['BS', 'DD'];
-            rolesInKhoas.sort((a, b) => a === 'BS' ? -1 : 1);
-
-            // Lọc bỏ các cột chức danh không có ai trực
-            let activeRoles = rolesInKhoas.filter(r => shiftsAll.some(s => s.ChucDanh === r));
-            if (activeRoles.length > 0) {
-                rolesInKhoas = activeRoles;
+            // Lọc bỏ các khoa không có ai trực trong tuần này để bản in gọn gàng hơn
+            let printKhoas = [...managedKhoas];
+            let activeKhoas = printKhoas.filter(k => shiftsAll.some(s => s.MaKhoa === k));
+            if (activeKhoas.length > 0) {
+                printKhoas = activeKhoas;
             }
 
             let printThead = `<tr><th class="border border-slate-800 p-2 w-1/4">THỨ / NGÀY</th>`;
-            rolesInKhoas.forEach(r => {
-                const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
-                printThead += `<th class="border border-slate-800 p-2 uppercase">${tenRole}</th>`;
+            printKhoas.forEach(k => {
+                const tenKhoa = MOCK_DB.khoa.find(d => d.MaKhoa === k)?.TenKhoa || k;
+                printThead += `<th class="border border-slate-800 p-2 uppercase">${tenKhoa}</th>`;
             });
             printThead += `</tr>`;
             document.getElementById('print-khoa-thead').innerHTML = printThead;
@@ -3371,9 +3368,9 @@
                 const shiftsToday = shiftsAll.filter(s => s.NgayTruc === dateISO);
 
                 html += `<tr><td class="border border-slate-800 p-2 font-bold">${days[i]}<br/><span class="text-xs font-normal">${disp}</span></td>`;
-                rolesInKhoas.forEach(r => {
-                    const shiftsRole = shiftsToday.filter(s => s.ChucDanh === r);
-                    const namesArray = shiftsRole.map(s => {
+                printKhoas.forEach(k => {
+                    const shiftsForKhoa = shiftsToday.filter(s => s.MaKhoa === k);
+                    const namesArray = shiftsForKhoa.map(s => {
                         const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                         return nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
                     }).filter(Boolean);
