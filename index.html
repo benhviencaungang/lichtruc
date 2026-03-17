@@ -1503,9 +1503,19 @@
         lucide.createIcons();
         document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
-        document.getElementById('tuan-bat-dau').value = "2026-03-09";
-        document.getElementById('admin-tuan-bat-dau').value = "2026-03-09";
-        document.getElementById('dash-tuan-bat-dau').value = "2026-03-09";
+        // Lấy ngày thứ 2 của tuần hiện tại
+        function getMondayOfCurrentWeek() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            return new Date(today.setDate(diff));
+        }
+        const currentMondayStr = normalizeDateStr(getMondayOfCurrentWeek());
+
+        // Áp dụng ngày thứ 2 mặc định cho tất cả các ô ngày tháng (Mới thay đổi)
+        document.getElementById('tuan-bat-dau').value = currentMondayStr;
+        document.getElementById('admin-tuan-bat-dau').value = currentMondayStr;
+        document.getElementById('dash-tuan-bat-dau').value = currentMondayStr;
 
         async function loadDataFromGAS() {
             if (!GAS_URL) return;
@@ -3385,4 +3395,3 @@
 </body>
 
 </html>
-
