@@ -1702,7 +1702,7 @@
 
                 if (user.Role === 'Admin_KHTH') {
                     // Admin KHTH có thể xếp lịch cho toàn bộ khoa phòng
-                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'BGD');
+                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
                     const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
                     if (sel) sel.innerHTML = options;
                     if (xemSel) xemSel.innerHTML = options;
@@ -1850,7 +1850,7 @@
                 renderAdminThongBaoTable();
                 const sel = document.getElementById('tb-nguoinhan');
                 let opts = `<option value="ALL">Gửi tất cả Khoa/Phòng</option>`;
-                MOCK_DB.khoa.forEach(k => { if (k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'BGD') opts += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`; });
+                MOCK_DB.khoa.forEach(k => { if (k.MaKhoa !== 'KHTH') opts += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`; });
                 sel.innerHTML = opts;
             }
             else if (viewId === 'view-admin-audit') { renderAuditLog(); }
@@ -2178,7 +2178,7 @@
             const phieusThisWeek = MOCK_DB.phieu.filter(p => p.TuanTruc === tuan && p.MaKhoa !== 'ALL');
             let countDepts = 0;
             if (MOCK_DB.khoa && MOCK_DB.khoa.length > 0) {
-                countDepts = MOCK_DB.khoa.filter(k => ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) && k.MaKhoa !== 'BGD').length;
+                countDepts = MOCK_DB.khoa.filter(k => ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa)).length;
             }
             const elDepts = document.getElementById('stat-depts');
             if (elDepts) elDepts.textContent = `${phieusThisWeek.length}/${countDepts}`;
@@ -3045,7 +3045,7 @@
                 let hasUnapproved = false;
                 MOCK_DB.khoa.forEach(k => {
                     // CHỈ CHECK TRẠNG THÁI NHỮNG KHOA BẮT BUỘC PHẢI CÓ LỊCH
-                    if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) || k.MaKhoa === 'BGD') return;
+                    if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa)) return;
                     let p = MOCK_DB.phieu.find(x => x.MaKhoa === k.MaKhoa && x.TuanTruc === tuan);
                     if (!p || p.TrangThai !== 'Đã duyệt') hasUnapproved = true;
                 });
@@ -3090,7 +3090,7 @@
 
             tbody.innerHTML = MOCK_DB.khoa.map(k => {
                 // CHỈ HIỂN THỊ CÁC KHOA CÓ TRỰC (KHÔNG HIỂN THỊ KHOA CHỈ XEM NHƯ BGD HOẶC KHOA MỚI)
-                if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) || k.MaKhoa === 'BGD') return '';
+                if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa)) return '';
                 const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === k.MaKhoa && p.TuanTruc === tuan);
 
                 const viol = allViolations.filter(v => v.MaKhoaData.includes(k.MaKhoa));
