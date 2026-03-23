@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ Thống Quản Lý Lịch Trực Thông Minh</title>
-    
+
     <!-- Thư viện CSS & JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -205,7 +205,8 @@
     <div id="login-screen" class="fixed inset-0 bg-medical-900 z-50 flex items-center justify-center fade-in">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
-                <img src="logo.ico" alt="Logo BV" class="w-20 h-20 mx-auto mb-4 object-contain drop-shadow-sm" onerror="this.style.display='none'">
+                <img src="logo.ico" alt="Logo BV" class="w-20 h-20 mx-auto mb-4 object-contain drop-shadow-sm"
+                    onerror="this.style.display='none'">
                 <h1 class="text-2xl font-bold text-slate-800">Bệnh viện ĐKKV Cầu Ngang</h1>
                 <p class="text-slate-500 text-sm mt-1">Hệ thống Lịch trực Điện tử</p>
                 <div id="initial-loading"
@@ -245,7 +246,8 @@
         class="w-64 bg-white border-r border-slate-200 flex-col hidden fixed md:relative h-full shadow-2xl md:shadow-sm z-[80] shrink-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <div class="p-4 border-b border-slate-200 flex items-center justify-between md:justify-start space-x-3">
             <div class="flex items-center space-x-3">
-                <img src="logo.ico" alt="Logo BV" class="w-10 h-10 object-contain drop-shadow-sm shrink-0" onerror="this.style.display='none'">
+                <img src="logo.ico" alt="Logo BV" class="w-10 h-10 object-contain drop-shadow-sm shrink-0"
+                    onerror="this.style.display='none'">
                 <div>
                     <h2 class="font-bold text-slate-800 leading-tight">Hệ thống lên lịch trực</h2>
                     <p class="text-[10px] text-slate-500 uppercase tracking-wider">BVĐKKV Cầu Ngang</p>
@@ -265,7 +267,8 @@
             <div class="flex items-center space-x-3 mb-4 cursor-pointer hover:bg-slate-50 p-2 rounded-lg transition"
                 onclick="switchView('view-user-profile')" title="Chỉnh sửa thông tin cá nhân">
                 <!-- ICON USER AVATAR -->
-                <div class="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500 shrink-0">
+                <div
+                    class="w-10 h-10 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center text-slate-500 shrink-0">
                     <i data-lucide="user" class="w-5 h-5"></i>
                 </div>
                 <div class="overflow-hidden">
@@ -326,7 +329,7 @@
             <div id="view-user-profile" class="hidden fade-in space-y-6 max-w-4xl mx-auto w-full">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 shrink-0">
                     <h3 class="font-bold text-lg text-slate-800">Hồ sơ cá nhân & Bảo mật</h3>
-                    <p class="text-sm text-slate-500 mt-1">Cập nhật thông tin liên hệ và thay đổi mật khẩu đăng nhập.
+                    <p class="text-sm text-slate-500 mt-1">Cập nhật thông hiện hệ và thay đổi mật khẩu đăng nhập.
                     </p>
                 </div>
 
@@ -392,7 +395,8 @@
                     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden h-max">
                         <div
                             class="bg-orange-50 p-4 border-b border-orange-100 font-bold text-orange-800 flex items-center">
-                            <i data-lucide="shield-alert" class="w-4 h-4 mr-2"></i> Thay đổi mật khẩu</div>
+                            <i data-lucide="shield-alert" class="w-4 h-4 mr-2"></i> Thay đổi mật khẩu
+                        </div>
                         <div class="p-6 space-y-4">
                             <p class="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">Để
                                 trống các ô bên dưới nếu bạn chỉ muốn cập nhật thông tin mà không đổi mật khẩu.</p>
@@ -440,7 +444,7 @@
                         class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex items-center space-x-4 border-l-4 border-l-blue-500">
                         <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i data-lucide="users"></i></div>
                         <div>
-                            <p class="text-sm text-slate-500">Khoa đã nộp lịch</p>
+                            <p class="text-sm text-slate-500">Khoa có lịch đã nộp</p>
                             <h3 class="text-2xl font-bold" id="stat-depts">0/0</h3>
                         </div>
                     </div>
@@ -505,15 +509,20 @@
 
             <!-- MODULE: QUẢN LÝ THÔNG BÁO -->
             <div id="view-admin-thongbao" class="hidden fade-in space-y-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div
+                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h3 class="font-bold text-lg text-slate-800">Thông báo Hệ thống</h3>
                         <p class="text-sm text-slate-500 mt-1">Gửi thông báo tới toàn viện hoặc chỉ định.</p>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                         <div class="flex items-center space-x-2">
-                            <input type="text" id="zalo-link-input" placeholder="Nhập Link nhóm Zalo..." class="w-full sm:w-48 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" title="Cấu hình link nhóm Zalo để dán thông báo">
-                            <button onclick="saveZaloLink()" class="px-3 py-2 bg-slate-100 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-200 text-sm whitespace-nowrap" title="Lưu cấu hình Link Zalo"><i data-lucide="save" class="w-4 h-4"></i></button>
+                            <input type="text" id="zalo-link-input" placeholder="Nhập Link nhóm Zalo..."
+                                class="w-full sm:w-48 px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                title="Cấu hình link nhóm Zalo để dán thông báo">
+                            <button onclick="saveZaloLink()"
+                                class="px-3 py-2 bg-slate-100 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-200 text-sm whitespace-nowrap"
+                                title="Lưu cấu hình Link Zalo"><i data-lucide="save" class="w-4 h-4"></i></button>
                         </div>
                         <button onclick="openThongBaoModal()"
                             class="px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
@@ -541,20 +550,26 @@
 
             <!-- MODULE: QUẢN LÝ NHÂN SỰ -->
             <div id="view-admin-users" class="hidden fade-in space-y-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div
+                    class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h3 class="font-bold text-lg text-slate-800" id="users-module-title">Danh sách Nhân viên</h3>
-                        <p class="text-sm text-slate-500 mt-1">Quản lý thông tin, SĐT, điều chuyển khoa, cấp tài khoản</p>
+                        <p class="text-sm text-slate-500 mt-1">Quản lý thông tin, SĐT, điều chuyển khoa, cấp tài khoản
+                        </p>
                     </div>
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                        <select id="admin-user-khoa-filter" onchange="renderAdminUsersTable()" class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none max-w-full sm:max-w-[200px] truncate">
+                        <select id="admin-user-khoa-filter" onchange="renderAdminUsersTable()"
+                            class="w-full sm:w-auto px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none max-w-full sm:max-w-[200px] truncate">
                             <!-- JS populate filter options -->
                         </select>
                         <div class="relative w-full sm:w-64">
-                            <input type="text" id="search-user" oninput="renderAdminUsersTable()" placeholder="Tìm tên, mã NV, SĐT..." class="w-full px-3 py-2 pl-9 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                            <input type="text" id="search-user" oninput="renderAdminUsersTable()"
+                                placeholder="Tìm tên, mã NV, SĐT..."
+                                class="w-full px-3 py-2 pl-9 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
                         </div>
-                        <button onclick="openUserModal()" class="w-full sm:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
+                        <button onclick="openUserModal()"
+                            class="w-full sm:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
                             <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Thêm Nhân viên
                         </button>
                     </div>
@@ -700,7 +715,7 @@
                         <div class="w-px h-8 bg-slate-300 flex-shrink-0 hidden md:block"></div>
                         <button id="btn-print-khoa" onclick="openPrintKhoa()"
                             class="bg-red-50 text-red-600 border border-red-200 px-3 py-2 rounded-lg shadow-sm hover:bg-red-100 flex items-center transition h-10 text-xs md:text-sm font-medium flex-shrink-0">
-                            <i data-lucide="file-text" class="w-4 h-4 mr-1 md:mr-2"></i> Xuất PDF
+                            <i data-lucide="file-text" class="w-4 h-4 mr-1 md:mr-2"></i> Xuất PDF Khoa
                         </button>
                         <button id="btn-print-all-khoa" onclick="openPrintAllKhoa()"
                             class="bg-blue-50 text-blue-600 border border-blue-200 px-3 py-2 rounded-lg shadow-sm hover:bg-blue-100 items-center transition h-10 text-xs md:text-sm font-medium flex-shrink-0 hidden">
@@ -708,7 +723,8 @@
                         </button>
                         <!-- Nút đồng bộ G-Calendar dành riêng cho Admin Khoa/User Khoa -->
                         <button id="btn-sync-khoa" onclick="syncToGoogleCalendar('khoa')"
-                            class="bg-amber-100 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg shadow-sm hover:bg-amber-200 flex items-center transition h-10 text-xs md:text-sm font-medium flex-shrink-0 hidden" title="Gửi thông báo lịch trực đến email Khoa">
+                            class="bg-amber-100 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg shadow-sm hover:bg-amber-200 flex items-center transition h-10 text-xs md:text-sm font-medium flex-shrink-0 hidden"
+                            title="Gửi thông báo lịch trực đến email Khoa">
                             <i data-lucide="calendar-plus" class="w-4 h-4 mr-1 md:mr-2"></i> G-Calendar
                         </button>
                         <button id="btn-save-draft" onclick="luuLichNhaps()"
@@ -764,7 +780,9 @@
                         <p class="text-sm text-slate-500 mt-1">Xem lại lịch trực đã được xếp của các tuần</p>
                     </div>
                     <div class="flex items-center space-x-3 w-full md:w-auto">
-                        <select id="xem-khoa-selector" class="text-medical-600 border border-medical-200 rounded px-2 py-1.5 text-sm md:text-base outline-none bg-medical-50 font-bold" onchange="changeActiveKhoaFromXemLich()"></select>
+                        <select id="xem-khoa-selector"
+                            class="text-medical-600 border border-medical-200 rounded px-2 py-1.5 text-sm md:text-base outline-none bg-medical-50 font-bold"
+                            onchange="changeActiveKhoaFromXemLich()"></select>
                         <span class="text-sm font-medium">Chọn tuần:</span>
                         <input type="date" id="xem-tuan-bat-dau"
                             class="border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-medical-500 w-full md:w-auto"
@@ -804,6 +822,11 @@
                             class="w-full md:w-auto px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 shadow flex justify-center items-center transition flex-shrink-0"
                             title="Đẩy lịch trực của bạn lên Google Calendar cá nhân">
                             <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i> Đồng bộ Google Lịch
+                        </button>
+                        <!-- NÚT IN CHO USER KHOA (MỚI BỔ SUNG) -->
+                        <button onclick="switchView('view-master-print')"
+                            class="w-full md:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 shadow flex justify-center items-center transition flex-shrink-0">
+                            <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Lịch Toàn Viện
                         </button>
                     </div>
                 </div>
@@ -880,19 +903,21 @@
             <div id="view-master-print" class="hidden fade-in space-y-4 print-area bg-white min-h-screen w-full">
                 <div
                     class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex justify-between items-center mb-4 no-print">
-                    <button onclick="switchView('view-admin-review')"
-                        class="text-slate-500 hover:text-slate-800 flex items-center">
+                    <button onclick="goBackFromPrint()" class="text-slate-500 hover:text-slate-800 flex items-center">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Quay lại
                     </button>
                     <div class="flex space-x-2">
-                        <button onclick="toggleStamp()"
-                            class="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 shadow-sm flex items-center">
-                            <i data-lucide="stamp" class="w-4 h-4 mr-2"></i> Đóng dấu
-                        </button>
-                        <button onclick="startSmartCA()"
-                            class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 shadow-sm flex items-center">
-                            <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i> Ký số SmartCA
-                        </button>
+                        <!-- Nút dành cho Admin KHTH đóng dấu và ký -->
+                        <div id="admin-print-controls" class="flex space-x-2">
+                            <button onclick="toggleStamp()"
+                                class="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 shadow-sm flex items-center">
+                                <i data-lucide="stamp" class="w-4 h-4 mr-2"></i> Đóng dấu
+                            </button>
+                            <button onclick="startSmartCA()"
+                                class="px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-100 shadow-sm flex items-center">
+                                <i data-lucide="shield-check" class="w-4 h-4 mr-2"></i> Ký số SmartCA
+                            </button>
+                        </div>
                         <button onclick="window.print()"
                             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 shadow-sm flex items-center border border-slate-300">
                             <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Quyết định
@@ -942,7 +967,8 @@
                                 <!-- Chữ ký cá nhân (Nằm Dưới - z-10) -->
                                 <img id="personal-signature" src="sonthichanhtria.png"
                                     class="hidden absolute w-40 h-auto object-contain z-10"
-                                    style="top: -5px; left: 50%; transform: translateX(-50%);" alt="Chữ ký" onerror="this.style.display='none'">
+                                    style="top: -5px; left: 50%; transform: translateX(-50%);" alt="Chữ ký"
+                                    onerror="this.style.display='none'">
 
                                 <!-- Con dấu (Nằm Trên - z-20) có mix-blend-mode để nét mực quyện vào nhau -->
                                 <img id="official-stamp" src="condau.png"
@@ -1071,7 +1097,8 @@
                         <label class="block text-xs font-medium text-slate-600 mb-1">Mã NV (Tự động) <span
                                 class="text-red-500">*</span></label>
                         <input type="text" id="u-manv"
-                            class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed" required readonly title="Mã NV tự động 9 số, không thể sửa.">
+                            class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed"
+                            required readonly title="Mã NV tự động 9 số, không thể sửa.">
                     </div>
                     <div><label class="block text-xs font-medium text-slate-600 mb-1">Họ và Tên <span
                                 class="text-red-500">*</span></label><input type="text" id="u-hoten"
@@ -1110,7 +1137,8 @@
                         <div><label class="block text-xs font-medium text-slate-600 mb-1">Tên đăng nhập</label><input
                                 type="text" id="u-username" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
                         <div><label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu</label><input
-                                type="password" id="u-password" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
+                                type="password" id="u-password" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        </div>
                     </div>
                     <div class="flex items-center justify-between">
                         <label class="text-sm font-medium text-slate-700">Quyền truy cập:</label>
@@ -1142,19 +1170,36 @@
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800" id="dept-modal-title">Thêm Khoa</h3>
-                <button onclick="closeDeptModal()" class="text-slate-400"><i data-lucide="x"
+                <button onclick="closeDeptModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"
                         class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="saveDepartment(event)" class="p-6 space-y-4">
                 <input type="hidden" id="d-form-mode" value="add">
-                <div><label class="block text-xs">Mã Khoa</label><input type="text" id="d-makhoa"
-                        class="w-full px-3 py-2 border rounded text-sm uppercase" required></div>
-                <div><label class="block text-xs">Tên Khoa hiển thị</label><input type="text" id="d-tenkhoa"
-                        class="w-full px-3 py-2 border rounded text-sm" required></div>
-                <div><label class="block text-xs">Số điện thoại Khoa/Trực ban</label><input type="text" id="d-sdt"
-                        class="w-full px-3 py-2 border rounded text-sm" placeholder="VD: 0274..."></div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Mã Khoa (Tự động)</label>
+                    <input type="text" id="d-makhoa"
+                        class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed outline-none"
+                        required readonly title="Mã Khoa được tạo tự động từ Tên Khoa">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Tên Khoa hiển thị <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" id="d-tenkhoa"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                        required oninput="autoGenerateMaKhoa()">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại Khoa/Trực ban</label>
+                    <input type="text" id="d-sdt"
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                        placeholder="VD: 0274...">
+                </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t">
-                    <button type="submit" class="px-4 py-2 text-sm text-white bg-medical-600 rounded">Lưu</button>
+                    <button type="button" onclick="closeDeptModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">Hủy</button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm text-white bg-medical-600 rounded-lg flex items-center shadow hover:bg-medical-700">Lưu
+                        thông tin</button>
                 </div>
             </form>
         </div>
@@ -1360,6 +1405,9 @@
         // ---------------------------------------------------------------------------------------
         // KHỐI 1: CÁC HÀM XỬ LÝ THỜI GIAN VÀ CẢNH BÁO
         // ---------------------------------------------------------------------------------------
+
+        // DANH SÁCH CÁC KHOA CÓ TRỰC (Để tránh lỗi khi tạo thêm khoa "chỉ xem" mới)
+        const ACTIVE_SHIFT_DEPTS = ['BGD', 'HSCC', 'NOI', 'NGOAI', 'GMHS', 'SAN', 'NHI', 'XN', 'CDHA', 'YHCT', 'CNTT', 'TAIVU', 'DN', 'TAIXE', 'BAOVE'];
 
         function normalizeDateStr(val) {
             if (!val) return "";
@@ -1651,14 +1699,14 @@
                 // Populate Dropdown cho Xếp lịch và Xem Lịch
                 const sel = document.getElementById('user-khoa-selector');
                 const xemSel = document.getElementById('xem-khoa-selector');
-                
+
                 if (user.Role === 'Admin_KHTH') {
                     // Admin KHTH có thể xếp lịch cho toàn bộ khoa phòng
                     const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'BGD');
                     const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
                     if (sel) sel.innerHTML = options;
                     if (xemSel) xemSel.innerHTML = options;
-                    
+
                     currentUser.ActiveKhoa = dsKhoa.length > 0 ? dsKhoa[0].MaKhoa : 'ALL';
                     switchView('view-dashboard');
                 } else {
@@ -1688,7 +1736,7 @@
                 renderXemLichKhoaTable();
             }
             if (!document.getElementById('view-admin-users').classList.contains('hidden')) {
-                 renderAdminUsersTable();
+                renderAdminUsersTable();
             }
         }
 
@@ -1697,7 +1745,7 @@
             currentUser.ActiveKhoa = document.getElementById('xem-khoa-selector').value;
             const nhapSel = document.getElementById('user-khoa-selector');
             if (nhapSel) nhapSel.value = currentUser.ActiveKhoa;
-            
+
             renderXemLichKhoaTable();
         }
 
@@ -1729,7 +1777,7 @@
                     <li><button onclick="switchView('view-user-master-schedule')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="globe" class="w-4 h-4 mr-3"></i> Lịch Toàn Viện</button></li>
                     <li><button onclick="switchView('view-contacts')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="contact" class="w-4 h-4 mr-3"></i> Danh bạ Liên hệ</button></li>
                 `);
-                
+
                 // Bổ sung menu Quản lý Nhân sự cho Admin Khoa
                 if (currentUser.Role === 'Admin_Khoa') {
                     menuHtml.push(`
@@ -1740,6 +1788,15 @@
             }
             document.getElementById('menu-items').innerHTML = menuHtml.join('');
             lucide.createIcons();
+        }
+
+        // HÀM QUAY LẠI TỪ MÀN HÌNH IN (Phân quyền)
+        function goBackFromPrint() {
+            if (currentUser.Role === 'Admin_KHTH') {
+                switchView('view-admin-review');
+            } else {
+                switchView('view-user-master-schedule');
+            }
         }
 
         function switchView(viewId) {
@@ -1762,7 +1819,7 @@
 
             if (viewId === 'view-dashboard') { setTimeout(() => updateDashboardStats(), 50); }
             else if (viewId === 'view-khoa-schedule') { checkWeeklyStatus(); }
-            else if (viewId === 'view-admin-users') { 
+            else if (viewId === 'view-admin-users') {
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
                 if (currentUser.Role === 'Admin_KHTH') {
                     let opts = `<option value="ALL">Tất cả khoa/phòng</option>`;
@@ -1779,8 +1836,8 @@
                     document.getElementById('users-module-title').textContent = `Quản lý Nhân sự Khoa`;
                 }
 
-                populateDeptDropdown(); 
-                renderAdminUsersTable(); 
+                populateDeptDropdown();
+                renderAdminUsersTable();
             }
             else if (viewId === 'view-admin-departments') { renderAdminDepartmentsTable(); }
             else if (viewId === 'view-admin-review') { renderAdminApprovalTable(); }
@@ -1983,7 +2040,7 @@
         // --- HÀM TẠO SỰ KIỆN GOOGLE CALENDAR ---
         async function syncToGoogleCalendar(sourceScreen = null) {
             let tuan = "";
-            
+
             // Xác định xem đang bấm đồng bộ ở màn hình nào
             if (sourceScreen === 'khoa' || !document.getElementById('view-khoa-schedule').classList.contains('hidden')) {
                 tuan = document.getElementById('tuan-bat-dau').value;
@@ -2060,7 +2117,7 @@
             const emailsToSync = Object.keys(syncDataByEmail);
             if (emailsToSync.length === 0) return showToast("Các nhân sự có lịch trực chưa được cập nhật địa chỉ Email!");
 
-            const confirmMsg = currentUser.Role === 'User_Khoa' 
+            const confirmMsg = currentUser.Role === 'User_Khoa'
                 ? `Hệ thống sẽ gửi lời mời trực (${shiftsToSync.length} ca) vào Google Calendar của bạn. Đồng ý?`
                 : `Hệ thống sẽ gửi email đồng bộ lịch trực hàng loạt cho ${emailsToSync.length} nhân viên. Bạn có chắc chắn muốn thực hiện?`;
 
@@ -2070,7 +2127,7 @@
                 const syncSpn = document.querySelector('#sync-status span');
                 syncStt.classList.remove('hidden');
                 syncSpn.textContent = `Đang đồng bộ (${emailsToSync.length} email)...`;
-                
+
                 try {
                     let successCount = 0;
                     for (const email of emailsToSync) {
@@ -2079,13 +2136,13 @@
                         await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'sync_gcal', data: payload }) });
                         successCount++;
                     }
-                    
+
                     syncStt.classList.add('hidden');
                     syncSpn.textContent = `Đang đồng bộ...`;
-                    
+
                     alert(`Đã hoàn tất gửi lệnh đồng bộ cho ${successCount} tài khoản.\nYêu cầu nhân sự kiểm tra hộp thư đến (hoặc thư mục Spam) để chấp nhận sự kiện!`);
                     logActivity(currentUser.Role === 'User_Khoa' ? "Đồng bộ Google Lịch cá nhân" : "Đồng bộ Google Lịch Hàng Loạt", `Đồng bộ ${shiftsToSync.length} ca cho ${successCount} nhân viên tuần ${tuan}`);
-                } catch(e) {
+                } catch (e) {
                     syncStt.classList.add('hidden');
                     syncSpn.textContent = `Đang đồng bộ...`;
                     showToast("Lỗi mạng khi thực hiện đồng bộ tới máy chủ.");
@@ -2117,11 +2174,11 @@
                 elTotalShifts.textContent = MOCK_DB.shifts.filter(s => weekDates.includes(s.NgayTruc)).length;
             }
 
-            // 2. KPI: Số khoa đã nộp lịch
+            // 2. KPI: Số khoa đã nộp lịch (CHỈ ĐẾM NHỮNG KHOA CÓ TRONG ACTIVE_SHIFT_DEPTS)
             const phieusThisWeek = MOCK_DB.phieu.filter(p => p.TuanTruc === tuan && p.MaKhoa !== 'ALL');
             let countDepts = 0;
             if (MOCK_DB.khoa && MOCK_DB.khoa.length > 0) {
-                countDepts = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'BGD').length;
+                countDepts = MOCK_DB.khoa.filter(k => ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) && k.MaKhoa !== 'BGD').length;
             }
             const elDepts = document.getElementById('stat-depts');
             if (elDepts) elDepts.textContent = `${phieusThisWeek.length}/${countDepts}`;
@@ -2275,10 +2332,10 @@
         function shareToZalo(maTB) {
             const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
             if (!tb) return;
-            
+
             const startDate = tb.NgayBatDau.split('-').reverse().join('/');
             const endDate = tb.NgayKetThuc.split('-').reverse().join('/');
-            
+
             // Xây dựng đoạn text format chuẩn để dán vào Zalo
             const text = `🔔 [THÔNG BÁO BVĐKKV CẦU NGANG] 🔔\n\n📌 Tiêu đề: ${tb.TieuDe}\n\n📝 Nội dung:\n${tb.NoiDung}\n\n⏳ Hiệu lực: ${startDate} đến ${endDate}`;
 
@@ -2298,7 +2355,7 @@
             setTimeout(() => {
                 window.open(ZALO_TARGET_URL, '_blank');
             }, 1000);
-            
+
             logActivity("Chia sẻ thông báo Zalo", `Tiêu đề: ${tb.TieuDe}`);
         }
 
@@ -2307,7 +2364,7 @@
             const deptName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
             const d = new Date(dateStr + "T12:00:00");
             const fmtDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            
+
             const text = `🚨 THÔNG BÁO ĐỔI LỊCH TRỰC ĐỘT XUẤT 🚨\n\n📌 Đơn vị: ${deptName}\n🗓️ Ngày trực: ${fmtDate}\n\n❌ Người nghỉ: ${sourceName}\n✅ Người trực thay: ${targetName}\n\nKính báo Ban Giám Đốc và các khoa phòng liên quan lưu ý phối hợp!`;
 
             const el = document.createElement('textarea');
@@ -2325,7 +2382,7 @@
             setTimeout(() => {
                 window.open(ZALO_TARGET_URL, '_blank');
             }, 1000);
-            
+
             logActivity("Chia sẻ đổi ca Zalo", `Ngày ${fmtDate}: ${sourceName} -> ${targetName}`);
         }
 
@@ -2397,7 +2454,7 @@
             const keyword = (document.getElementById('search-user')?.value || "").toLowerCase().trim();
             const filterKhoa = document.getElementById('admin-user-khoa-filter')?.value || "ALL";
             const tbody = document.getElementById('admin-users-table-body');
-            
+
             // Lọc danh sách nhân viên: 
             // - Lọc theo dropdown menu Khoa
             // - Lọc theo từ khóa tìm kiếm
@@ -2416,14 +2473,14 @@
                 }
 
                 // Kiểm tra từ khóa
-                if(!keyword) return true;
+                if (!keyword) return true;
                 const searchStr = `${u.MaNV} ${u.HoTen} ${u.TenHienThi || ''} ${u.SDT || ''}`.toLowerCase();
                 return searchStr.includes(keyword);
             });
 
             if (filteredUsers.length === 0) {
-                 tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 italic">Không tìm thấy nhân viên nào.</td></tr>`;
-                 return;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-500 italic">Không tìm thấy nhân viên nào.</td></tr>`;
+                return;
             }
 
             tbody.innerHTML = filteredUsers.map(u => {
@@ -2439,11 +2496,11 @@
 
         function openUserModal(maNV = null) {
             const isKhoaAdmin = currentUser && currentUser.Role === 'Admin_Khoa';
-            
+
             // Render lại danh sách để chắc chắn hiển thị đúng theo quyền
             populateDeptDropdown();
-            const cbs = document.querySelectorAll('input[name="u-khoa-cb"]'); 
-            
+            const cbs = document.querySelectorAll('input[name="u-khoa-cb"]');
+
             cbs.forEach(c => {
                 c.checked = false;
                 c.disabled = false; // Bỏ khóa để Admin Khoa có thể tự do chọn Khoa cho Nhân sự
@@ -2466,31 +2523,31 @@
                 document.getElementById('u-manv').readOnly = true;
                 const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                 if (user) {
-                    document.getElementById('u-manv').value = user.MaNV; 
-                    document.getElementById('u-hoten').value = user.HoTen; 
-                    document.getElementById('u-chucdanh').value = user.ChucDanh; 
-                    document.getElementById('u-sdt').value = user.SDT ? formatSDT(user.SDT) : ""; 
-                    document.getElementById('u-email').value = user.Email || ""; 
-                    document.getElementById('u-username').value = user.Username || ""; 
-                    document.getElementById('u-password').value = user.Password || ""; 
-                    
-                    if(!isKhoaAdmin) {
-                        document.getElementById('u-role').value = user.Role || "User_Khoa"; 
+                    document.getElementById('u-manv').value = user.MaNV;
+                    document.getElementById('u-hoten').value = user.HoTen;
+                    document.getElementById('u-chucdanh').value = user.ChucDanh;
+                    document.getElementById('u-sdt').value = user.SDT ? formatSDT(user.SDT) : "";
+                    document.getElementById('u-email').value = user.Email || "";
+                    document.getElementById('u-username').value = user.Username || "";
+                    document.getElementById('u-password').value = user.Password || "";
+
+                    if (!isKhoaAdmin) {
+                        document.getElementById('u-role').value = user.Role || "User_Khoa";
                     } else {
                         // Nếu là Admin Khoa thì hiển thị đúng role của user đang sửa
                         roleSelect.value = user.Role || "User_Khoa";
                     }
-                    
+
                     document.getElementById('u-cchs').checked = user.ChungChiHS;
-                    
+
                     // Tích các checkbox tương ứng
-                    if (user.MaKhoa) { 
-                        const arr = user.MaKhoa.split(',').map(s => s.trim()); 
-                        cbs.forEach(c => { if (arr.includes(c.value)) c.checked = true; }); 
+                    if (user.MaKhoa) {
+                        const arr = user.MaKhoa.split(',').map(s => s.trim());
+                        cbs.forEach(c => { if (arr.includes(c.value)) c.checked = true; });
                     }
                 }
             } else {
-                document.getElementById('form-mode').value = "add"; 
+                document.getElementById('form-mode').value = "add";
                 // Khi thêm mới thì tự động sinh 9 số và khóa ô nhập
                 document.getElementById('u-manv').readOnly = true;
                 document.getElementById('u-manv').value = Math.floor(100000000 + Math.random() * 900000000).toString();
@@ -2515,12 +2572,12 @@
         function saveUser(e) {
             e.preventDefault();
             const maNV = document.getElementById('u-manv').value.toUpperCase().trim();
-            
+
             // Lấy dữ liệu checkbox hiện tại hiển thị trên UI
             const selectedKhoas = Array.from(document.querySelectorAll('input[name="u-khoa-cb"]'))
-                                      .filter(c => c.checked)
-                                      .map(c => c.value);
-            
+                .filter(c => c.checked)
+                .map(c => c.value);
+
             let finalKhoas = selectedKhoas.join(', ');
             let userRole = document.getElementById('u-role').value;
 
@@ -2530,33 +2587,33 @@
                     const existingUser = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                     if (existingUser) {
                         // 1. Phục hồi lại Role hiện tại của họ (Tránh việc Admin_Khoa tự giáng chức mình)
-                        userRole = existingUser.Role || 'User_Khoa'; 
-                        
+                        userRole = existingUser.Role || 'User_Khoa';
+
                         // 2. Phục hồi lại các Khoa mà nhân sự đó trực nhưng Admin này không có quyền quản lý
                         const oldKhoas = (existingUser.MaKhoa || "").split(',').map(s => s.trim()).filter(Boolean);
                         const unmanagedKhoas = oldKhoas.filter(k => !currentUser.KhoaList.includes(k));
-                        
+
                         // Ghép lại toàn bộ Khoa cũ (ngoài tầm kiểm soát) + Khoa mới (vừa chọn)
                         finalKhoas = [...new Set([...unmanagedKhoas, ...selectedKhoas])].join(', ');
                     }
                 } else {
-                    userRole = 'User_Khoa'; 
+                    userRole = 'User_Khoa';
                 }
             }
-            
+
             if (!finalKhoas) return showToast("Phải chọn ít nhất 1 khoa cho nhân viên!");
 
-            const newUser = { 
-                MaNV: maNV, 
-                HoTen: document.getElementById('u-hoten').value.trim(), 
-                MaKhoa: finalKhoas, 
-                ChucDanh: document.getElementById('u-chucdanh').value, 
-                SDT: document.getElementById('u-sdt').value.trim(), 
-                Email: document.getElementById('u-email').value.trim(), 
-                Username: document.getElementById('u-username').value.trim(), 
-                Password: document.getElementById('u-password').value.trim(), 
-                Role: userRole, 
-                ChungChiHS: document.getElementById('u-cchs').checked 
+            const newUser = {
+                MaNV: maNV,
+                HoTen: document.getElementById('u-hoten').value.trim(),
+                MaKhoa: finalKhoas,
+                ChucDanh: document.getElementById('u-chucdanh').value,
+                SDT: document.getElementById('u-sdt').value.trim(),
+                Email: document.getElementById('u-email').value.trim(),
+                Username: document.getElementById('u-username').value.trim(),
+                Password: document.getElementById('u-password').value.trim(),
+                Role: userRole,
+                ChungChiHS: document.getElementById('u-cchs').checked
             };
 
             if (document.getElementById('form-mode').value === 'add') {
@@ -2585,13 +2642,30 @@
             lucide.createIcons();
         }
 
+        // --- Hàm tạo tự động Mã Khoa dựa trên Tên Khoa ---
+        function autoGenerateMaKhoa() {
+            if (document.getElementById('d-form-mode').value === 'add') {
+                const tenKhoa = document.getElementById('d-tenkhoa').value;
+                const maKhoa = tenKhoa
+                    .normalize('NFD') // Phân tách các ký tự có dấu
+                    .replace(/[\u0300-\u036f]/g, '') // Loại bỏ dấu
+                    .replace(/đ/g, 'd').replace(/Đ/g, 'D') // Xử lý chữ Đ
+                    .replace(/[^a-zA-Z0-9]/g, '') // Loại bỏ khoảng trắng và ký tự đặc biệt
+                    .toUpperCase(); // Chuyển thành chữ hoa
+                document.getElementById('d-makhoa').value = maKhoa;
+            }
+        }
+
         function openDeptModal(id = null) {
             if (id) {
-                document.getElementById('d-form-mode').value = "edit"; document.getElementById('d-makhoa').readOnly = true;
+                document.getElementById('d-form-mode').value = "edit";
+                document.getElementById('d-makhoa').readOnly = true;
                 const d = MOCK_DB.khoa.find(x => x.MaKhoa === id);
                 if (d) { document.getElementById('d-makhoa').value = d.MaKhoa; document.getElementById('d-tenkhoa').value = d.TenKhoa; document.getElementById('d-sdt').value = d.SDT ? formatSDT(d.SDT) : ""; }
             } else {
-                document.getElementById('d-form-mode').value = "add"; document.getElementById('d-makhoa').readOnly = false; document.getElementById('d-makhoa').value = ""; document.getElementById('d-tenkhoa').value = ""; document.getElementById('d-sdt').value = "";
+                document.getElementById('d-form-mode').value = "add";
+                document.getElementById('d-makhoa').readOnly = true;
+                document.getElementById('d-makhoa').value = ""; document.getElementById('d-tenkhoa').value = ""; document.getElementById('d-sdt').value = "";
             }
             document.getElementById('dept-modal').classList.remove('hidden');
         }
@@ -2637,9 +2711,9 @@
 
             reason.classList.add('hidden'); workspace.classList.remove('locked-overlay');
             ['btn-submit-khoa', 'btn-save-draft'].forEach(id => { document.getElementById(id).disabled = false; document.getElementById(id).classList.remove('opacity-50', 'cursor-not-allowed'); });
-            
+
             if (btnSync) btnSync.classList.add('hidden');
-            
+
             // Xử lý hiện/ẩn nút In Gộp Tất Cả
             if (btnPrintAll) {
                 if (currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.length > 1) {
@@ -2723,7 +2797,7 @@
         function renderChips(shifts, isLocked) {
             if (shifts.length === 0) return '';
             return shifts.map(s => {
-                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); 
+                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                 const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
                 return `<div class="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-800 text-xs px-2 py-1 rounded mb-1 mr-1"><span>${ten}</span>${isLocked ? '' : `<button onclick="event.stopPropagation(); removeShift('${s.MaChiTiet}')" class="ml-1 text-red-400 hover:text-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>`}</div>`;
             }).join('');
@@ -2813,34 +2887,34 @@
 
             const tuan = document.getElementById('tuan-bat-dau').value; const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
             const isApproved = phieu && phieu.TrangThai === 'Đã duyệt';
-            
-            const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(sNV)); 
+
+            const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(sNV));
             const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(tNV));
             const deptName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
 
             if (isApproved) {
                 const today = new Date().toISOString().split('T')[0]; let nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
                 const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - ${deptName}`, NoiDung: `${deptName} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: nextWeek.toISOString().split('T')[0] };
-                MOCK_DB.thongBao.push(newTB); syncWithGAS('sync_ThongBao', MOCK_DB.thongBao); logActivity("Xin trực thế", `Ngày ${sDate}: ${sNV} -> ${tNV}`); 
-                
+                MOCK_DB.thongBao.push(newTB); syncWithGAS('sync_ThongBao', MOCK_DB.thongBao); logActivity("Xin trực thế", `Ngày ${sDate}: ${sNV} -> ${tNV}`);
+
                 document.getElementById('swap-modal').classList.add('hidden');
                 showToast("Lịch đã khóa. Đã gửi yêu cầu trực thế lên KHTH!");
-                
+
                 // Mời chia sẻ lên Zalo
-                if(confirm("Yêu cầu đã được lưu. Bạn có muốn gửi thông báo KHẨN CẤP thay đổi này vào nhóm Zalo để mọi người nắm thông tin ngay không?")) {
+                if (confirm("Yêu cầu đã được lưu. Bạn có muốn gửi thông báo KHẨN CẤP thay đổi này vào nhóm Zalo để mọi người nắm thông tin ngay không?")) {
                     shareSwapToZalo(sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV, tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV, sDate);
                 }
             } else {
                 localShifts[shiftIndex].MaNV = String(tNV);
                 if (tUser) localShifts[shiftIndex].ChucDanh = tUser.ChucDanh;
-                logActivity("Đổi ca trực", `${sNV} đổi cho ${tNV} ngày ${sDate}`); 
-                renderWeeklyGrid("Nháp"); 
-                
+                logActivity("Đổi ca trực", `${sNV} đổi cho ${tNV} ngày ${sDate}`);
+                renderWeeklyGrid("Nháp");
+
                 document.getElementById('swap-modal').classList.add('hidden');
                 showToast("Đã đổi ca nội bộ thành công!");
-                
+
                 // Mời chia sẻ lên Zalo
-                if(confirm("Thay đổi thành công! Bạn có muốn thông báo liền vào nhóm Zalo cho 2 người này biết không?")) {
+                if (confirm("Thay đổi thành công! Bạn có muốn thông báo liền vào nhóm Zalo cho 2 người này biết không?")) {
                     shareSwapToZalo(sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV, tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV, sDate);
                 }
             }
@@ -2970,7 +3044,8 @@
                 // Chốt lịch
                 let hasUnapproved = false;
                 MOCK_DB.khoa.forEach(k => {
-                    if (k.MaKhoa === 'KHTH' || k.MaKhoa === 'BGD') return;
+                    // CHỈ CHECK TRẠNG THÁI NHỮNG KHOA BẮT BUỘC PHẢI CÓ LỊCH
+                    if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) || k.MaKhoa === 'BGD') return;
                     let p = MOCK_DB.phieu.find(x => x.MaKhoa === k.MaKhoa && x.TuanTruc === tuan);
                     if (!p || p.TrangThai !== 'Đã duyệt') hasUnapproved = true;
                 });
@@ -3014,7 +3089,8 @@
             }
 
             tbody.innerHTML = MOCK_DB.khoa.map(k => {
-                if (k.MaKhoa === 'KHTH' || k.MaKhoa === 'BGD') return '';
+                // CHỈ HIỂN THỊ CÁC KHOA CÓ TRỰC (KHÔNG HIỂN THỊ KHOA CHỈ XEM NHƯ BGD HOẶC KHOA MỚI)
+                if (!ACTIVE_SHIFT_DEPTS.includes(k.MaKhoa) || k.MaKhoa === 'BGD') return '';
                 const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === k.MaKhoa && p.TuanTruc === tuan);
 
                 const viol = allViolations.filter(v => v.MaKhoaData.includes(k.MaKhoa));
@@ -3265,7 +3341,16 @@
 
         // Dành cho màn hình hiển thị/in toàn viện của Admin
         function renderMasterTable() {
-            const tuan = document.getElementById('admin-tuan-bat-dau').value; if (!tuan) return;
+            let tuan = "";
+            if (currentUser.Role === 'Admin_KHTH') {
+                tuan = document.getElementById('admin-tuan-bat-dau').value;
+                document.getElementById('admin-print-controls').classList.remove('hidden');
+            } else {
+                tuan = document.getElementById('user-master-tuan').value;
+                // Ẩn các nút đóng dấu, ký số của User thường để tránh họ bấm nhầm
+                document.getElementById('admin-print-controls').classList.add('hidden');
+            }
+            if (!tuan) return;
             const data = generateMasterScheduleData(tuan);
 
             document.getElementById('master-so-hieu').textContent = `Số: ${data.weekNum}/LT-BVĐKKV`;
@@ -3337,7 +3422,7 @@
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa));
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
-            
+
             // Lọc bỏ các cột chức danh không có ai trực trong tuần này để bản in gọn gàng hơn
             let activeRoles = rolesInKhoa.filter(r => localShifts.some(s => s.ChucDanh === r));
             if (activeRoles.length > 0) {
@@ -3372,7 +3457,7 @@
             const khoaNames = managedKhoas.map(k => MOCK_DB.khoa.find(d => d.MaKhoa === k)?.TenKhoa || k).join(', ');
 
             document.getElementById('print-khoa-title').textContent = `LỊCH TRỰC TỔNG HỢP`;
-            document.getElementById('print-khoa-date').textContent = khoaNames; 
+            document.getElementById('print-khoa-date').textContent = khoaNames;
 
             const weekDates = getDatesInWeek(tuan);
             const days = ['THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY', 'CHỦ NHẬT'];
@@ -3385,7 +3470,7 @@
 
             // Gộp tất cả ca trực (Từ Database chung + Những thay đổi cục bộ hiện tại trên màn hình)
             let shiftsAll = MOCK_DB.shifts.filter(s => managedKhoas.includes(s.MaKhoa) && weekDates.includes(s.NgayTruc) && s.MaKhoa !== currentUser.ActiveKhoa);
-            shiftsAll = shiftsAll.concat(localShifts); 
+            shiftsAll = shiftsAll.concat(localShifts);
 
             // Lọc bỏ các khoa không có ai trực trong tuần này để bản in gọn gàng hơn
             let printKhoas = [...managedKhoas];
