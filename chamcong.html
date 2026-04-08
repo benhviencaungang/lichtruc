@@ -28,7 +28,7 @@
                 font-size: 10px !important;
             }
 
-            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal {
+            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal, #leave-stats-modal {
                 display: none !important;
             }
 
@@ -302,6 +302,11 @@
                 </button>
             </div>
 
+            <!-- Nút thống kê phép (Chỉ Admin mới thấy) -->
+            <button id="btn-leave-stats" onclick="openLeaveStatsModal()" class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0" title="Thống kê Phép năm và Nghỉ bù">
+                <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
+            </button>
+
             <button id="btn-print" onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0" title="In Bảng Chấm Công (A4 Ngang)">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Bảng (A4)
             </button>
@@ -410,11 +415,60 @@
         </div>
     </div>
 
+    <!-- MODAL THỐNG KÊ PHÉP NĂM VÀ NGHỈ BÙ -->
+    <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-purple-50 px-6 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-bold text-lg text-purple-800 flex items-center">
+                        <i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Thống kê Phép năm & Nghỉ bù
+                    </h3>
+                    <p class="text-sm text-purple-600 mt-1">Dữ liệu được tính toán dựa trên bảng chấm công của tháng hiện tại.</p>
+                </div>
+                <button onclick="closeLeaveStatsModal()" class="text-purple-400 hover:text-purple-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-auto p-4 bg-slate-50">
+                <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-100 text-slate-600 text-xs uppercase sticky top-0 shadow-sm">
+                            <tr>
+                                <th class="px-4 py-3 border-b">Họ và Tên</th>
+                                <th class="px-4 py-3 border-b">Khoa</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Sửa để lưu thay đổi">Tổng<br>Phép Năm <i data-lucide="edit-3" class="w-3 h-3 inline text-blue-400"></i></th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50">Phép<br>Đã nghỉ</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50">Nghỉ bù<br>Tích lũy (T6, T7)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50">Nghỉ bù<br>Đã nghỉ</th>
+                                <th class="px-4 py-3 border-b text-center bg-purple-50/50 text-purple-700">Tổng Quỹ Còn Lại<br>(Phép + Bù)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leave-stats-tbody" class="divide-y divide-slate-200">
+                            <!-- Render bằng JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-xs text-slate-500 bg-white p-3 rounded border border-slate-200">
+                    <p><b>Ghi chú:</b></p>
+                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                        <li><b>Phép năm:</b> Mặc định 12 ngày. Tự động tính thâm niên (nhân viên cũ được 13-14 ngày). Bạn có thể sửa trực tiếp số trong ô để hệ thống lưu lại.</li>
+                        <li><b>Tích lũy nghỉ bù:</b> <span class="text-red-600 font-medium">Chỉ cộng dồn khi có tham gia Trực (T24, T12) vào Thứ 6, Thứ 7. Không tính Chủ nhật và các ca làm việc bình thường (+, -).</span></li>
+                        <li><b>Không áp dụng nghỉ bù:</b> Khoa Hồi sức cấp cứu (HSCC) theo quy định không cộng dồn nghỉ bù tự động.</li>
+                        <li><b>Cảnh báo:</b> Hệ thống đang tạm tính số liệu hao hụt trong giới hạn <b>tháng đang hiển thị</b>.</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t border-slate-200 bg-white flex justify-end shrink-0">
+                <button onclick="closeLeaveStatsModal()" class="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MÃ JAVASCRIPT -->
     <script>
         lucide.createIcons();
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxXZdtANewUNVD6RzDGU4Kuz76-a0rL9xJSE6Aan_USqqdTuWeplaev7EwysaX_QbL5/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzlt_Rh4vnf0-PtfR8BcjgJ0tvN65vLaS2Xvehptmj42XgAox-p9Ag2JzaIUjfz_Fcv/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
         let currentUser = null;
         let activeInputCell = null; 
@@ -714,7 +768,12 @@
 
         function initKhoaFilter() {
             const filterKhoa = document.getElementById('filter-khoa');
+            const btnLeaveStats = document.getElementById('btn-leave-stats');
             const isAdminAll = isGlobalAdmin();
+
+            if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
+                if (btnLeaveStats) btnLeaveStats.classList.remove('hidden');
+            }
 
             if (isAdminAll) {
                 filterKhoa.classList.remove('hidden');
@@ -1304,11 +1363,11 @@
                         <td class="font-bold sum-ngayviec text-blue-800 bg-blue-50/30">${ngayViec > 0 ? ngayViec : ''}</td>
                         <td class="font-bold sum-truc24 bg-yellow-50">${truc24 > 0 ? truc24 : ''}</td>
                         <td class="font-bold sum-truc12">${truc12 > 0 ? truc12 : ''}</td>
-                        <td class="sum-p"></td>
-                        <td class="sum-nb"></td>
-                        <td class="sum-om"></td>
-                        <td class="sum-khac"></td>
-                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1"></td>
+                        <td class="sum-p font-bold text-blue-600"></td>
+                        <td class="sum-nb font-bold text-emerald-600"></td>
+                        <td class="sum-om font-bold text-orange-600"></td>
+                        <td class="sum-khac font-bold text-purple-600"></td>
+                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1 text-[10px]"></td>
                     </tr>`;
 
                     tbodyHtml += rowHtml;
@@ -1316,7 +1375,7 @@
             }
 
             if (allUsers.length === 0) {
-                tbodyHtml = `<tr><td colspan="41" class="py-8 italic text-gray-500 font-sans">Hệ thống chưa có nhân sự nào trong danh sách quản lý.</td></tr>`;
+                tbodyHtml = `<tr><td colspan=\"41\" class=\"py-8 italic text-gray-500 font-sans\">Hệ thống chưa có nhân sự nào trong danh sách quản lý.</td></tr>`;
             }
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
@@ -1360,6 +1419,114 @@
                     recalcRow(cells[0]);
                 });
             }
+        }
+
+        // ==========================================
+        // KHỐI QUẢN LÝ NGHỈ PHÉP & NGHỈ BÙ
+        // ==========================================
+
+        // Hàm lấy số phép (Ưu tiên đọc từ cột SoPhep trên Google Sheets, nếu trống mặc định là 12)
+        function getBaseAnnualLeave(maNV) {
+            const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+            if (user && user.SoPhep !== undefined && user.SoPhep !== null && user.SoPhep !== '') {
+                return parseFloat(user.SoPhep);
+            }
+            return 12; // Mặc định 12 ngày phép năm
+        }
+
+        // Hàm cập nhật phép năm tùy chỉnh lưu vào Sheet
+        async function updatePhepNam(maNV, newVal) {
+            const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+            if(user) {
+                user.SoPhep = parseFloat(newVal) || 0; // Cập nhật trực tiếp vào trường SoPhep
+                await syncWithGAS('sync_NhanVien', MOCK_DB.users); // Đồng bộ lại bảng NhanVien lên Google Sheet
+                showToast("Đã lưu thay đổi số phép năm!", "success");
+                openLeaveStatsModal(); // Cập nhật lại UI sau khi sửa
+            }
+        }
+
+        function openLeaveStatsModal() {
+            const rows = document.querySelectorAll('#report-tbody tr.data-row');
+            if (rows.length === 0) {
+                return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
+            }
+
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            
+            let tbodyHtml = '';
+
+            rows.forEach(tr => {
+                const maNV = tr.getAttribute('data-id');
+                const maKhoa = tr.getAttribute('data-khoa');
+                const hoTen = tr.cells[1].innerText.trim();
+                const tenKhoa = MOCK_DB.khoa.find(k => k.MaKhoa === maKhoa)?.TenKhoa || maKhoa;
+
+                // Lấy thông tin số phép từ cơ sở dữ liệu
+                const baseP = getBaseAnnualLeave(maNV);
+
+                // Lấy số phép và số nghỉ bù đã sử dụng (được tính bằng hàm recalcRow)
+                const usedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                const usedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+
+                const remainingP = baseP - usedP;
+
+                // TÍNH TOÁN SỐ NGÀY NGHỈ BÙ ĐƯỢC HƯỞNG (CHỈ TÍNH T6, T7)
+                let earnedNb = 0;
+                
+                // Quy định: Khoa HSCC không được tự động cộng dồn nghỉ bù
+                if (maKhoa !== 'HSCC') {
+                    const cells = tr.querySelectorAll('.cell-day');
+                    cells.forEach((cell, idx) => {
+                        const day = idx + 1;
+                        if (day > daysInMonth) return;
+
+                        const dateObj = new Date(year, month - 1, day);
+                        const dw = dateObj.getDay(); // 0: CN, 5: T6, 6: T7
+
+                        const rawVal = cell.innerText.trim().toUpperCase();
+                        if (!rawVal) return;
+
+                        let parts = rawVal.split('/');
+                        parts.forEach(v => {
+                            v = v.trim();
+                            // CHỈ TÍNH TRỰC VÀO THỨ 6 (5) VÀ THỨ 7 (6). KHÔNG TÍNH CHỦ NHẬT (0) VÀ LÀM VIỆC BÌNH THƯỜNG (+, -)
+                            if (dw === 5 || dw === 6) {
+                                if (v === 'T24' || v === 'T12N' || v === 'T12D') earnedNb += 1;
+                            }
+                        });
+                    });
+                }
+
+                const remainNb = earnedNb - usedNb;
+                const totalRemaining = remainingP + remainNb; // TỔNG QUỸ CÒN LẠI
+
+                const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
+                const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
+
+                tbodyHtml += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
+                        <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoa}</td>
+                        <td class="px-4 py-3 border-b text-center">
+                            <input type="number" step="0.5" value="${baseP}" onchange="updatePhepNam('${maNV}', this.value)" class="w-16 text-center border border-slate-300 rounded px-1 py-1 focus:ring-2 focus:ring-blue-500 outline-none text-blue-700 font-bold bg-blue-50/50">
+                        </td>
+                        <td class="px-4 py-3 border-b text-center">${usedP > 0 ? usedP : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center font-bold text-emerald-600">${earnedNb > 0 ? earnedNb : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center">${usedNb > 0 ? usedNb : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
+            document.getElementById('leave-stats-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeLeaveStatsModal() {
+            document.getElementById('leave-stats-modal').classList.add('hidden');
         }
 
         window.onload = () => {
