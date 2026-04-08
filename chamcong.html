@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Chấm Công Gộp</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* CSS DÀNH RIÊNG CHO BẢN IN A4 NẰM NGANG */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+
+            html, body {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                background-color: white !important;
+                font-family: "Times New Roman", Times, serif !important;
+                color: black !important;
+                display: block !important;
+                font-size: 10px !important;
+            }
+
+            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal {
+                display: none !important;
+            }
+
+            #print-workspace {
+                display: block !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                position: static !important;
+                background-color: transparent !important;
+            }
+
+            .print-area {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                border: none !important;
+                display: block !important;
+            }
+
+            table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group !important;
+            }
+
+            tfoot {
+                display: table-footer-group !important;
+            }
+
+            th, td {
+                border: 1px solid black !important;
+                padding: 2px !important; 
+                color: black !important;
+                text-align: center;
+                vertical-align: middle;
+                font-size: 9pt !important;
+                line-height: 1.1 !important; /* Thu gọn khoảng cách dòng khi in Sáng/Chiều */
+            }
+
+            .bg-gray-300 {
+                background-color: #d1d5db !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .bg-blue-50 {
+                background-color: #eff6ff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .text-blue-700 {
+                color: #1d4ed8 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .text-blue-800 {
+                color: #1e40af !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .editable-date {
+                border-bottom: none !important;
+                background-color: transparent !important;
+            }
+        }
+
+        /* FONT STYLE CHUẨN CÔNG VĂN */
+        .doc-font {
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        .table-custom th, .table-custom td {
+            border: 1px solid black;
+            padding: 4px;
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        /* Hover effect cho các ô có thể chọn ký hiệu */
+        .cell-day:hover {
+            background-color: #fef08a !important; /* Vàng nhạt */
+            cursor: pointer;
+        }
+
+        /* Cột ngày nhỏ gọn */
+        .day-col { min-width: 22px; max-width: 26px; }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* CSS cho ngày tháng có thể chỉnh sửa */
+        .editable-date {
+            outline: none;
+            border-bottom: 1px dashed #94a3b8;
+            transition: all 0.2s;
+            min-width: 24px;
+            display: inline-block;
+            text-align: center;
+        }
+        .editable-date:hover, .editable-date:focus {
+            border-bottom-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        /* Select styling trong popup */
+        .shift-select option { font-family: sans-serif; }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-slate-900 doc-font h-screen flex flex-col relative" onclick="closeShiftPicker(event)">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden font-sans">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800" id="confirm-modal-title">
+                <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
+            </div>
+            <div class="p-6 text-center md:text-left">
+                <p class="text-sm text-slate-600 mb-6 whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto" id="confirm-cancel-btn">Hủy</button>
+                    <button id="confirm-modal-btn" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition w-full md:w-auto">Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE: MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800 font-sans">Đăng nhập Chấm Công</h1>
+                <p class="text-slate-500 text-sm mt-1 font-sans">Hệ thống yêu cầu xác thực quyền Admin</p>
+            </div>
+            <form id="login-form">
+                <div class="mb-4 text-left font-sans">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label>
+                    <input type="text" id="username" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                </div>
+                <div class="mb-6 text-left font-sans">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="password" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                </div>
+                <div id="login-error" class="hidden text-red-500 text-sm mb-4 font-sans text-center"></div>
+                <button type="submit" id="btn-login" class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
+                    <i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực
+                </button>
+                <div class="mt-6 text-center font-sans">
+                    <a href="index.html" class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BỘ TẢI DỮ LIỆU BẢO VỆ MÀN HÌNH -->
+    <div id="loading-screen" class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
+        <div id="loading-icon-wrapper">
+            <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
+        </div>
+        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ liệu...</p>
+        <div id="retry-btn-container" class="hidden mt-4 font-sans">
+            <button onclick="loadDataFromGAS()" class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Thử lại
+            </button>
+        </div>
+    </div>
+
+    <!-- BỘ CHỌN KÝ HIỆU 2 CA (SÁNG - CHIỀU) -->
+    <div id="shift-picker-popover" onclick="event.stopPropagation()" class="hidden absolute bg-white border border-slate-300 shadow-2xl rounded-xl z-[100] p-4 text-sm font-sans flex flex-col no-print w-80 fade-in">
+        <div class="font-bold text-blue-800 border-b border-slate-200 pb-2 mb-3 flex justify-between items-center">
+            <span id="sp-title">Chọn công</span>
+            <button type="button" onclick="closeShiftPicker(event, true)" class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="flex gap-3 mb-4">
+            <div class="w-1/2 flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Sáng</label>
+                <select id="sp-sang" onchange="handleMorningChange()" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div class="w-1/2 flex flex-col">
+                <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Chiều</label>
+                <select id="sp-chieu" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="clearShiftPicker()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition-colors">Xóa trống</button>
+            <button type="button" onclick="applyShiftSelection()" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-colors">Áp dụng</button>
+        </div>
+    </div>
+
+    <!-- KHU VỰC ĐIỀU KHIỂN (KHÔNG IN) -->
+    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
+        
+        <!-- Nhóm lọc dữ liệu bên trái -->
+        <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+            <!-- NÚT TRANG CHỦ -->
+            <button onclick="handleGoHome()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
+            </button>
+            <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
+            
+            <select id="sel-month" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
+                <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+                <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
+                <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+            </select>
+            <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+            </select>
+
+            <!-- BỘ LỌC CHỌN KHOA RIÊNG ĐỂ DUYỆT (CHỈ HIỆN VỚI ADMIN) -->
+            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
+                <option value="ALL">-- Toàn viện --</option>
+                <!-- JS Populate -->
+            </select>
+
+            <!-- BỘ LỌC GÓC NHÌN -->
+            <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium">
+                <option value="chitiet">Chi tiết phòng/trại</option>
+                <option value="khoa">Góc nhìn Khoa (Ẩn H/C)</option>
+                <option value="gop">Gộp Phòng/Trại</option>
+            </select>
+            
+            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới
+            </button>
+        </div>
+
+        <!-- Nhóm phê duyệt & in bên phải -->
+        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
+            <!-- Vùng điều khiển Phê duyệt -->
+            <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 transition-all">
+                <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa lưu</span>
+                
+                <button id="btn-save-draft" onclick="saveDraftData()" class="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu
+                </button>
+                <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Trình KHTH</span>
+                </button>
+                <button id="btn-approve" onclick="approveBang()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
+                </button>
+                <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Hủy/Từ chối
+                </button>
+            </div>
+
+            <button id="btn-print" onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0" title="In Bảng Chấm Công (A4 Ngang)">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Bảng (A4)
+            </button>
+        </div>
+    </div>
+    
+    <!-- KHU VỰC HIỂN THỊ TRANG IN -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-200 no-print-bg hidden" id="print-workspace">
+        <div class="w-[1250px] max-w-full mx-auto bg-white shadow-xl border border-slate-200 p-8 print-area text-black">
+            
+            <!-- HEADER CÔNG VĂN -->
+            <div class="flex justify-between items-start mb-2">
+                <div class="text-center w-1/3 text-[11pt]">
+                    <p class="font-bold">SỞ Y TẾ VĨNH LONG</p>
+                    <p class="font-bold">BỆNH VIỆN ĐKKV CẦU NGANG</p>
+                    <p class="mt-2 font-bold uppercase">PHÒNG, TRẠI: <span id="lbl-phong-trai">TOÀN VIỆN</span></p>
+                </div>
+                <div class="text-center w-2/3 text-[11pt]">
+                    <p class="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                    <p class="font-bold">Độc Lập - Tự Do - Hạnh Phúc</p>
+                    <h1 class="font-bold text-[16pt] uppercase mt-4">BẢNG CHẤM CÔNG THÁNG <span id="lbl-month-year">01/2026</span></h1>
+                </div>
+            </div>
+
+            <!-- TỔNG NHÂN VIÊN -->
+            <div class="font-bold text-[11pt] mb-1 flex justify-between items-end">
+                <span>Tổng số nhân viên : <span id="lbl-total-nv">0</span></span>
+                <span class="text-[10px] italic font-normal text-gray-500 no-print">* Click vào ô ngày để chọn ký hiệu từ danh sách thả xuống</span>
+            </div>
+
+            <!-- BẢNG DỮ LIỆU -->
+            <table class="w-full table-custom text-center">
+                <thead>
+                    <tr class="font-bold bg-white">
+                        <th rowspan="2" class="w-8">STT</th>
+                        <th rowspan="2" class="w-48">HỌ VÀ TÊN</th>
+                        <th colspan="31">Ngày trong tháng</th>
+                        <th colspan="7">Quy ra công</th>
+                        <th rowspan="2" class="w-16">Ghi chú</th>
+                    </tr>
+                    <tr class="font-bold bg-white" id="header-days">
+                        <!-- JS gen ngày 1-31 -->
+                    </tr>
+                    <tr class="bg-gray-100 font-bold text-[10px]" id="header-col-index">
+                        <!-- JS gen A, B, 1-39 -->
+                    </tr>
+                </thead>
+                <tbody id="report-tbody">
+                    <!-- JS sẽ render dữ liệu toàn bộ khoa vào đây -->
+                </tbody>
+            </table>
+
+            <!-- FOOTER & LEGEND -->
+            <div class="flex justify-between items-start mt-4 text-[10pt]">
+                <!-- GHI CHÚ KÝ HIỆU (CẬP NHẬT ĐẦY ĐỦ) -->
+                <div class="w-1/2">
+                    <p class="font-bold underline mb-1">Ký hiệu chấm công</p>
+                    <div class="flex">
+                        <div class="w-1/3">
+                            <p>+ : Làm nguyên ngày</p>
+                            <p>- : Làm 1 buổi</p>
+                            <p>O : Nghỉ không lý do</p>
+                            <p>Ô : Nghỉ ốm</p>
+                            <p>Cô : Con ốm mẹ nghỉ</p>
+                            <p>H : Đi học</p>
+                            <p>CT : Công tác</p>
+                            <p>CT/2: Công tác 1/2 ngày</p>
+                        </div>
+                        <div class="w-1/3">
+                            <p>P: Nghỉ phép</p>
+                            <p>L: Nghỉ lễ, tết</p>
+                            <p>Nb: Nghỉ bù</p>
+                            <p>Nb/2: Nghỉ bù 1/2 ngày</p>
+                            <p>HS: Nghỉ hộ sản</p>
+                            <p>Rt: Ra trực</p>
+                            <p>Rt/2: Ra trực 1/2 ngày</p>
+                        </div>
+                        <div class="w-1/3">
+                            <p>T24: Trực 24/24</p>
+                            <p>T12N: Trực 12/24 ngày</p>
+                            <p>T12D: Trực 12/24 đêm</p>
+                            <p>Ô/2: Nghỉ ốm 1/2 ngày</p>
+                            <p>H/2: Đi học 1/2 ngày</p>
+                            <p>P/2: Nghỉ phép 1/2 ngày</p>
+                            <p>Cô/2: Nghỉ con ốm 1/2 ngày</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KÝ TÊN -->
+                <div class="w-1/2 flex justify-between text-center font-bold">
+                    <div class="w-1/3">
+                        <p class="uppercase">Xác nhận<br>P.Tổ chức Cán bộ</p>
+                    </div>
+                    <div class="w-1/3">
+                        <p class="uppercase"><br>Trưởng Khoa/Phòng</p>
+                    </div>
+                    <div class="w-1/3 font-normal">
+                        <!-- CHỈNH SỬA NGÀY THÁNG BẰNG contenteditable -->
+                        <p class="italic mb-1 whitespace-nowrap">Ngày <span id="lbl-print-day" contenteditable="true" class="editable-date">...</span> tháng <span id="lbl-print-month" contenteditable="true" class="editable-date">...</span> năm <span id="lbl-print-year" contenteditable="true" class="editable-date">20...</span></p>
+                        <p class="font-bold uppercase">Phụ trách chấm công</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MÃ JAVASCRIPT -->
+    <script>
+        lucide.createIcons();
+
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxXZdtANewUNVD6RzDGU4Kuz76-a0rL9xJSE6Aan_USqqdTuWeplaev7EwysaX_QbL5/exec";
+        let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
+        let currentUser = null;
+        let activeInputCell = null; 
+        
+        // CỜ ĐÁNH DẤU CÓ SỰ THAY ĐỔI DỮ LIỆU
+        let hasUnsavedChanges = false;
+
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = 'Bạn có dữ liệu thay đổi chưa được lưu. Bạn có chắc chắn muốn rời khỏi trang?';
+            }
+        });
+
+        // TÁCH MẢNG NHẬN DIỆN NỬA NGÀY (CẬP NHẬT)
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2'];
+
+        // DANH SÁCH CÁC KÝ HIỆU CHẤM CÔNG DÙNG CHO DROPDOWN MENU (CẬP NHẬT)
+        const SYMBOLS_DICT = [
+            { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
+            { id: '-', name: 'Làm 1 buổi (-)', bg: '' },
+            { id: 'T24', name: 'Trực 24/24 (T24)', bg: 'bg-blue-100 text-blue-700 font-bold' },
+            { id: 'T12N', name: 'Trực 12/24 Ngày (T12N)', bg: 'bg-indigo-100 text-indigo-700' },
+            { id: 'T12D', name: 'Trực 12/24 Đêm (T12D)', bg: 'bg-indigo-100 text-indigo-700' },
+            { id: 'Rt', name: 'Ra trực (Rt)', bg: 'bg-green-100 text-green-700' },
+            { id: 'Rt/2', name: 'Ra trực nửa ngày (Rt/2)', bg: 'bg-green-100 text-green-700' },
+            { id: 'P', name: 'Nghỉ phép (P)', bg: 'bg-yellow-100 text-yellow-700' },
+            { id: 'P/2', name: 'Nghỉ phép nửa ngày (P/2)', bg: 'bg-yellow-100 text-yellow-700' },
+            { id: 'Nb', name: 'Nghỉ bù (Nb)', bg: 'bg-yellow-100 text-yellow-700' },
+            { id: 'Nb/2', name: 'Nghỉ bù nửa ngày (Nb/2)', bg: 'bg-yellow-100 text-yellow-700' },
+            { id: 'Ô', name: 'Nghỉ ốm (Ô)', bg: 'bg-orange-100 text-orange-700' },
+            { id: 'Cô', name: 'Con ốm mẹ nghỉ (Cô)', bg: 'bg-orange-100 text-orange-700' },
+            { id: 'O', name: 'Nghỉ không lý do (O)', bg: 'bg-red-100 text-red-700 font-bold' },
+            { id: 'H', name: 'Đi học (H)', bg: '' },
+            { id: 'CT', name: 'Công tác (CT)', bg: '' },
+            { id: 'CT/2', name: 'Công tác 1/2 ngày (CT/2)', bg: '' },
+            { id: 'L', name: 'Nghỉ lễ, tết (L)', bg: 'bg-purple-100 text-purple-700 font-bold' },
+            { id: 'HS', name: 'Nghỉ hộ sản (HS)', bg: 'bg-pink-100 text-pink-700' },
+            { id: 'Ô/2', name: 'Nghỉ ốm 1/2 ngày (Ô/2)', bg: 'bg-orange-100 text-orange-700' },
+            { id: 'H/2', name: 'Đi học 1/2 ngày (H/2)', bg: '' },
+            { id: 'Cô/2', name: 'Nghỉ con ốm 1/2 ngày (Cô/2)', bg: 'bg-orange-100 text-orange-700' }
+        ];
+
+        // --- HÀM RENDER SELECT SÁNG CHIỀU ---
+        function renderShiftOptions(selectEle, allowedTypes) {
+            let html = '<option value="">-- Trống --</option>';
+            SYMBOLS_DICT.forEach(sym => {
+                const isHalf = HALF_DAY_SYMBOLS.includes(sym.id);
+                if (allowedTypes === 'all' || (allowedTypes === 'half' && isHalf) || (allowedTypes === 'full' && !isHalf)) {
+                    html += `<option value="${sym.id}">${sym.id} - ${sym.name.split(' (')[0]}</option>`;
+                }
+            });
+            selectEle.innerHTML = html;
+        }
+
+        // --- XỬ LÝ LOGIC CHỌN SÁNG ĐỂ MỞ/KHÓA CHIỀU ---
+        function handleMorningChange() {
+            const spSang = document.getElementById('sp-sang');
+            const spChieu = document.getElementById('sp-chieu');
+            const sangVal = spSang.value;
+
+            if (sangVal === '') {
+                // Sáng trống -> Cho phép chiều chọn thoải mái nửa ngày
+                spChieu.disabled = false;
+                renderShiftOptions(spChieu, 'half');
+            } else if (HALF_DAY_SYMBOLS.includes(sangVal)) {
+                // Sáng chọn Nửa Ngày -> Chiều chỉ cho chọn tiếp Nửa Ngày
+                spChieu.disabled = false;
+                renderShiftOptions(spChieu, 'half');
+            } else {
+                // Sáng chọn Nguyên Ngày -> Tự động KHÓA chiều và xóa trống
+                spChieu.disabled = true;
+                spChieu.innerHTML = '<option value="">-- Không cần --</option>';
+            }
+            
+            // Cố gắng giữ lại giá trị Chiều cũ nếu hợp lệ
+            const currentChieu = spChieu.getAttribute('data-current') || '';
+            if (Array.from(spChieu.options).some(opt => opt.value === currentChieu)) {
+                spChieu.value = currentChieu;
+            } else {
+                spChieu.value = '';
+            }
+        }
+
+        function openShiftPicker(event, tdElement) {
+            event.stopPropagation(); // Ngăn việc click làm tắt luôn popover
+            
+            if (activeInputCell) activeInputCell.classList.remove('ring-2', 'ring-blue-500');
+            
+            activeInputCell = tdElement;
+            activeInputCell.classList.add('ring-2', 'ring-blue-500');
+
+            const popover = document.getElementById('shift-picker-popover');
+            popover.classList.remove('hidden');
+
+            // Cập nhật giá trị đang có trên ô vào Select
+            // Tách giá trị Sáng / Chiều bằng dấu gạch chéo
+            const currentVal = tdElement.innerText.trim();
+            const parts = currentVal.split('/');
+            const sangVal = parts[0] ? parts[0].trim() : '';
+            const chieuVal = parts[1] ? parts[1].trim() : '';
+
+            const spSang = document.getElementById('sp-sang');
+            const spChieu = document.getElementById('sp-chieu');
+
+            // Render tất cả lựa chọn cho Sáng
+            renderShiftOptions(spSang, 'all');
+            spSang.value = sangVal;
+
+            // Lưu tạm giá trị chiều để hàm handleMorningChange khôi phục
+            spChieu.setAttribute('data-current', chieuVal); 
+            
+            // Xử lý ẩn/hiện và render cho Chiều
+            handleMorningChange();
+
+            // Tính toán vị trí hiển thị popup
+            const rect = tdElement.getBoundingClientRect();
+            let top = rect.bottom + window.scrollY + 5;
+            let left = rect.left + window.scrollX - 100; // Canh lùi ra giữa
+
+            if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
+            if (left < 10) left = 10;
+            if (top + 200 > window.innerHeight + window.scrollY) top = rect.top + window.scrollY - 180;
+
+            popover.style.top = `${top}px`;
+            popover.style.left = `${left}px`;
+        }
+
+        function closeShiftPicker(event, forceClose = false) {
+            const popover = document.getElementById('shift-picker-popover');
+            
+            // Nếu click ra ngoài (body) hoặc click nút X, thì tắt
+            if (forceClose || !popover.contains(event.target)) {
+                if (!popover.classList.contains('hidden')) {
+                    popover.classList.add('hidden');
+                    if(activeInputCell) activeInputCell.classList.remove('ring-2', 'ring-blue-500');
+                }
+            }
+        }
+
+        function clearShiftPicker() {
+            document.getElementById('sp-sang').value = '';
+            handleMorningChange();
+            document.getElementById('sp-chieu').value = '';
+        }
+
+        function applyShiftSelection() {
+            if (!activeInputCell) return;
+
+            const sangVal = document.getElementById('sp-sang').value;
+            const chieuVal = document.getElementById('sp-chieu').value;
+
+            // Nối Sáng và Chiều bằng dấu gạch chéo
+            let finalVal = sangVal;
+            if (chieuVal && sangVal) {
+                finalVal = `${sangVal}/${chieuVal}`;
+            } else if (chieuVal && !sangVal) {
+                finalVal = chieuVal; // Chỉ chọn chiều
+            }
+
+            activeInputCell.innerText = finalVal;
+            
+            // Tìm màu nền (ưu tiên lấy màu của ca Sáng)
+            activeInputCell.className = activeInputCell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
+            let primarySymbolObj = SYMBOLS_DICT.find(s => s.id === (sangVal || chieuVal));
+            if (primarySymbolObj && primarySymbolObj.bg) {
+                activeInputCell.className += ` ${primarySymbolObj.bg}`;
+            }
+
+            recalcRow(activeInputCell);
+            closeShiftPicker(new Event('click'), true);
+            markUnsaved(); // Ghi nhận có thao tác chỉnh sửa
+        }
+
+
+        // --- CÁC HÀM TIỆN ÍCH QUẢN LÝ QUYỀN TRUY CẬP ---
+        
+        // CẬP NHẬT LOGIC NHẬN DIỆN ADMIN CHÍNH XÁC HƠN
+        function isGlobalAdmin() {
+            if (!currentUser) return false;
+            
+            // Nếu là Admin_KHTH thì luôn luôn là Global Admin
+            if (currentUser.Role === 'Admin_KHTH') return true;
+            
+            // Nếu là Admin_Khoa, kiểm tra mảng KhoaList xem có thuộc TCHC không
+            if (currentUser.Role === 'Admin_Khoa') {
+                if (currentUser.KhoaList && currentUser.KhoaList.length > 0) {
+                    return currentUser.KhoaList.some(k => {
+                        if (!k) return false;
+                        
+                        // Chuyển in hoa
+                        const upperK = k.toUpperCase();
+                        
+                        // Check thô nhanh
+                        if (upperK.includes('TỔ CHỨC') || upperK.includes('HÀNH CHÍNH') || upperK.includes('TCHC')) {
+                            return true;
+                        }
+                        
+                        // Xử lý tuyệt đối: Bỏ dấu tiếng Việt, bỏ khoảng trắng để so sánh
+                        const cleanK = upperK.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+                        return cleanK.includes('TOCHUCHANHCHANH');
+                    });
+                }
+            }
+            return false;
+        }
+
+        // --- CÁC HÀM TIỆN ÍCH KHÁC ---
+        let confirmActionFn = null;
+
+        function showConfirmModal(title, desc, actionFn) {
+            document.getElementById('confirm-modal-title').innerHTML = `<i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> ${title}`;
+            document.getElementById('confirm-modal-desc').innerText = desc;
+            confirmActionFn = actionFn;
+            document.getElementById('custom-confirm-modal').classList.remove('hidden');
+            lucide.createIcons();
+            
+            // Bắt sự kiện tắt modal nếu user chọn Hủy
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            cancelBtn.onclick = () => {
+                closeConfirmModal();
+                // Phục hồi lại nút nếu trước đó có đổi chữ
+                const okBtn = document.getElementById('confirm-modal-btn');
+                okBtn.innerHTML = "Đồng ý";
+                okBtn.disabled = false;
+            };
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('custom-confirm-modal').classList.add('hidden');
+            confirmActionFn = null;
+        }
+
+        document.getElementById('confirm-modal-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('confirm-modal-btn');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline"></i>Đang xử lý...`;
+            btn.disabled = true;
+            lucide.createIcons();
+            
+            if(confirmActionFn) await confirmActionFn();
+            
+            btn.innerHTML = "Đồng ý";
+            btn.disabled = false;
+            closeConfirmModal();
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : 'bg-emerald-600');
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
+            toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span class="font-sans">${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function handleGoHome() {
+            if (hasUnsavedChanges) {
+                showConfirmModal(
+                    "Cảnh báo: Dữ liệu chưa lưu!", 
+                    "Bạn đã thay đổi Bảng chấm công nhưng chưa lưu.\nHệ thống bắt buộc phải LƯU LẠI thay đổi trước khi thoát để tránh mất dữ liệu.\n\nNhấn 'Đồng ý' để tự động lưu và thoát.", 
+                    async () => {
+                        await saveDraftData();
+                        window.location.href = 'index.html';
+                    }
+                );
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function handleFilterChange() {
+            if (hasUnsavedChanges) {
+                await updateBangStatus('Nháp');
+                showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
+            }
+            generateReport();
+        }
+
+        function markUnsaved() {
+            if (!hasUnsavedChanges) {
+                hasUnsavedChanges = true;
+                const badge = document.getElementById('badge-status');
+                if (badge) {
+                    badge.innerHTML = `<i data-lucide="alert-triangle" class="w-3 h-3 inline mr-1"></i>Chưa lưu`;
+                    badge.className = "px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap animate-pulse border border-red-200";
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        function initKhoaFilter() {
+            const filterKhoa = document.getElementById('filter-khoa');
+            const isAdminAll = isGlobalAdmin();
+
+            if (isAdminAll) {
+                filterKhoa.classList.remove('hidden');
+                let optionsHtml = '<option value="ALL">-- Toàn viện (Tất cả) --</option>';
+                let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
+                sortedKhoa.forEach(k => {
+                    optionsHtml += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`;
+                });
+                filterKhoa.innerHTML = optionsHtml;
+            } else {
+                filterKhoa.classList.add('hidden');
+            }
+        }
+
+        function checkAuth() {
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                return false;
+            }
+
+            currentUser = JSON.parse(userStr);
+            if (currentUser.Role !== 'Admin_KHTH' && currentUser.Role !== 'Admin_Khoa') {
+                alert("Tài khoản của bạn không có quyền Quản lý để sử dụng Bảng Chấm Công Toàn Viện!");
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.toLowerCase().trim();
+            const p = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btn-login');
+            const errorDiv = document.getElementById('login-error');
+
+            errorDiv.classList.add('hidden');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang kiểm tra...`;
+            lucide.createIcons();
+
+            try {
+                if (MOCK_DB.users.length === 0) {
+                    const res = await fetch(GAS_URL + "?action=NhanVien").then(r => r.json());
+                    if (res && res.status === "success") MOCK_DB.users = res.data || [];
+                }
+
+                const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+
+                if (user) {
+                    // FIX: Xử lý triệt để lỗi khoảng trắng dư trong excel ("Admin_Khoa " -> "Admin_Khoa")
+                    const rawRole = (user.Role || '').trim();
+                    user.Role = rawRole; 
+
+                    if (user.Role !== 'Admin_KHTH' && user.Role !== 'Admin_Khoa') {
+                        errorDiv.textContent = "Bạn không có quyền truy cập chức năng này!";
+                        errorDiv.classList.remove('hidden');
+                        btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    user.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
+                    user.ActiveKhoa = user.KhoaList[0] || 'KHTH';
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    currentUser = user;
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('loading-screen').classList.remove('hidden');
+                    loadDataFromGAS();
+                } else {
+                    errorDiv.textContent = "Sai tài khoản hoặc mật khẩu!";
+                    errorDiv.classList.remove('hidden');
+                    btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                errorDiv.textContent = "Lỗi kết nối máy chủ!";
+                errorDiv.classList.remove('hidden');
+                btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                lucide.createIcons();
+            }
+        });
+
+        // ĐỒNG BỘ LÊN GOOGLE SHEETS (HÀM BẤT ĐỒNG BỘ, CHỜ RESPONSE TRẢ VỀ)
+        async function syncWithGAS(actionName, payloadData) {
+            try {
+                const response = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action: actionName, data: payloadData }) 
+                });
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error('Lỗi phản hồi từ server');
+                }
+            } catch (e) {
+                console.error("Lỗi đồng bộ", e);
+                showToast("Lỗi mạng: Dữ liệu đang được lưu cục bộ.", "error");
+            }
+        }
+
+        async function loadDataFromGAS() {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            hasUnsavedChanges = false;
+            
+            try {
+                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "BangChamCong"];
+                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
+                const results = await Promise.all(promises);
+
+                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
+                if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
+                if (results[3] && results[3].status === "success") MOCK_DB.bangChamCong = results[3].data || [];
+                
+                if (results[2] && results[2].status === "success") {
+                    MOCK_DB.shifts = (results[2].data || []).map(s => ({
+                        ...s,
+                        MaNV: String(s.MaNV),
+                        NgayTruc: s.NgayTruc.substring(0, 10)
+                    }));
+                }
+
+                showToast("Đã tải dữ liệu mới nhất.", "success");
+
+            } catch (e) {
+                document.getElementById('retry-btn-container').classList.remove('hidden');
+                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
+                document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                lucide.createIcons();
+                return;
+            } finally {
+                initUI();
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('control-panel').classList.remove('hidden');
+                document.getElementById('print-workspace').classList.remove('hidden');
+            }
+        }
+
+        function initUI() {
+            const today = new Date();
+            let defaultMonth = today.getMonth() + 1;
+            let defaultYear = today.getFullYear();
+            
+            if(today.getDate() < 5) {
+                defaultMonth -= 1;
+                if(defaultMonth === 0) {
+                    defaultMonth = 12;
+                    defaultYear -= 1;
+                }
+            }
+
+            document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
+            document.getElementById('lbl-print-month').textContent = String(defaultMonth).padStart(2, '0');
+            document.getElementById('lbl-print-year').textContent = String(defaultYear);
+
+            document.getElementById('sel-month').value = defaultMonth;
+            document.getElementById('sel-year').value = defaultYear;
+
+            initKhoaFilter();
+            buildStaticTableHeaders();
+            generateReport();
+        }
+
+        function buildStaticTableHeaders() {
+            let tr1 = '';
+            let tr2 = '<th>A</th><th>B</th>';
+            for(let i=1; i<=31; i++) {
+                tr1 += `<th class="day-col">${i}</th>`;
+                tr2 += `<th class="day-col">${i}</th>`;
+            }
+            tr1 += `
+                <th class="w-8 leading-tight">Ngày<br>việc</th>
+                <th class="w-8 leading-tight bg-blue-50">Trực<br>24</th>
+                <th class="w-8 leading-tight">Trực<br>12/T</th>
+                <th class="w-8 leading-tight">P</th>
+                <th class="w-8 leading-tight">Nb</th>
+                <th class="w-8 leading-tight">Ốm</th>
+                <th class="w-8 leading-tight">Khác</th>
+            `;
+            tr2 += `<th>32</th><th>33</th><th>34</th><th>35</th><th>36</th><th>37</th><th>38</th><th>39</th>`;
+            
+            document.getElementById('header-days').innerHTML = tr1;
+            document.getElementById('header-col-index').innerHTML = tr2;
+        }
+
+        // TÍNH TỔNG CÔNG CHO MỖI HÀNG (HỖ TRỢ DẤU CÁCH NỬA NGÀY /)
+        function recalcRow(el) {
+            const tr = el.closest('tr');
+            if(!tr) return;
+
+            const cells = tr.querySelectorAll('.cell-day');
+            let ngayViec = 0, truc24 = 0, truc12 = 0, p = 0, nb = 0, om = 0, khac = 0;
+
+            cells.forEach(cell => {
+                let rawVal = cell.innerText.trim().toUpperCase();
+                if (!rawVal) return;
+
+                // Tách giá trị ra làm 2 (Sáng, Chiều) dựa trên dấu /
+                let parts = rawVal.split('/');
+
+                parts.forEach(val => {
+                    val = val.trim();
+                    if (!val) return;
+
+                    if (val === '+') ngayViec += 1;
+                    if (val === '-') ngayViec += 0.5;
+
+                    if (val === 'T24') truc24 += 1;
+                    if (val === 'T12D' || val === 'T12N') truc12 += 1;
+
+                    if (val === 'P') p += 1;
+                    if (val === 'P/2') p += 0.5;
+
+                    if (val === 'NB') nb += 1;
+                    if (val === 'NB/2') nb += 0.5;
+
+                    if (val === 'Ô' || val === 'O^') om += 1;
+                    if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
+
+                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(val)) khac += 1;
+                    if (['H/2', 'CT/2', 'CÔ/2'].includes(val)) khac += 0.5;
+                });
+            });
+
+            tr.querySelector('.sum-ngayviec').innerText = ngayViec > 0 ? ngayViec : '';
+            tr.querySelector('.sum-truc24').innerText = truc24 > 0 ? truc24 : '';
+            tr.querySelector('.sum-truc12').innerText = truc12 > 0 ? truc12 : '';
+            tr.querySelector('.sum-p').innerText = p > 0 ? p : '';
+            tr.querySelector('.sum-nb').innerText = nb > 0 ? nb : '';
+            tr.querySelector('.sum-om').innerText = om > 0 ? om : '';
+            tr.querySelector('.sum-khac').innerText = khac > 0 ? khac : '';
+        }
+
+        function updateApprovalUI(status) {
+            const btnDraft = document.getElementById('btn-save-draft');
+            const btnSend = document.getElementById('btn-send-approve');
+            const btnApprove = document.getElementById('btn-approve');
+            const btnCancel = document.getElementById('btn-cancel-approve');
+            const btnPrint = document.getElementById('btn-print');
+            const badge = document.getElementById('badge-status');
+
+            btnDraft.classList.add('hidden');
+            btnSend.classList.add('hidden');
+            btnApprove.classList.add('hidden');
+            btnCancel.classList.add('hidden');
+
+            const isAdminAll = isGlobalAdmin();
+
+            if (status === 'Nháp' || status === 'Trả lại') {
+                badge.textContent = status === 'Nháp' ? "Chưa trình" : "Bị Trả Lại";
+                badge.className = `px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${status === 'Nháp' ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-700'}`;
+                
+                if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
+                    btnDraft.classList.remove('hidden');
+                    btnSend.classList.remove('hidden');
+                }
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+            } 
+            else if (status === 'Chờ duyệt') {
+                badge.textContent = "Chờ Tổ chức/KHTH Duyệt";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800 whitespace-nowrap";
+                
+                if (isAdminAll) {
+                    btnApprove.classList.remove('hidden');
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối`;
+                }
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+            } 
+            else if (status === 'Đã duyệt') {
+                badge.textContent = "Đã được Duyệt";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
+                
+                btnPrint.disabled = false;
+                btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                if (isAdminAll) {
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy duyệt`;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // Lấy dữ liệu từ Table và nhóm theo data-khoa của thẻ tr
+        function extractGridData() {
+            let dataByKhoa = {};
+            const rows = document.querySelectorAll('#report-tbody tr.data-row');
+            
+            rows.forEach(tr => {
+                const maNV = tr.getAttribute('data-id');
+                const maKhoa = tr.getAttribute('data-khoa');
+                
+                if(!dataByKhoa[maKhoa]) dataByKhoa[maKhoa] = {};
+
+                const cells = tr.querySelectorAll('.cell-day');
+                let userDays = {};
+                cells.forEach((c, idx) => {
+                    let val = c.innerText.trim();
+                    if(val) userDays[idx + 1] = val;
+                });
+                
+                let ghiChu = tr.querySelector('.cell-ghichu').innerText.trim();
+                dataByKhoa[maKhoa][maNV] = { days: userDays, note: ghiChu };
+            });
+            return dataByKhoa;
+        }
+
+        // HÀM LƯU DỮ LIỆU (ASYNC ĐỂ CHỜ HOÀN TẤT)
+        async function updateBangStatus(status) {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            
+            let dataByKhoa = extractGridData();
+
+            for (let maKhoa in dataByKhoa) {
+                const maBang = `BCC_${maKhoa}_${month}_${year}`;
+                let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
+                let gridJson = JSON.stringify(dataByKhoa[maKhoa]);
+
+                if (!bang) {
+                    bang = { 
+                        MaBang: maBang, MaKhoa: maKhoa, Thang: month, Nam: year, TrangThai: status, 
+                        NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '', 
+                        NgayDuyet: status === 'Đã duyệt' ? new Date().toISOString().split('T')[0] : '', 
+                        DuLieu: gridJson 
+                    };
+                    MOCK_DB.bangChamCong.push(bang);
+                } else {
+                    bang.TrangThai = status;
+                    bang.DuLieu = gridJson;
+                    if(status === 'Đã duyệt') {
+                        bang.NguoiDuyet = currentUser.MaNV;
+                        bang.NgayDuyet = new Date().toISOString().split('T')[0];
+                    }
+                }
+            }
+
+            hasUnsavedChanges = false; 
+            updateApprovalUI(status);
+            
+            // Chờ quá trình đẩy lên server kết thúc
+            await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
+        }
+
+        async function saveDraftData() {
+            await updateBangStatus('Nháp');
+            showToast("Đã lưu nháp Bảng chấm công!", "success");
+        }
+
+        function sendApprove() {
+            showConfirmModal("Xác nhận Trình KHTH", "Bạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
+                await updateBangStatus('Chờ duyệt');
+                showToast("Đã trình Bảng chấm công thành công!", "success");
+            });
+        }
+
+        function approveBang() {
+            const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+            const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+            
+            const msg = isBulk 
+                ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?" 
+                : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
+
+            showConfirmModal("Xác nhận Phê duyệt", msg, async () => {
+                await updateBangStatus('Đã duyệt');
+                showToast("Đã phê duyệt thành công!", "success");
+            });
+        }
+
+        function cancelApprove() {
+            const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+            const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+            
+            const msg = isBulk 
+                ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?" 
+                : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
+
+            showConfirmModal("Từ chối / Trả lại", msg, async () => {
+                await updateBangStatus('Trả lại');
+                showToast("Đã trả lại/hủy duyệt Bảng chấm công!", "warning");
+            });
+        }
+
+        function generateReport() {
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+            document.getElementById('lbl-month-year').textContent = `${String(month).padStart(2, '0')}/${year}`;
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            const viewModeEle = document.getElementById('view-mode');
+            const viewMode = viewModeEle ? viewModeEle.value : 'chitiet';
+
+            const filterKhoaEle = document.getElementById('filter-khoa');
+            const selectedKhoaFilter = filterKhoaEle && !filterKhoaEle.classList.contains('hidden') ? filterKhoaEle.value : 'ALL';
+
+            const isAdminAll = isGlobalAdmin();
+            let baseAllowedKhoas = isAdminAll ? MOCK_DB.khoa.map(k => k.MaKhoa) : currentUser.KhoaList;
+            
+            let allowedKhoas = baseAllowedKhoas;
+            if (isAdminAll && selectedKhoaFilter !== 'ALL') {
+                allowedKhoas = [selectedKhoaFilter];
+            }
+
+            let processedGroups = {};
+
+            function getMergedName(tenKhoa) {
+                const nameStr = (tenKhoa || '').toLowerCase();
+                if (nameStr.includes('công nghệ thông tin') || nameStr.includes('kế hoạch tổng hợp')) return 'Phòng Kế hoạch tổng hợp';
+                if (nameStr.includes('tài xế') || nameStr.includes('điện nước') || nameStr.includes('bảo vệ') || nameStr.includes('tổ chức hành chính')) return 'Tổ chức hành chính';
+                if (nameStr.includes('tài vụ') || nameStr.includes('tài chính kế toán')) return 'Tài chính kế toán';
+                return tenKhoa;
+            }
+
+            let tenCacKhoa = "TOÀN VIỆN";
+            if (isAdminAll && selectedKhoaFilter !== 'ALL') {
+                let kObj = MOCK_DB.khoa.find(k => k.MaKhoa === selectedKhoaFilter);
+                if (kObj) {
+                    tenCacKhoa = viewMode === 'gop' ? getMergedName(kObj.TenKhoa) : kObj.TenKhoa;
+                    tenCacKhoa = tenCacKhoa.toUpperCase();
+                }
+            } else if (!isAdminAll) {
+                let names = allowedKhoas.map(mk => {
+                    let f = MOCK_DB.khoa.find(k => k.MaKhoa === mk);
+                    let tenGoc = f ? f.TenKhoa : mk;
+                    return viewMode === 'gop' ? getMergedName(tenGoc) : tenGoc;
+                });
+                tenCacKhoa = [...new Set(names)].join(', ').toUpperCase();
+            }
+            document.getElementById('lbl-phong-trai').textContent = tenCacKhoa;
+
+            let allUsers = MOCK_DB.users.filter(u => {
+                if (u.ChucDanh === 'Quản lý') return false;
+                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
+                return uKhoas.some(k => allowedKhoas.includes(k)); 
+            });
+            document.getElementById('lbl-total-nv').textContent = allUsers.length;
+
+            allUsers.forEach(u => {
+                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
+                let matchedKhoaId = uKhoas.find(k => allowedKhoas.includes(k)) || 'KHTH';
+                
+                let originalKhoaObj = MOCK_DB.khoa.find(k => k.MaKhoa === matchedKhoaId);
+                let originalTenKhoa = originalKhoaObj ? originalKhoaObj.TenKhoa : matchedKhoaId;
+
+                let displayGroupName = originalTenKhoa;
+                if (viewMode === 'gop') {
+                    displayGroupName = getMergedName(originalTenKhoa);
+                }
+
+                if (!processedGroups[displayGroupName]) {
+                    processedGroups[displayGroupName] = {
+                        ten: displayGroupName,
+                        users: []
+                    };
+                }
+                processedGroups[displayGroupName].users.push({ user: u, originalMaKhoa: matchedKhoaId });
+            });
+
+            function getTenString(fullName) {
+                if (!fullName) return { ten: "", hoDem: "" };
+                let parts = fullName.trim().split(" ");
+                let ten = parts.pop(); 
+                let hoDem = parts.join(" "); 
+                return { ten: ten.toLowerCase(), hoDem: hoDem.toLowerCase() };
+            }
+
+            for (let groupName in processedGroups) {
+                processedGroups[groupName].users.sort((itemA, itemB) => {
+                    let nameA = getTenString(itemA.user.HoTen);
+                    let nameB = getTenString(itemB.user.HoTen);
+                    
+                    let cmpTen = nameA.ten.localeCompare(nameB.ten, 'vi');
+                    if (cmpTen !== 0) return cmpTen;
+                    return nameA.hoDem.localeCompare(nameB.hoDem, 'vi');
+                });
+            }
+
+            let overallStatus = 'Nháp';
+            let hasDraft = false, hasPending = false, hasRejected = false, hasApproved = false;
+
+            allowedKhoas.forEach(mk => {
+                const maBang = `BCC_${mk}_${month}_${year}`;
+                const b = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
+                if(b) {
+                    if(b.TrangThai === 'Nháp') hasDraft = true;
+                    if(b.TrangThai === 'Chờ duyệt') hasPending = true;
+                    if(b.TrangThai === 'Trả lại') hasRejected = true;
+                    if(b.TrangThai === 'Đã duyệt') hasApproved = true;
+                } else {
+                    hasDraft = true; 
+                }
+            });
+
+            if (hasRejected) overallStatus = 'Trả lại';
+            else if (hasDraft) overallStatus = 'Nháp';
+            else if (hasPending) overallStatus = 'Chờ duyệt';
+            else if (hasApproved) overallStatus = 'Đã duyệt';
+
+            const isLocked = (overallStatus === 'Chờ duyệt' || overallStatus === 'Đã duyệt');
+            updateApprovalUI(overallStatus);
+            
+            hasUnsavedChanges = false;
+
+            const shiftsInMonth = MOCK_DB.shifts.filter(s => {
+                const d = new Date(s.NgayTruc + "T12:00:00");
+                return (d.getMonth() + 1) === month && d.getFullYear() === year;
+            });
+
+            let tbodyHtml = '';
+            let globalStt = 1;
+
+            for (let groupName in processedGroups) {
+                let group = processedGroups[groupName];
+                if(group.users.length === 0) continue;
+
+                const isAdministrative = !groupName.toLowerCase().includes('khoa');
+                const shouldHideHeader = viewMode === 'khoa' && isAdministrative;
+
+                if (!shouldHideHeader) {
+                    tbodyHtml += `
+                        <tr>
+                            <td colspan="41" class="text-left font-bold text-blue-800 bg-blue-50 uppercase pl-2 text-[12px] tracking-wide border-y border-slate-300">
+                                ${group.ten}
+                            </td>
+                        </tr>
+                    `;
+                }
+
+                group.users.forEach(item => {
+                    const u = item.user;
+                    const maKhoa = item.originalMaKhoa; 
+
+                    const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
+                    const shiftMap = {};
+                    nvShifts.forEach(s => {
+                        let d = new Date(s.NgayTruc + "T12:00:00").getDate();
+                        shiftMap[d] = s.ChucDanh; 
+                    });
+
+                    let rowHtml = `<tr class="data-row" data-id="${u.MaNV}" data-khoa="${maKhoa}">
+                        <td>${globalStt++}</td>
+                        <td class="text-left font-bold pl-2 whitespace-nowrap overflow-hidden max-w-[150px] text-[11px]">${u.HoTen}</td>`;
+
+                    let ngayViec = 0, truc24 = 0, truc12 = 0;
+
+                    for(let day = 1; day <= 31; day++) {
+                        if (day > daysInMonth) {
+                            rowHtml += `<td class="bg-gray-300"></td>`;
+                        } else {
+                            let dateObj = new Date(year, month - 1, day);
+                            let dw = dateObj.getDay(); 
+                            let val = '';
+                            let cellClass = 'cell-day transition';
+                            
+                            const maBang = `BCC_${maKhoa}_${month}_${year}`;
+                            const daLuu = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
+
+                            if (!daLuu) {
+                                if (shiftMap[day]) {
+                                    val = 'T24'; truc24++;
+                                    cellClass += ' bg-blue-100 text-blue-700 font-bold';
+                                } else if (shiftMap[day - 1]) {
+                                    val = 'Rt';
+                                    cellClass += ' bg-green-100 text-green-700';
+                                } else if (dw === 0 || dw === 6) {
+                                    val = dw === 0 ? 'CN' : 'T7'; 
+                                    cellClass += ' bg-red-50 text-red-600 font-medium';
+                                } else {
+                                    val = '+'; ngayViec += 1;
+                                }
+                            }
+
+                            // UPDATE SỰ KIỆN CLICK MỞ BẢNG CHỌN CA
+                            const onClickEvent = isLocked ? '' : `onclick="openShiftPicker(event, this)"`;
+                            rowHtml += `<td ${onClickEvent} class="${cellClass}">${val}</td>`;
+                        }
+                    }
+
+                    rowHtml += `
+                        <td class="font-bold sum-ngayviec text-blue-800 bg-blue-50/30">${ngayViec > 0 ? ngayViec : ''}</td>
+                        <td class="font-bold sum-truc24 bg-yellow-50">${truc24 > 0 ? truc24 : ''}</td>
+                        <td class="font-bold sum-truc12">${truc12 > 0 ? truc12 : ''}</td>
+                        <td class="sum-p"></td>
+                        <td class="sum-nb"></td>
+                        <td class="sum-om"></td>
+                        <td class="sum-khac"></td>
+                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1"></td>
+                    </tr>`;
+
+                    tbodyHtml += rowHtml;
+                });
+            }
+
+            if (allUsers.length === 0) {
+                tbodyHtml = `<tr><td colspan="41" class="py-8 italic text-gray-500 font-sans">Hệ thống chưa có nhân sự nào trong danh sách quản lý.</td></tr>`;
+            }
+
+            document.getElementById('report-tbody').innerHTML = tbodyHtml;
+
+            // Xây dựng dữ liệu gộp của tất cả các khoa trong tháng
+            let globalSavedData = {};
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (b.Thang == month && b.Nam == year && b.DuLieu) {
+                    try {
+                        let savedObj = JSON.parse(b.DuLieu);
+                        for (let nv in savedObj) {
+                            if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
+                            // Gộp ngày
+                            for (let d in savedObj[nv].days) {
+                                if (savedObj[nv].days[d]) globalSavedData[nv].days[d] = savedObj[nv].days[d];
+                            }
+                            // Giữ lại ghi chú mới nhất
+                            if (savedObj[nv].note) globalSavedData[nv].note = savedObj[nv].note;
+                        }
+                    } catch(e) {}
+                }
+            });
+
+            // Cập nhật dữ liệu vào lưới dựa trên mã NV (áp dụng cho NV có ở nhiều khoa)
+            for (let maNV in globalSavedData) {
+                const trs = document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`);
+                trs.forEach(tr => {
+                    const daysData = globalSavedData[maNV].days || {};
+                    const cells = tr.querySelectorAll('.cell-day');
+                    cells.forEach((c, idx) => {
+                        let val = daysData[idx + 1];
+                        if (val) {
+                            c.innerText = val;
+                            // Lấy ký hiệu Sáng để gắn background
+                            let primarySymbol = val.split('/')[0].trim();
+                            let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
+                            if(symObj && symObj.bg) c.className += ` ${symObj.bg}`;
+                        }
+                    });
+                    tr.querySelector('.cell-ghichu').innerText = globalSavedData[maNV].note || '';
+                    recalcRow(cells[0]);
+                });
+            }
+        }
+
+        window.onload = () => {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            if (checkAuth()) {
+                loadDataFromGAS();
+            }
+        };
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiếu Bồi Dưỡng Trực Khoa</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* CSS DÀNH RIÊNG CHO BẢN IN A4 */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 15mm;
+            }
+
+            /* PHÁ BỎ GIỚI HẠN CHIỀU CAO MÀN HÌNH ĐỂ TRÁNH BỊ CHỤP MÀN HÌNH CÓ THANH CUỘN */
+            html, body {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                background-color: white !important;
+                font-family: "Times New Roman", Times, serif !important;
+                color: black !important;
+                display: block !important; /* Gỡ bỏ flex box */
+            }
+
+            .no-print, #control-panel, #login-screen, #loading-screen, #toast-container, #custom-confirm-modal {
+                display: none !important;
+            }
+
+            /* GỠ BỎ SCROLL CỦA KHUNG LÀM VIỆC */
+            #print-workspace {
+                display: block !important;
+                height: auto !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                position: static !important;
+            }
+
+            .print-area {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                max-width: none !important;
+                border: none !important;
+                display: block !important;
+            }
+
+            /* CĂN CHỈNH BẢNG IN */
+            table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid; /* Tránh cắt ngang dòng khi sang trang */
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group; /* Lặp lại Header bảng khi sang trang mới */
+            }
+
+            tfoot {
+                display: table-footer-group; /* Lặp lại Footer bảng khi sang trang mới */
+            }
+
+            th, td {
+                border: 1px solid black !important;
+                padding: 6px !important;
+                color: black !important;
+            }
+
+            /* Ẩn các input khi in, hiện text span lên */
+            .rate-input {
+                display: none !important;
+            }
+            .print-value {
+                display: inline !important;
+            }
+        }
+
+        /* FONT STYLE CHUẨN CÔNG VĂN */
+        .doc-font {
+            font-family: "Times New Roman", Times, serif;
+        }
+
+        .border-black {
+            border-color: #000 !important;
+        }
+
+        .table-custom th, .table-custom td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        /* Loại bỏ mũi tên tăng giảm số của input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body class="bg-slate-100 text-slate-900 doc-font h-screen flex flex-col relative">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans" id="confirm-modal-title">
+                <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
+            </div>
+            <div class="p-6 text-center md:text-left">
+                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
+                    <button id="confirm-modal-btn" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULE: MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-slate-800">Yêu cầu Đăng nhập</h1>
+                <p class="text-slate-500 text-sm mt-1">Trang in Phiếu bồi dưỡng cần xác thực quyền</p>
+            </div>
+            <form id="login-form">
+                <div class="mb-4 text-left font-sans">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label>
+                    <input type="text" id="username" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                </div>
+                <div class="mb-6 text-left font-sans">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="password" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                </div>
+                <div id="login-error" class="hidden text-red-500 text-sm mb-4 font-sans text-center"></div>
+                <button type="submit" id="btn-login" class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
+                    <i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực
+                </button>
+                <div class="mt-6 text-center font-sans">
+                    <a href="index.html" class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- BỘ TẢI DỮ LIỆU BẢO VỆ MÀN HÌNH -->
+    <div id="loading-screen" class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
+        <div id="loading-icon-wrapper">
+            <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
+        </div>
+        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ liệu...</p>
+        <div id="retry-btn-container" class="hidden mt-4 font-sans">
+            <button onclick="loadDataFromGAS()" class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Thử lại
+            </button>
+        </div>
+    </div>
+
+    <!-- KHU VỰC ĐIỀU KHIỂN (KHÔNG IN) -->
+    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
+        
+        <!-- Nhóm lọc dữ liệu bên trái -->
+        <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+            <button onclick="window.location.href='index.html'" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
+            </button>
+            <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
+            
+            <select id="sel-month" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
+                <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+                <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
+                <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+            </select>
+            <select id="sel-year" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+            </select>
+            <select id="sel-khoa" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0">
+                <!-- Tự động điền qua JS -->
+            </select>
+            
+            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới & Tải Dữ liệu
+            </button>
+        </div>
+
+        <!-- Nhóm phê duyệt & in bên phải -->
+        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
+            <!-- Vùng điều khiển Phê duyệt -->
+            <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa gửi</span>
+                
+                <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Gửi duyệt</span>
+                </button>
+                <button id="btn-approve" onclick="approvePhieu()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
+                </button>
+                
+                <!-- NÚT LƯU TIỀN (Chỉ hiện khi đã duyệt và là KHTH/TCHC) -->
+                <button id="btn-save-money" onclick="saveMoney()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Số Tiền
+                </button>
+
+                <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
+                    <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối
+                </button>
+            </div>
+            
+            <button id="btn-print" onclick="window.print()" class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0" disabled title="Chỉ được in khi phiếu ĐÃ ĐƯỢC DUYỆT">
+                <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Phiếu (A4)
+            </button>
+        </div>
+    </div>
+    
+    <!-- Hiển thị lý do từ chối -->
+    <div id="reject-reason-banner" class="hidden bg-red-100 text-red-800 px-4 py-2 text-sm font-sans flex items-center justify-center border-b border-red-200 no-print">
+        <i data-lucide="info" class="w-4 h-4 mr-2"></i> <span id="reject-reason-text">Lý do từ chối...</span>
+    </div>
+
+    <!-- MODAL TỪ CHỐI DUYỆT -->
+    <div id="reject-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div class="bg-red-50 px-6 py-4 border-b text-red-700 font-bold flex items-center font-sans">
+                <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> Từ chối / Trả lại Phiếu
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để Khoa nắm thông tin và chỉnh sửa:</p>
+                <textarea id="reject-reason-input" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans" rows="3" placeholder="VD: Sai số ngày trực của BS A..."></textarea>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button onclick="closeRejectModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
+                    <button onclick="confirmReject()" class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác nhận Trả lại</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC HIỂN THỊ TRANG IN -->
+    <div class="flex-1 overflow-y-auto p-4 md:p-8 no-print-bg hidden" id="print-workspace">
+        <div class="max-w-[1100px] mx-auto bg-white shadow-xl border border-slate-200 p-8 md:p-12 print-area text-[13pt] text-black">
+            
+            <!-- HEADER CÔNG VĂN -->
+            <div class="flex justify-between items-start mb-6">
+                <div class="text-center w-1/3">
+                    <p class="font-bold">SỞ Y TẾ TỈNH VĨNH LONG</p>
+                    <p class="font-bold underline pb-1">BVĐKKV CẦU NGANG</p>
+                </div>
+                <div class="text-center w-2/3">
+                    <p class="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                    <p class="font-bold underline pb-1">Độc lập - Tự do - Hạnh phúc</p>
+                </div>
+            </div>
+
+            <!-- TIÊU ĐỀ PHIẾU -->
+            <div class="text-center mb-6 mt-8">
+                <h1 class="font-bold text-xl uppercase" id="main-report-title">
+                    PHIẾU BỒI DƯỠNG TRỰC KHOA
+                </h1>
+                <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM <span id="lbl-end-date">.../.../......</span>)</p>
+            </div>
+
+            <!-- BẢNG DỮ LIỆU -->
+            <table class="w-full table-custom text-center mt-6">
+                <thead>
+                    <tr class="font-bold bg-gray-50/50">
+                        <th class="w-12">Số<br>TT</th>
+                        <th class="w-48">HỌ VÀ TÊN</th>
+                        <th class="w-24">Chức vụ</th>
+                        <th class="w-56">TRỰC ĐÊM</th>
+                        <th class="w-16">Số<br>đêm</th>
+                        <th class="w-24">Bồi dưỡng<br>một đêm</th>
+                        <th class="w-32">THÀNH TIỀN</th>
+                        <th class="w-32">GHI CHÚ</th>
+                    </tr>
+                </thead>
+                <tbody id="report-tbody">
+                    <!-- JS sẽ render dữ liệu vào đây -->
+                    <tr>
+                        <td colspan="8" class="py-8 italic text-gray-500 font-sans">Bấm "Tải dữ liệu" để lấy danh sách công trực.</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="font-bold">
+                        <td colspan="4" class="text-right pr-4">Tổng cộng</td>
+                        <td id="lbl-total-nights">0</td>
+                        <td></td>
+                        <td id="lbl-total-amount" class="font-bold"></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="mt-4 italic">
+                Tổng cộng tiền là (viết bằng chữ): <span id="lbl-money-text" class="font-bold">............................................................................................................................................................</span>
+            </div>
+
+            <!-- CHỮ KÝ -->
+            <div class="flex justify-between items-start mt-10 text-center font-bold">
+                <div class="w-1/5">
+                    <p>GIÁM ĐỐC</p>
+                </div>
+                <div class="w-1/5">
+                    <p>TP. TÀI CHÍNH -<br>KẾ TOÁN</p>
+                </div>
+                <div class="w-1/5">
+                    <p>TP. KẾ HOẠCH<br>TỔNG HỢP</p>
+                </div>
+                <div class="w-1/5 relative">
+                    <p>TRƯỞNG KHOA</p>
+                </div>
+                <div class="w-1/5 font-normal flex flex-col items-center">
+                    <div class="italic mb-1 whitespace-nowrap">Ngày ..... tháng ..... năm 20.....</div>
+                    <div class="font-bold uppercase">NGƯỜI LẬP PHIẾU</div>
+                </div>
+            </div>
+
+            <!-- KHOẢNG TRỐNG KÝ TÊN -->
+            <div class="h-32"></div>
+
+        </div>
+    </div>
+
+    <!-- MÃ JAVASCRIPT -->
+    <script>
+        lucide.createIcons();
+
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxXZdtANewUNVD6RzDGU4Kuz76-a0rL9xJSE6Aan_USqqdTuWeplaev7EwysaX_QbL5/exec";
+        let MOCK_DB = { khoa: [], users: [], shifts: [], phieuBoiDuong: [] };
+        let currentUser = null;
+
+        // TỪ ĐIỂN DỊCH CHỨC VỤ SANG CHỮ DÀI ĐẦY ĐỦ
+        const ROLE_MAP = {
+            'KS': 'Kỹ sư',
+            'BS': 'Bác sĩ',
+            'DD': 'Điều dưỡng',
+            'NHS': 'Nữ hộ sinh',
+            'KTV': 'Kỹ thuật viên',
+            'DS': 'Dược sĩ',
+            'Y sĩ': 'Y sĩ',
+            'CĐ': 'Cử nhân',
+            'CN': 'Cử nhân',
+            'NV': 'Nhân viên',
+            'Khác': 'Nhân viên',
+            'K': 'Nhân viên'
+        };
+
+        // --- CÁC HÀM TIỆN ÍCH ---
+        let confirmActionFn = null;
+
+        function showConfirmModal(title, desc, actionFn) {
+            document.getElementById('confirm-modal-title').innerHTML = `<i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> ${title}`;
+            document.getElementById('confirm-modal-desc').innerText = desc;
+            confirmActionFn = actionFn;
+            document.getElementById('custom-confirm-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('custom-confirm-modal').classList.add('hidden');
+            confirmActionFn = null;
+        }
+
+        document.getElementById('confirm-modal-btn').addEventListener('click', () => {
+            if(confirmActionFn) confirmActionFn();
+            closeConfirmModal();
+        });
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const toast = document.createElement('div');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : 'bg-emerald-600');
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
+            toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Định dạng tiền tệ
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('vi-VN').format(num);
+        }
+
+        // Đọc số tiền thành chữ
+        function docTienTienViet(so) {
+            if (so == 0) return "Không đồng";
+            const m = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
+            function docBlock(so, daydu) {
+                let chuoi = "";
+                let tram = Math.floor(so / 100); so = so % 100;
+                let chuc = Math.floor(so / 10); let donvi = so % 10;
+                if (daydu || tram > 0) {
+                    chuoi = " " + m[tram] + " trăm";
+                    chuoi += (chuc == 0 && donvi > 0) ? " lẻ" : "";
+                }
+                if (chuc == 1) chuoi += " mười";
+                if (chuc > 1) chuoi += " " + m[chuc] + " mươi";
+                if (donvi == 1 && chuc > 1) chuoi += " mốt";
+                else if (donvi == 5 && chuc > 0) chuoi += " lăm";
+                else if (donvi > 0) chuoi += " " + m[donvi];
+                return chuoi;
+            }
+            let chuoi = "";
+            so = Math.round(so);
+            let ty = Math.floor(so / 1000000000); so = so % 1000000000;
+            let trieu = Math.floor(so / 1000000); so = so % 1000000;
+            let ngan = Math.floor(so / 1000); let dong = so % 1000;
+            if (ty > 0) chuoi = docBlock(ty, false) + " tỷ";
+            if (trieu > 0) chuoi += docBlock(trieu, ty > 0) + " triệu";
+            if (ngan > 0) chuoi += docBlock(ngan, ty > 0 || trieu > 0) + " nghìn";
+            if (dong > 0) chuoi += docBlock(dong, ty > 0 || trieu > 0 || ngan > 0);
+            chuoi = chuoi.trim();
+            if (chuoi.length > 0) chuoi = chuoi.charAt(0).toUpperCase() + chuoi.slice(1);
+            return chuoi + " đồng chẵn.";
+        }
+
+        // Parse JSON Ghi chú an toàn
+        function parseGhiChu(ghiChuStr) {
+            if (!ghiChuStr) return { reason: "", rates: {} };
+            try {
+                const obj = JSON.parse(ghiChuStr);
+                if (obj.rates || obj.reason !== undefined) return obj;
+                return { reason: ghiChuStr, rates: {} };
+            } catch (e) {
+                return { reason: ghiChuStr, rates: {} };
+            }
+        }
+
+        function normalizeDateStr(val) {
+            if (!val) return "";
+            if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+            try {
+                let d = new Date(val);
+                if (!isNaN(d.getTime())) {
+                    let year = d.getFullYear();
+                    let month = String(d.getMonth() + 1).padStart(2, '0');
+                    let day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+            } catch (e) { }
+            return String(val).substring(0, 10);
+        }
+
+        // KIỂM TRA QUYỀN TRUY CẬP KẾT HỢP ADMIN KHTH VÀ ADMIN TCHC
+        function isGlobalAdmin() {
+            if (!currentUser) return false;
+            if (currentUser.Role === 'Admin_KHTH') return true;
+            if (currentUser.Role === 'Admin_Khoa') {
+                if (currentUser.KhoaList && currentUser.KhoaList.length > 0) {
+                    return currentUser.KhoaList.some(k => {
+                        if (!k) return false;
+                        const upperK = k.toUpperCase();
+                        if (upperK.includes('TỔ CHỨC') || upperK.includes('HÀNH CHÍNH') || upperK.includes('TCHC')) return true;
+                        const cleanK = upperK.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+                        return cleanK.includes('TOCHUCHANHCHANH');
+                    });
+                }
+            }
+            return false;
+        }
+
+        function checkAuth() {
+            const userStr = localStorage.getItem('currentUser');
+            if (!userStr) {
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('login-screen').classList.remove('hidden');
+                return false;
+            }
+
+            currentUser = JSON.parse(userStr);
+            if (currentUser.Role !== 'Admin_KHTH' && currentUser.Role !== 'Admin_Khoa') {
+                alert("Tài khoản của bạn không có quyền sử dụng chức năng này!");
+                window.location.href = 'index.html';
+                return false;
+            }
+            return true;
+        }
+
+        // XỬ LÝ ĐĂNG NHẬP
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.toLowerCase().trim();
+            const p = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btn-login');
+            const errorDiv = document.getElementById('login-error');
+
+            errorDiv.classList.add('hidden');
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang kiểm tra...`;
+            lucide.createIcons();
+
+            try {
+                if (MOCK_DB.users.length === 0) {
+                    const res = await fetch(GAS_URL + "?action=NhanVien").then(r => r.json());
+                    if (res && res.status === "success") MOCK_DB.users = res.data || [];
+                }
+
+                const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+
+                if (user) {
+                    if (user.Role !== 'Admin_KHTH' && user.Role !== 'Admin_Khoa') {
+                        errorDiv.textContent = "Bạn không có quyền Admin để truy cập chức năng này!";
+                        errorDiv.classList.remove('hidden');
+                        btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    user.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
+                    user.ActiveKhoa = user.KhoaList[0] || 'KHTH';
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    currentUser = user;
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('loading-screen').classList.remove('hidden');
+                    loadDataFromGAS();
+                } else {
+                    errorDiv.textContent = "Sai tài khoản hoặc mật khẩu!";
+                    errorDiv.classList.remove('hidden');
+                    btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                errorDiv.textContent = "Lỗi kết nối máy chủ! Vui lòng kiểm tra mạng.";
+                errorDiv.classList.remove('hidden');
+                btn.innerHTML = `<i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực`;
+                lucide.createIcons();
+            }
+        });
+
+        // ĐỒNG BỘ LÊN GOOGLE SHEETS
+        async function syncWithGAS(actionName, payloadData) {
+            try {
+                await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action: actionName, data: payloadData }) 
+                });
+            } catch (e) {
+                console.error("Lỗi đồng bộ", e);
+                showToast("Lỗi mạng: Trạng thái hiện tại chỉ được lưu tạm trên trình duyệt.", "error");
+            }
+        }
+
+        // TẢI DỮ LIỆU TỪ GOOGLE SHEET
+        async function loadDataFromGAS() {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            
+            document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
+            document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
+            lucide.createIcons();
+
+            try {
+                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "PhieuBoiDuong"];
+                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
+                const results = await Promise.all(promises);
+
+                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
+                if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
+                
+                if (results[3] && results[3].status === "success") MOCK_DB.phieuBoiDuong = results[3].data || [];
+                else MOCK_DB.phieuBoiDuong = [];
+                
+                if (results[2] && results[2].status === "success") {
+                    MOCK_DB.shifts = (results[2].data || []).map(s => ({
+                        ...s,
+                        MaNV: String(s.MaNV),
+                        NgayTruc: normalizeDateStr(s.NgayTruc)
+                    }));
+                }
+
+                showToast("Đã cập nhật dữ liệu mới nhất", "success");
+
+            } catch (e) {
+                console.error("Lỗi khi fetch dữ liệu:", e);
+                document.getElementById('retry-btn-container').classList.remove('hidden');
+                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
+                document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                lucide.createIcons();
+                return;
+            } finally {
+                initUI();
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('control-panel').classList.remove('hidden');
+                document.getElementById('print-workspace').classList.remove('hidden');
+            }
+        }
+
+        // KHỞI TẠO CÁC DROPDOWN
+        function initUI() {
+            const today = new Date();
+            
+            let defaultMonth = today.getMonth() + 1;
+            let defaultYear = today.getFullYear();
+            if(today.getDate() < 5) {
+                defaultMonth -= 1;
+                if(defaultMonth === 0) {
+                    defaultMonth = 12;
+                    defaultYear -= 1;
+                }
+            }
+
+            document.getElementById('sel-month').value = defaultMonth;
+            document.getElementById('sel-year').value = defaultYear;
+
+            const selKhoa = document.getElementById('sel-khoa');
+            
+            let dsKhoa = MOCK_DB.khoa || [];
+            
+            // Quyền Duyệt và Nhập Tiền dành cho Tổ chức Hành chánh / KHTH
+            const isApprover = isGlobalAdmin();
+            const isKeToan = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            
+            if (isApprover || isKeToan) {
+                // Cho phép Tài vụ / Kế toán / KHTH / TCHC xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
+                dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN');
+            } else if (currentUser.Role === 'Admin_Khoa') {
+                dsKhoa = dsKhoa.filter(k => currentUser.KhoaList.includes(k.MaKhoa));
+            }
+
+            selKhoa.innerHTML = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+
+            if (dsKhoa.length > 0) generateReport();
+        }
+
+        // ==========================================
+        // KHỐI QUẢN LÝ PHÊ DUYỆT & NHẬP SỐ TIỀN
+        // ==========================================
+        function updateApprovalUI(shiftsCount) {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+
+            const btnSend = document.getElementById('btn-send-approve');
+            const btnSendText = document.getElementById('btn-send-text');
+            const btnApprove = document.getElementById('btn-approve');
+            const btnSaveMoney = document.getElementById('btn-save-money');
+            const btnCancel = document.getElementById('btn-cancel-approve');
+            const btnPrint = document.getElementById('btn-print');
+            const badge = document.getElementById('badge-status');
+            const rejectBanner = document.getElementById('reject-reason-banner');
+
+            // Reset tất cả UI
+            btnSend.classList.add('hidden');
+            btnApprove.classList.add('hidden');
+            btnCancel.classList.add('hidden');
+            btnSaveMoney.classList.add('hidden');
+            rejectBanner.classList.add('hidden');
+
+            if (shiftsCount === 0) {
+                badge.textContent = "Không có lịch";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-slate-100 text-slate-400 whitespace-nowrap";
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            // Tìm thông tin phiếu từ DB
+            const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            const status = phieu ? phieu.TrangThai : 'Nháp';
+            
+            const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
+
+            // CHỈ KHTH / TCHC mới có quyền duyệt và điền tiền
+            const isApprover = isGlobalAdmin();
+            const isOwner = currentUser.KhoaList.includes(maKhoa) || isApprover;
+
+            // 1. TRẠNG THÁI NHÁP HOẶC BỊ TRẢ LẠI
+            if (status === 'Nháp' || status === 'Trả lại') {
+                badge.textContent = status === 'Nháp' ? "Chưa gửi duyệt" : "Bị Trả Lại";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap";
+                
+                if(status === 'Trả lại') {
+                    badge.className = "px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap";
+                    
+                    // Chuyển nút sang màu cam "Gửi duyệt lại"
+                    if(btnSendText) btnSendText.textContent = "Gửi duyệt lại";
+                    btnSend.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    btnSend.classList.add('bg-orange-600', 'hover:bg-orange-700');
+
+                    if(noteData.reason) {
+                        rejectBanner.classList.remove('hidden');
+                        document.getElementById('reject-reason-text').textContent = "Lý do từ chối: " + noteData.reason;
+                    }
+                } else {
+                    // Mặc định màu xanh dương
+                    if(btnSendText) btnSendText.textContent = "Gửi duyệt";
+                    btnSend.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+                    btnSend.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+
+                if (isOwner) btnSend.classList.remove('hidden');
+                
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+                btnPrint.classList.remove('hover:bg-blue-700');
+            } 
+            
+            // 2. TRẠNG THÁI CHỜ DUYỆT
+            else if (status === 'Chờ duyệt') {
+                badge.textContent = "Chờ Tổ chức Hành chánh / KHTH Duyệt";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800 whitespace-nowrap";
+                
+                if (isApprover) {
+                    btnApprove.classList.remove('hidden');
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối`;
+                }
+
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+                btnPrint.classList.remove('hover:bg-blue-700');
+            } 
+            
+            // 3. TRẠNG THÁI ĐÃ DUYỆT
+            else if (status === 'Đã duyệt') {
+                badge.textContent = "Đã được Duyệt";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
+                
+                btnPrint.disabled = false;
+                btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnPrint.classList.add('hover:bg-blue-700');
+
+                // Quyền Lưu Tiền và Hủy duyệt chỉ hiển thị cho KHTH / TCHC
+                if (isApprover) {
+                    btnSaveMoney.classList.remove('hidden');
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy duyệt`;
+                }
+            }
+            
+            lucide.createIcons();
+        }
+
+        // HÀM LƯU TRẠNG THÁI VÀ ĐỒNG BỘ GOOGLE SHEET
+        function updatePhieuStatus(status, reasonStr = "") {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+
+            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            let currentData = parseGhiChu(phieu ? phieu.GhiChu : "");
+
+            currentData.reason = reasonStr; // Cập nhật lý do
+            
+            if (!phieu) {
+                phieu = { 
+                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, 
+                    MaKhoa: maKhoa, 
+                    Thang: month, 
+                    Nam: year, 
+                    TrangThai: status,
+                    NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                    NgayDuyet: status === 'Đã duyệt' ? new Date().toISOString().split('T')[0] : '',
+                    GhiChu: JSON.stringify(currentData)
+                };
+                MOCK_DB.phieuBoiDuong.push(phieu);
+            } else {
+                phieu.TrangThai = status;
+                if(status === 'Đã duyệt') {
+                    phieu.NguoiDuyet = currentUser.MaNV;
+                    phieu.NgayDuyet = new Date().toISOString().split('T')[0];
+                }
+                phieu.GhiChu = JSON.stringify(currentData);
+            }
+
+            generateReport();
+            syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
+        }
+
+        function sendApprove() {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            let isResend = phieu && phieu.TrangThai === 'Trả lại';
+
+            showConfirmModal(
+                isResend ? "Xác nhận gửi lại phiếu" : "Xác nhận gửi duyệt",
+                isResend ? "Bạn có chắc chắn muốn GỬI LẠI phiếu bồi dưỡng này cho Tổ chức Hành chánh / KHTH duyệt sau khi đã cập nhật số liệu mới nhất?" : "Bạn có chắc chắn muốn GỬI phiếu bồi dưỡng này cho Tổ chức Hành chánh / KHTH duyệt?\nVui lòng kiểm tra kỹ danh sách công trực.",
+                () => {
+                    updatePhieuStatus('Chờ duyệt');
+                    showToast("Đã gửi phiếu thành công!", "success");
+                }
+            );
+        }
+
+        function approvePhieu() {
+            showConfirmModal(
+                "Xác nhận phê duyệt",
+                "Xác nhận PHÊ DUYỆT phiếu bồi dưỡng trực này?\nSau khi duyệt, bạn có thể điền Số Tiền bồi dưỡng và in ấn.",
+                () => {
+                    updatePhieuStatus('Đã duyệt');
+                    showToast("Đã duyệt phiếu thành công!", "success");
+                }
+            );
+        }
+
+        function cancelApprove() {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            
+            if (phieu && phieu.TrangThai === 'Đã duyệt') {
+                showConfirmModal(
+                    "Xác nhận Hủy duyệt",
+                    "Xác nhận HỦY DUYỆT phiếu này? (Phiếu sẽ chuyển về trạng thái Chờ duyệt để Khoa sửa lại)",
+                    () => {
+                        updatePhieuStatus('Chờ duyệt', "Bị hủy duyệt bởi Tổ chức Hành chánh / KHTH");
+                        showToast("Đã hủy duyệt phiếu!", "warning");
+                    }
+                );
+            } else {
+                document.getElementById('reject-reason-input').value = "";
+                document.getElementById('reject-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeRejectModal() {
+            document.getElementById('reject-modal').classList.add('hidden');
+        }
+
+        function confirmReject() {
+            const reason = document.getElementById('reject-reason-input').value.trim();
+            if (!reason) {
+                showToast("Vui lòng nhập lý do từ chối!", "error");
+                return;
+            }
+            updatePhieuStatus('Trả lại', reason);
+            closeRejectModal();
+            showToast("Đã trả lại phiếu!", "warning");
+        }
+
+        // TÍNH TỔNG TIỀN ĐỘNG TRÊN GIAO DIỆN KHI KẾ TOÁN NHẬP
+        function calculateTotals() {
+            let sum = 0;
+            document.querySelectorAll('.rate-input').forEach(input => {
+                const id = input.getAttribute('data-id');
+                const nights = parseInt(input.getAttribute('data-nights') || 0);
+                const rate = parseInt(input.value || 0);
+                const total = nights * rate;
+                
+                const totalEl = document.getElementById(`total_${id}`);
+                if(totalEl) totalEl.textContent = total > 0 ? formatCurrency(total) : '';
+                
+                const printSpan = input.nextElementSibling;
+                if(printSpan && printSpan.classList.contains('print-value')) {
+                    printSpan.textContent = rate > 0 ? formatCurrency(rate) : '';
+                }
+                
+                sum += total;
+            });
+            
+            document.getElementById('lbl-total-amount').textContent = sum > 0 ? formatCurrency(sum) : '';
+            document.getElementById('lbl-money-text').textContent = sum > 0 ? docTienTienViet(sum) : '............................................................................................................................................................';
+        }
+
+        // LƯU DỮ LIỆU SỐ TIỀN VÀO GOOGLE SHEETS DƯỚI DẠNG JSON
+        function saveMoney() {
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            
+            if (!phieu) return showToast("Phiếu không tồn tại!", "error");
+            
+            let noteData = parseGhiChu(phieu.GhiChu);
+            noteData.rates = {};
+            
+            document.querySelectorAll('.rate-input').forEach(input => {
+                const id = input.getAttribute('data-id');
+                const rate = input.value;
+                if (rate) noteData.rates[id] = rate;
+            });
+            
+            phieu.GhiChu = JSON.stringify(noteData);
+            syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
+            showToast("Đã tính và lưu thành công Số tiền Bồi dưỡng!", "success");
+        }
+
+        // THUẬT TOÁN TẠO PHIẾU VÀ TÍNH TOÁN
+        function generateReport() {
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+            const maKhoa = document.getElementById('sel-khoa').value;
+            const tenKhoa = MOCK_DB.khoa.find(k => k.MaKhoa === maKhoa)?.TenKhoa || maKhoa;
+
+            // XỬ LÝ TIÊU ĐỀ
+            let titleHtml = "";
+            let upperKhoa = tenKhoa.toUpperCase();
+            
+            if (upperKhoa.startsWith("KHOA ")) {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC ${upperKhoa}`;
+            } else {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC KHOA ${upperKhoa}`;
+            }
+            
+            if (maKhoa === 'CNTT') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ CÔNG NGHỆ THÔNG TIN PHÒNG KẾ HOẠCH TỔNG HỢP`;
+            } else if (maKhoa === 'TAIVU' || maKhoa === 'TAICHINHKETOAN') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ TÀI VỤ PHÒNG TÀI CHÍNH KẾ TOÁN`;
+            } else if (maKhoa === 'BGD') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC BAN GIÁM ĐỐC`;
+            } else if (maKhoa === 'BAOVE') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ BẢO VỆ PHÒNG TỔ CHỨC HÀNH CHÍNH`;
+            } else if (maKhoa === 'DN') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ ĐIỆN NƯỚC PHÒNG TỔ CHỨC HÀNH CHÍNH`;
+            } else if (maKhoa === 'TAIXE') {
+                titleHtml = `PHIẾU BỒI DƯỠNG TỔ TÀI XẾ PHÒNG TỔ CHỨC HÀNH CHÍNH`;
+            }
+            
+            document.getElementById('main-report-title').innerHTML = titleHtml;
+
+            const lastDay = new Date(year, month, 0).getDate();
+            document.getElementById('lbl-start-date').textContent = `01/${month < 10 ? '0'+month : month}/${year}`;
+            document.getElementById('lbl-end-date').textContent = `${lastDay}/${month < 10 ? '0'+month : month}/${year}`;
+
+            // Lọc ca trực trong tháng
+            const shiftsInMonth = MOCK_DB.shifts.filter(s => {
+                if (s.MaKhoa !== maKhoa) return false;
+                const d = new Date(s.NgayTruc + "T12:00:00");
+                return (d.getMonth() + 1) === month && d.getFullYear() === year;
+            });
+
+            // GỌI HÀM CẬP NHẬT GIAO DIỆN PHÊ DUYỆT NÚT BẤM
+            updateApprovalUI(shiftsInMonth.length);
+
+            // Kiểm tra quyền và tải dữ liệu Tiền (Nếu có)
+            const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            const status = phieu ? phieu.TrangThai : 'Nháp';
+            const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
+            const savedRates = noteData.rates || {};
+
+            // CHỈ KHTH / TCHC mới có quyền nhập số tiền
+            const isApprover = isGlobalAdmin();
+            const canEnterMoney = isApprover;
+
+            const userShifts = {}; 
+            shiftsInMonth.forEach(s => {
+                if (!userShifts[s.MaNV]) {
+                    const uInfo = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
+                    
+                    let roleDisplay = ROLE_MAP[s.ChucDanh] || s.ChucDanh;
+                    if (roleDisplay.toLowerCase() === 'khác' || roleDisplay.toLowerCase() === 'k') roleDisplay = 'Nhân viên';
+
+                    userShifts[s.MaNV] = {
+                        maNV: s.MaNV,
+                        name: uInfo ? (uInfo.HoTen || uInfo.TenHienThi) : s.MaNV,
+                        role: roleDisplay,
+                        weekdays: [],
+                        weekends: []
+                    };
+                }
+                
+                const d = new Date(s.NgayTruc + "T12:00:00");
+                const dayOfWeek = d.getDay(); 
+                const dateNum = d.getDate();
+
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    if(!userShifts[s.MaNV].weekends.includes(dateNum)) userShifts[s.MaNV].weekends.push(dateNum);
+                } else {
+                    if(!userShifts[s.MaNV].weekdays.includes(dateNum)) userShifts[s.MaNV].weekdays.push(dateNum);
+                }
+            });
+
+            let tbodyHtml = '';
+            let stt = 1;
+            let totalAllNights = 0;
+            let grandTotalMoney = 0;
+
+            const padStt = (n) => n < 10 ? '0'+n : n;
+            const padNum = (n) => n < 10 ? '0'+n : n;
+            const formatDates = (arr) => arr.join(', ');
+
+            for (let maNV in userShifts) {
+                const u = userShifts[maNV];
+                u.weekdays.sort((a,b) => a - b);
+                u.weekends.sort((a,b) => a - b);
+
+                const hasWD = u.weekdays.length > 0;
+                const hasWE = u.weekends.length > 0;
+
+                // Chuẩn bị dữ liệu tiền Ngày thường
+                let rateWd = savedRates[`${maNV}_wd`] || '';
+                let totalWd = rateWd ? parseInt(rateWd) * u.weekdays.length : 0;
+                grandTotalMoney += totalWd;
+
+                let inputWdHtml = '';
+                let printWdHtml = `<span class="print-value ${canEnterMoney && status === 'Đã duyệt' ? 'hidden' : ''}">${rateWd ? formatCurrency(rateWd) : ''}</span>`;
+                if (canEnterMoney && status === 'Đã duyệt') {
+                    inputWdHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_wd" data-nights="${u.weekdays.length}" value="${rateWd}" placeholder="Nhập số..." oninput="calculateTotals()">`;
+                }
+                let cellRateWd = `${inputWdHtml}${printWdHtml}`;
+                let cellTotalWd = `<span id="total_${maNV}_wd" class="row-total font-bold">${totalWd ? formatCurrency(totalWd) : ''}</span>`;
+
+                // Chuẩn bị dữ liệu tiền T7, CN
+                let rateWe = savedRates[`${maNV}_we`] || '';
+                let totalWe = rateWe ? parseInt(rateWe) * u.weekends.length : 0;
+                grandTotalMoney += totalWe;
+
+                let inputWeHtml = '';
+                let printWeHtml = `<span class="print-value ${canEnterMoney && status === 'Đã duyệt' ? 'hidden' : ''}">${rateWe ? formatCurrency(rateWe) : ''}</span>`;
+                if (canEnterMoney && status === 'Đã duyệt') {
+                    inputWeHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_we" data-nights="${u.weekends.length}" value="${rateWe}" placeholder="Nhập số..." oninput="calculateTotals()">`;
+                }
+                let cellRateWe = `${inputWeHtml}${printWeHtml}`;
+                let cellTotalWe = `<span id="total_${maNV}_we" class="row-total font-bold">${totalWe ? formatCurrency(totalWe) : ''}</span>`;
+
+                // Render Hàng
+                if (hasWD && hasWE) {
+                    tbodyHtml += `
+                    <tr>
+                        <td rowspan="2" class="text-center">${padStt(stt)}</td>
+                        <td rowspan="2" class="text-left font-bold pl-2">${u.name}</td>
+                        <td rowspan="2" class="text-center">${u.role}</td>
+                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekdays)}</td>
+                        <td class="text-center font-medium">${padNum(u.weekdays.length)}</td>
+                        <td class="text-center">${cellRateWd}</td>
+                        <td class="text-center">${cellTotalWd}</td>
+                        <td class="text-center italic text-sm">Ngày thường</td>
+                    </tr>
+                    <tr>
+                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekends)}</td>
+                        <td class="text-center font-medium">${padNum(u.weekends.length)}</td>
+                        <td class="text-center">${cellRateWe}</td>
+                        <td class="text-center">${cellTotalWe}</td>
+                        <td class="text-center italic text-sm font-medium">T7, CN</td>
+                    </tr>
+                    `;
+                    totalAllNights += u.weekdays.length + u.weekends.length;
+                } else if (hasWD) {
+                    tbodyHtml += `
+                    <tr>
+                        <td class="text-center">${padStt(stt)}</td>
+                        <td class="text-left font-bold pl-2">${u.name}</td>
+                        <td class="text-center">${u.role}</td>
+                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekdays)}</td>
+                        <td class="text-center font-medium">${padNum(u.weekdays.length)}</td>
+                        <td class="text-center">${cellRateWd}</td>
+                        <td class="text-center">${cellTotalWd}</td>
+                        <td class="text-center italic text-sm">Ngày thường</td>
+                    </tr>
+                    `;
+                    totalAllNights += u.weekdays.length;
+                } else if (hasWE) {
+                    tbodyHtml += `
+                    <tr>
+                        <td class="text-center">${padStt(stt)}</td>
+                        <td class="text-left font-bold pl-2">${u.name}</td>
+                        <td class="text-center">${u.role}</td>
+                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekends)}</td>
+                        <td class="text-center font-medium">${padNum(u.weekends.length)}</td>
+                        <td class="text-center">${cellRateWe}</td>
+                        <td class="text-center">${cellTotalWe}</td>
+                        <td class="text-center italic text-sm font-medium">T7, CN</td>
+                    </tr>
+                    `;
+                    totalAllNights += u.weekends.length;
+                }
+                if(hasWD || hasWE) stt++;
+            }
+
+            if (Object.keys(userShifts).length === 0) {
+                tbodyHtml = `<tr><td colspan="8" class="py-8 italic text-gray-500 text-center font-sans">Không có dữ liệu công trực cho khoa này trong tháng ${month}.</td></tr>`;
+            }
+
+            document.getElementById('report-tbody').innerHTML = tbodyHtml;
+            document.getElementById('lbl-total-nights').textContent = padStt(totalAllNights);
+
+            // Set tổng cộng lúc ban đầu load
+            document.getElementById('lbl-total-amount').textContent = grandTotalMoney > 0 ? formatCurrency(grandTotalMoney) : '';
+            document.getElementById('lbl-money-text').textContent = grandTotalMoney > 0 ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
+        }
+
+        window.onload = () => {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            if (checkAuth()) {
+                loadDataFromGAS();
+            }
+        };
+
+    </script>
+</body>
+
+</html>
