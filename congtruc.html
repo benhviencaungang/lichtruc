@@ -18,17 +18,25 @@
             }
 
             /* PHÁ BỎ GIỚI HẠN CHIỀU CAO MÀN HÌNH ĐỂ TRÁNH BỊ CHỤP MÀN HÌNH CÓ THANH CUỘN */
-            html, body {
+            html,
+            body {
                 height: auto !important;
                 min-height: auto !important;
                 overflow: visible !important;
                 background-color: white !important;
                 font-family: "Times New Roman", Times, serif !important;
                 color: black !important;
-                display: block !important; /* Gỡ bỏ flex box */
+                display: block !important;
+                /* Gỡ bỏ flex box */
             }
 
-            .no-print, #control-panel, #login-screen, #loading-screen, #toast-container, #custom-confirm-modal {
+            .no-print,
+            #control-panel,
+            #login-screen,
+            #loading-screen,
+            #toast-container,
+            #custom-confirm-modal,
+            #settings-modal {
                 display: none !important;
             }
 
@@ -60,19 +68,23 @@
             }
 
             tr {
-                page-break-inside: avoid; /* Tránh cắt ngang dòng khi sang trang */
+                page-break-inside: avoid;
+                /* Tránh cắt ngang dòng khi sang trang */
                 page-break-after: auto;
             }
 
             thead {
-                display: table-header-group; /* Lặp lại Header bảng khi sang trang mới */
+                display: table-header-group;
+                /* Lặp lại Header bảng khi sang trang mới */
             }
 
             tfoot {
-                display: table-footer-group; /* Lặp lại Footer bảng khi sang trang mới */
+                display: table-footer-group;
+                /* Lặp lại Footer bảng khi sang trang mới */
             }
 
-            th, td {
+            th,
+            td {
                 border: 1px solid black !important;
                 padding: 6px !important;
                 color: black !important;
@@ -82,6 +94,7 @@
             .rate-input {
                 display: none !important;
             }
+
             .print-value {
                 display: inline !important;
             }
@@ -96,21 +109,35 @@
             border-color: #000 !important;
         }
 
-        .table-custom th, .table-custom td {
+        .table-custom th,
+        .table-custom td {
             border: 1px solid black;
             padding: 8px;
         }
 
         /* Loại bỏ mũi tên tăng giảm số của input number */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
 
         /* Animations */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -120,26 +147,68 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
 
     <!-- CUSTOM CONFIRM MODAL -->
-    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+    <div id="custom-confirm-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans" id="confirm-modal-title">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans"
+                id="confirm-modal-title">
                 <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
             </div>
             <div class="p-6 text-center md:text-left">
-                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed"
+                    id="confirm-modal-desc">Bạn có chắc chắn?</p>
                 <div class="flex justify-end space-x-3">
-                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
-                    <button id="confirm-modal-btn" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng ý</button>
+                    <button onclick="closeConfirmModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
+                    <button id="confirm-modal-btn"
+                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng
+                        ý</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CÀI ĐẶT ĐƠN GIÁ (DÀNH CHO TCKT) -->
+    <div id="settings-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden font-sans">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800">
+                <i data-lucide="settings" class="w-5 h-5 mr-2 text-purple-600"></i> Cài đặt Đơn giá Mặc định
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-600 mb-4 italic">Khoa HSCC sẽ tự động chia đôi (/2) so với mức giá này.</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá Ngày thường (VNĐ)</label>
+                        <input type="number" id="setting-wd"
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="VD: 50000">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá Thứ 7, CN (VNĐ)</label>
+                        <input type="number" id="setting-we"
+                            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
+                            placeholder="VD: 80000">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeSettingsModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition">Đóng</button>
+                    <button onclick="saveSettings()"
+                        class="px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow transition">Lưu
+                        Cài đặt</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- MODULE: MÀN HÌNH ĐĂNG NHẬP -->
-    <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
+    <div id="login-screen"
+        class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div
+                    class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">Yêu cầu Đăng nhập</h1>
@@ -148,108 +217,158 @@
             <form id="login-form">
                 <div class="mb-4 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label>
-                    <input type="text" id="username" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <input type="text" id="username" autocomplete="off"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required>
                 </div>
                 <div class="mb-6 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
-                    <input type="password" id="password" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <input type="password" id="password" autocomplete="off"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required>
                 </div>
                 <div id="login-error" class="hidden text-red-500 text-sm mb-4 font-sans text-center"></div>
-                <button type="submit" id="btn-login" class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
+                <button type="submit" id="btn-login"
+                    class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
                     <i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực
                 </button>
                 <div class="mt-6 text-center font-sans">
-                    <a href="index.html" class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
+                    <a href="index.html"
+                        class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i
+                            data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- BỘ TẢI DỮ LIỆU BẢO VỆ MÀN HÌNH -->
-    <div id="loading-screen" class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
+    <div id="loading-screen"
+        class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
         </div>
-        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ liệu...</p>
+        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ
+            liệu...</p>
         <div id="retry-btn-container" class="hidden mt-4 font-sans">
-            <button onclick="loadDataFromGAS()" class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
+            <button onclick="loadDataFromGAS()"
+                class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Thử lại
             </button>
         </div>
     </div>
 
     <!-- KHU VỰC ĐIỀU KHIỂN (KHÔNG IN) -->
-    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
-        
+    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden"
+        id="control-panel">
+
         <!-- Nhóm lọc dữ liệu bên trái -->
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <button onclick="window.location.href='index.html'" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
+            <button onclick="window.location.href='index.html'"
+                class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
                 <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
             </button>
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
-            
-            <select id="sel-month" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
-                <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
-                <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
-                <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
-                <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+
+            <select id="sel-month" onchange="generateReport()"
+                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="1">Tháng 1</option>
+                <option value="2">Tháng 2</option>
+                <option value="3">Tháng 3</option>
+                <option value="4">Tháng 4</option>
+                <option value="5">Tháng 5</option>
+                <option value="6">Tháng 6</option>
+                <option value="7">Tháng 7</option>
+                <option value="8">Tháng 8</option>
+                <option value="9">Tháng 9</option>
+                <option value="10">Tháng 10</option>
+                <option value="11">Tháng 11</option>
+                <option value="12">Tháng 12</option>
             </select>
-            <select id="sel-year" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
-                <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+            <select id="sel-year" onchange="generateReport()"
+                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
             </select>
-            <select id="sel-khoa" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0">
+            <select id="sel-khoa" onchange="generateReport()"
+                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0">
                 <!-- Tự động điền qua JS -->
             </select>
-            
-            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
+
+            <button onclick="loadDataFromGAS()"
+                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0"
+                title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới & Tải Dữ liệu
             </button>
         </div>
 
         <!-- Nhóm phê duyệt & in bên phải -->
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
+            <!-- Nút cài đặt đơn giá (Chỉ TCKT) -->
+            <button id="btn-settings" onclick="openSettingsModal()"
+                class="hidden px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center shadow transition whitespace-nowrap shrink-0">
+                <i data-lucide="settings" class="w-4 h-4 mr-1"></i> Cài đặt Đơn giá
+            </button>
+
             <!-- Vùng điều khiển Phê duyệt -->
-            <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa gửi</span>
-                
+            <div id="approval-controls"
+                class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                <span id="badge-status"
+                    class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa
+                    gửi</span>
+
                 <!-- Nhóm nút bấm đa năng tùy theo Phân quyền (isKHTH, isTCKT, isKhoa) -->
-                <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-send-approve" onclick="sendApprove()"
+                    class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Gửi KHTH</span>
                 </button>
-                <button id="btn-approve" onclick="approvePhieu()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-approve" onclick="approvePhieu()"
+                    class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
                 </button>
-                <button id="btn-save-money" onclick="saveMoney()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-save-money" onclick="saveMoney()"
+                    class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Số Tiền
                 </button>
-                <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-cancel-approve" onclick="cancelApprove()"
+                    class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối
                 </button>
             </div>
-            
-            <button id="btn-print" onclick="window.print()" class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0" disabled title="Chỉ được in khi TCKT đã đóng chốt">
+
+            <button id="btn-print" onclick="window.print()"
+                class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0"
+                disabled title="Chỉ được in khi TCKT đã đóng chốt">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Phiếu (A4)
             </button>
         </div>
     </div>
-    
+
     <!-- Hiển thị lý do từ chối -->
-    <div id="reject-reason-banner" class="hidden bg-red-100 text-red-800 px-4 py-2 text-sm font-sans flex items-center justify-center border-b border-red-200 no-print">
+    <div id="reject-reason-banner"
+        class="hidden bg-red-100 text-red-800 px-4 py-2 text-sm font-sans flex items-center justify-center border-b border-red-200 no-print">
         <i data-lucide="info" class="w-4 h-4 mr-2"></i> <span id="reject-reason-text">Lý do từ chối...</span>
     </div>
 
     <!-- MODAL TỪ CHỐI DUYỆT -->
-    <div id="reject-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
+    <div id="reject-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
             <div class="bg-red-50 px-6 py-4 border-b text-red-700 font-bold flex items-center font-sans">
                 <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> Từ chối / Trả lại Phiếu
             </div>
             <div class="p-6">
-                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để bộ phận trước nắm thông tin và chỉnh sửa:</p>
-                <textarea id="reject-reason-input" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans" rows="3" placeholder="VD: Sai số ngày trực của BS A, áp sai định mức..."></textarea>
+                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để bộ phận trước nắm thông
+                    tin và chỉnh sửa:</p>
+                <textarea id="reject-reason-input"
+                    class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans"
+                    rows="3" placeholder="VD: Sai số ngày trực của BS A, áp sai định mức..."></textarea>
                 <div class="flex justify-end space-x-3 mt-4">
-                    <button onclick="closeRejectModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
-                    <button onclick="confirmReject()" class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác nhận Trả lại</button>
+                    <button onclick="closeRejectModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
+                    <button onclick="confirmReject()"
+                        class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác
+                        nhận Trả lại</button>
                 </div>
             </div>
         </div>
@@ -257,8 +376,9 @@
 
     <!-- KHU VỰC HIỂN THỊ TRANG IN -->
     <div class="flex-1 overflow-y-auto p-4 md:p-8 no-print-bg hidden" id="print-workspace">
-        <div class="max-w-[1100px] mx-auto bg-white shadow-xl border border-slate-200 p-8 md:p-12 print-area text-[13pt] text-black">
-            
+        <div
+            class="max-w-[1100px] mx-auto bg-white shadow-xl border border-slate-200 p-8 md:p-12 print-area text-[13pt] text-black">
+
             <!-- HEADER CÔNG VĂN -->
             <div class="flex justify-between items-start mb-6">
                 <div class="text-center w-1/3">
@@ -276,7 +396,9 @@
                 <h1 class="font-bold text-xl uppercase" id="main-report-title">
                     PHIẾU BỒI DƯỠNG TRỰC KHOA
                 </h1>
-                <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM <span id="lbl-end-date">.../.../......</span>)</p>
+                <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM
+                    <span id="lbl-end-date">.../.../......</span>)
+                </p>
             </div>
 
             <!-- BẢNG DỮ LIỆU -->
@@ -296,7 +418,8 @@
                 <tbody id="report-tbody">
                     <!-- JS sẽ render dữ liệu vào đây -->
                     <tr>
-                        <td colspan="8" class="py-8 italic text-gray-500 font-sans">Bấm "Tải dữ liệu" để lấy danh sách công trực.</td>
+                        <td colspan="8" class="py-8 italic text-gray-500 font-sans">Bấm "Tải dữ liệu" để lấy danh sách
+                            công trực.</td>
                     </tr>
                 </tbody>
                 <tfoot>
@@ -311,7 +434,8 @@
             </table>
 
             <div class="mt-4 italic">
-                Tổng cộng tiền là (viết bằng chữ): <span id="lbl-money-text" class="font-bold">............................................................................................................................................................</span>
+                Tổng cộng tiền là (viết bằng chữ): <span id="lbl-money-text"
+                    class="font-bold">............................................................................................................................................................</span>
             </div>
 
             <!-- CHỮ KÝ -->
@@ -381,20 +505,20 @@
         }
 
         document.getElementById('confirm-modal-btn').addEventListener('click', () => {
-            if(confirmActionFn) confirmActionFn();
+            if (confirmActionFn) confirmActionFn();
             closeConfirmModal();
         });
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
-            if(!container) return;
+            if (!container) return;
             const toast = document.createElement('div');
-            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : 'bg-emerald-600');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : (type === 'info' ? 'bg-purple-600' : 'bg-emerald-600'));
             toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
             toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span>${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-            
+
             setTimeout(() => {
                 toast.classList.add('opacity-0');
                 setTimeout(() => toast.remove(), 300);
@@ -403,12 +527,13 @@
 
         // Định dạng tiền tệ
         function formatCurrency(num) {
+            if (!num) return '';
             return new Intl.NumberFormat('vi-VN').format(num);
         }
 
         // Đọc số tiền thành chữ
         function docTienTienViet(so) {
-            if (so == 0) return "Không đồng";
+            if (!so || isNaN(so) || so == 0) return "Không đồng";
             const m = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
             function docBlock(so, daydu) {
                 let chuoi = "";
@@ -502,7 +627,7 @@
         }
 
         // XỬ LÝ ĐĂNG NHẬP
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const u = document.getElementById('username').value.toLowerCase().trim();
             const p = document.getElementById('password').value.trim();
@@ -532,7 +657,7 @@
 
                     user.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
                     user.ActiveKhoa = user.KhoaList[0] || 'KHTH';
-                    
+
                     localStorage.setItem('currentUser', JSON.stringify(user));
                     currentUser = user;
 
@@ -556,10 +681,10 @@
         // ĐỒNG BỘ LÊN GOOGLE SHEETS
         async function syncWithGAS(actionName, payloadData) {
             try {
-                await fetch(GAS_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                    body: JSON.stringify({ action: actionName, data: payloadData }) 
+                await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: actionName, data: payloadData })
                 });
             } catch (e) {
                 console.error("Lỗi đồng bộ", e);
@@ -571,7 +696,7 @@
         async function loadDataFromGAS() {
             document.getElementById('loading-screen').classList.remove('hidden');
             document.getElementById('retry-btn-container').classList.add('hidden');
-            
+
             document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
             document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
             lucide.createIcons();
@@ -583,10 +708,10 @@
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
                 if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
-                
+
                 if (results[3] && results[3].status === "success") MOCK_DB.phieuBoiDuong = results[3].data || [];
                 else MOCK_DB.phieuBoiDuong = [];
-                
+
                 if (results[2] && results[2].status === "success") {
                     MOCK_DB.shifts = (results[2].data || []).map(s => ({
                         ...s,
@@ -612,15 +737,15 @@
             }
         }
 
-        // KHỞI TẠO CÁC DROPDOWN
+        // KHỞI TẠO CÁC DROPDOWN VÀ QUYỀN GIAO DIỆN
         function initUI() {
             const today = new Date();
-            
+
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
-            if(today.getDate() < 5) {
+            if (today.getDate() < 5) {
                 defaultMonth -= 1;
-                if(defaultMonth === 0) {
+                if (defaultMonth === 0) {
                     defaultMonth = 12;
                     defaultYear -= 1;
                 }
@@ -630,13 +755,13 @@
             document.getElementById('sel-year').value = defaultYear;
 
             const selKhoa = document.getElementById('sel-khoa');
-            
+
             let dsKhoa = MOCK_DB.khoa || [];
-            
+
             // Tách biệt quyền Xem Tất Cả (Chỉ KHTH và Kế toán) và Quyền Duyệt
             const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
             const isKeToan = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
-            
+
             if (isKHTH_Account || isKeToan) {
                 // Cho phép Tài vụ / Kế toán / KHTH xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
                 dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
@@ -647,7 +772,43 @@
 
             selKhoa.innerHTML = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
 
+            // Hiển thị nút Cài đặt đơn giá nếu là Kế toán
+            if (isKeToan) {
+                document.getElementById('btn-settings').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-settings').classList.add('hidden');
+            }
+
             if (dsKhoa.length > 0) generateReport();
+        }
+
+        // ==========================================
+        // CÀI ĐẶT ĐƠN GIÁ (DÀNH CHO TCKT)
+        // ==========================================
+        function openSettingsModal() {
+            let ratesStr = localStorage.getItem('defaultRates');
+            let rates = ratesStr ? JSON.parse(ratesStr) : { wd: '', we: '' };
+
+            document.getElementById('setting-wd').value = rates.wd;
+            document.getElementById('setting-we').value = rates.we;
+
+            document.getElementById('settings-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            let wd = document.getElementById('setting-wd').value;
+            let we = document.getElementById('setting-we').value;
+
+            localStorage.setItem('defaultRates', JSON.stringify({ wd: wd, we: we }));
+            closeSettingsModal();
+
+            showToast("Đã lưu Cài đặt đơn giá!", "info");
+            generateReport(); // Cập nhật lại báo cáo với giá mới
         }
 
         // ==========================================
@@ -685,7 +846,7 @@
             // Tìm thông tin phiếu từ DB
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
             let status = phieu ? phieu.TrangThai : 'Nháp';
-            
+
             // Chuẩn hóa trạng thái cũ
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
@@ -702,36 +863,36 @@
             if (status === 'Nháp' || status === 'KHTH trả lại') {
                 badge.textContent = status === 'Nháp' ? "Chưa gửi KHTH" : "KHTH Trả Lại";
                 badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Nháp' ? "bg-slate-200 text-slate-600" : "bg-red-100 text-red-700") + " whitespace-nowrap";
-                
-                if(status === 'KHTH trả lại') {
-                    if(btnSendText) btnSendText.textContent = "Gửi duyệt lại";
+
+                if (status === 'KHTH trả lại') {
+                    if (btnSendText) btnSendText.textContent = "Gửi duyệt lại";
                     btnSend.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                     btnSend.classList.add('bg-orange-600', 'hover:bg-orange-700');
-                    
-                    if(noteData.reason) {
+
+                    if (noteData.reason) {
                         rejectBanner.classList.remove('hidden');
                         document.getElementById('reject-reason-text').textContent = "KHTH Từ chối: " + noteData.reason;
                     }
                 } else {
-                    if(btnSendText) btnSendText.textContent = "Gửi KHTH";
+                    if (btnSendText) btnSendText.textContent = "Gửi KHTH";
                     btnSend.classList.remove('bg-orange-600', 'hover:bg-orange-700');
                     btnSend.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 }
 
                 // Chỉ Khoa sở hữu phiếu mới được bấm nút gửi (Kể cả TCHC khi làm nháp phiếu của chính mình)
                 if (isOwner && !isTCKT) btnSend.classList.remove('hidden');
-                
+
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
                 btnPrint.classList.remove('hover:bg-blue-700');
-            } 
-            
+            }
+
             // 2. TRẠNG THÁI CHỜ KHTH DUYỆT HOẶC TCKT TRẢ LẠI
             else if (status === 'Chờ KHTH duyệt' || status === 'TCKT trả lại') {
                 badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ KHTH xử lý)";
                 badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Chờ KHTH duyệt' ? "bg-yellow-100 text-yellow-800" : "bg-orange-100 text-orange-800") + " whitespace-nowrap";
-                
-                if(status === 'TCKT trả lại' && noteData.reason) {
+
+                if (status === 'TCKT trả lại' && noteData.reason) {
                     rejectBanner.classList.remove('hidden');
                     document.getElementById('reject-reason-text').textContent = "TCKT Từ chối: " + noteData.reason;
                 }
@@ -739,7 +900,7 @@
                 if (isKHTH) {
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt chuyển TCKT`;
-                    
+
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại Khoa`;
                 }
@@ -747,18 +908,18 @@
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
                 btnPrint.classList.remove('hover:bg-blue-700');
-            } 
-            
+            }
+
             // 3. TRẠNG THÁI CHỜ TCKT CHỐT
             else if (status === 'Chờ TCKT chốt') {
                 badge.textContent = "Đã Duyệt - Chờ TCKT Nhập Tiền & Chốt";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 whitespace-nowrap";
-                
+
                 if (isTCKT) {
                     btnSaveMoney.classList.remove('hidden');
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="lock" class="w-3 h-3 inline mr-1"></i>Chốt Phiếu`;
-                    
+
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại KHTH`;
                 }
@@ -777,7 +938,7 @@
             else if (status === 'Đã chốt') {
                 badge.textContent = "TCKT Đã Chốt - Được Phép In";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
-                
+
                 btnPrint.disabled = false;
                 btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnPrint.classList.add('hover:bg-blue-700');
@@ -788,7 +949,7 @@
                     btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy Chốt`;
                 }
             }
-            
+
             lucide.createIcons();
         }
 
@@ -802,13 +963,13 @@
             let currentData = parseGhiChu(phieu ? phieu.GhiChu : "");
 
             currentData.reason = reasonStr; // Cập nhật lý do
-            
+
             if (!phieu) {
-                phieu = { 
-                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, 
-                    MaKhoa: maKhoa, 
-                    Thang: month, 
-                    Nam: year, 
+                phieu = {
+                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`,
+                    MaKhoa: maKhoa,
+                    Thang: month,
+                    Nam: year,
                     TrangThai: status,
                     NguoiDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? currentUser.MaNV : '',
                     NgayDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? new Date().toISOString().split('T')[0] : '',
@@ -817,7 +978,7 @@
                 MOCK_DB.phieuBoiDuong.push(phieu);
             } else {
                 phieu.TrangThai = status;
-                if(status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt') {
+                if (status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt') {
                     phieu.NguoiDuyet = currentUser.MaNV;
                     phieu.NgayDuyet = new Date().toISOString().split('T')[0];
                 }
@@ -833,9 +994,9 @@
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            
+
             let status = phieu ? phieu.TrangThai : 'Nháp';
-            if (status === 'Trả lại') status = 'KHTH trả lại'; 
+            if (status === 'Trả lại') status = 'KHTH trả lại';
             let isResend = status === 'KHTH trả lại';
 
             showConfirmModal(
@@ -878,7 +1039,7 @@
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            
+
             let status = phieu ? phieu.TrangThai : '';
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
@@ -930,7 +1091,7 @@
             } else if (isKHTH) {
                 updatePhieuStatus('KHTH trả lại', reason);
             }
-            
+
             closeRejectModal();
             showToast("Đã trả lại phiếu!", "warning");
         }
@@ -943,18 +1104,18 @@
                 const nights = parseInt(input.getAttribute('data-nights') || 0);
                 const rate = parseInt(input.value || 0);
                 const total = nights * rate;
-                
+
                 const totalEl = document.getElementById(`total_${id}`);
-                if(totalEl) totalEl.textContent = total > 0 ? formatCurrency(total) : '';
-                
+                if (totalEl) totalEl.textContent = total > 0 ? formatCurrency(total) : '';
+
                 const printSpan = input.nextElementSibling;
-                if(printSpan && printSpan.classList.contains('print-value')) {
+                if (printSpan && printSpan.classList.contains('print-value')) {
                     printSpan.textContent = rate > 0 ? formatCurrency(rate) : '';
                 }
-                
+
                 sum += total;
             });
-            
+
             document.getElementById('lbl-total-amount').textContent = sum > 0 ? formatCurrency(sum) : '';
             document.getElementById('lbl-money-text').textContent = sum > 0 ? docTienTienViet(sum) : '............................................................................................................................................................';
         }
@@ -965,18 +1126,18 @@
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            
+
             if (!phieu) return showToast("Phiếu không tồn tại!", "error");
-            
+
             let noteData = parseGhiChu(phieu.GhiChu);
             noteData.rates = {};
-            
+
             document.querySelectorAll('.rate-input').forEach(input => {
                 const id = input.getAttribute('data-id');
                 const rate = input.value;
-                if (rate) noteData.rates[id] = rate;
+                if (rate) noteData.rates[id] = rate; // Nếu input trống thì bỏ qua (ko lưu)
             });
-            
+
             phieu.GhiChu = JSON.stringify(noteData);
             syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
             showToast("Đã tính và lưu thành công Số tiền Bồi dưỡng!", "success");
@@ -992,13 +1153,13 @@
             // XỬ LÝ TIÊU ĐỀ
             let titleHtml = "";
             let upperKhoa = tenKhoa.toUpperCase();
-            
+
             if (upperKhoa.startsWith("KHOA ")) {
                 titleHtml = `PHIẾU BỒI DƯỠNG TRỰC ${upperKhoa}`;
             } else {
                 titleHtml = `PHIẾU BỒI DƯỠNG TRỰC KHOA ${upperKhoa}`;
             }
-            
+
             if (maKhoa === 'CNTT') {
                 titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ CÔNG NGHỆ THÔNG TIN PHÒNG KẾ HOẠCH TỔNG HỢP`;
             } else if (maKhoa === 'TAIVU' || maKhoa === 'TAICHINHKETOAN') {
@@ -1012,12 +1173,12 @@
             } else if (maKhoa === 'TAIXE') {
                 titleHtml = `PHIẾU BỒI DƯỠNG TỔ TÀI XẾ PHÒNG TỔ CHỨC HÀNH CHÍNH`;
             }
-            
+
             document.getElementById('main-report-title').innerHTML = titleHtml;
 
             const lastDay = new Date(year, month, 0).getDate();
-            document.getElementById('lbl-start-date').textContent = `01/${month < 10 ? '0'+month : month}/${year}`;
-            document.getElementById('lbl-end-date').textContent = `${lastDay}/${month < 10 ? '0'+month : month}/${year}`;
+            document.getElementById('lbl-start-date').textContent = `01/${month < 10 ? '0' + month : month}/${year}`;
+            document.getElementById('lbl-end-date').textContent = `${lastDay}/${month < 10 ? '0' + month : month}/${year}`;
 
             // Lọc ca trực trong tháng
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
@@ -1043,11 +1204,20 @@
             const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
             const canEnterMoney = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
-            const userShifts = {}; 
+            // --- LẤY CÀI ĐẶT ĐƠN GIÁ TỪ LOCAL STORAGE VÀ ÁP DỤNG LUẬT CHIA ĐÔI CHO HSCC ---
+            const defaultRatesStr = localStorage.getItem('defaultRates');
+            const parsedDefRates = defaultRatesStr ? JSON.parse(defaultRatesStr) : { wd: '', we: '' };
+
+            // Nếu mã khoa là HSCC -> Chia 2 đơn giá
+            const priceMultiplier = (maKhoa.toUpperCase() === 'HSCC') ? 0.5 : 1;
+            const defRateWd = parsedDefRates.wd ? Math.round(parseInt(parsedDefRates.wd) * priceMultiplier) : '';
+            const defRateWe = parsedDefRates.we ? Math.round(parseInt(parsedDefRates.we) * priceMultiplier) : '';
+
+            const userShifts = {};
             shiftsInMonth.forEach(s => {
                 if (!userShifts[s.MaNV]) {
                     const uInfo = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
-                    
+
                     let roleDisplay = ROLE_MAP[s.ChucDanh] || s.ChucDanh;
                     if (roleDisplay.toLowerCase() === 'khác' || roleDisplay.toLowerCase() === 'k') roleDisplay = 'Nhân viên';
 
@@ -1059,15 +1229,15 @@
                         weekends: []
                     };
                 }
-                
+
                 const d = new Date(s.NgayTruc + "T12:00:00");
-                const dayOfWeek = d.getDay(); 
+                const dayOfWeek = d.getDay();
                 const dateNum = d.getDate();
 
                 if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    if(!userShifts[s.MaNV].weekends.includes(dateNum)) userShifts[s.MaNV].weekends.push(dateNum);
+                    if (!userShifts[s.MaNV].weekends.includes(dateNum)) userShifts[s.MaNV].weekends.push(dateNum);
                 } else {
-                    if(!userShifts[s.MaNV].weekdays.includes(dateNum)) userShifts[s.MaNV].weekdays.push(dateNum);
+                    if (!userShifts[s.MaNV].weekdays.includes(dateNum)) userShifts[s.MaNV].weekdays.push(dateNum);
                 }
             });
 
@@ -1076,20 +1246,29 @@
             let totalAllNights = 0;
             let grandTotalMoney = 0;
 
-            const padStt = (n) => n < 10 ? '0'+n : n;
-            const padNum = (n) => n < 10 ? '0'+n : n;
+            const padStt = (n) => n < 10 ? '0' + n : n;
+            const padNum = (n) => n < 10 ? '0' + n : n;
             const formatDates = (arr) => arr.join(', ');
 
             for (let maNV in userShifts) {
                 const u = userShifts[maNV];
-                u.weekdays.sort((a,b) => a - b);
-                u.weekends.sort((a,b) => a - b);
+                u.weekdays.sort((a, b) => a - b);
+                u.weekends.sort((a, b) => a - b);
 
                 const hasWD = u.weekdays.length > 0;
                 const hasWE = u.weekends.length > 0;
 
                 // Chuẩn bị dữ liệu tiền Ngày thường
-                let rateWd = savedRates[`${maNV}_wd`] || '';
+                let rateWd = '';
+                // 1. Nếu đã lưu dữ liệu tuỳ chỉnh thì dùng
+                if (savedRates.hasOwnProperty(`${maNV}_wd`)) {
+                    rateWd = savedRates[`${maNV}_wd`];
+                }
+                // 2. Nếu chưa lưu nhưng đang ở phiên TCKT thì tự động lấy giá mặc định
+                else if (canEnterMoney) {
+                    rateWd = defRateWd;
+                }
+
                 let totalWd = rateWd ? parseInt(rateWd) * u.weekdays.length : 0;
                 grandTotalMoney += totalWd;
 
@@ -1102,7 +1281,13 @@
                 let cellTotalWd = `<span id="total_${maNV}_wd" class="row-total font-bold">${totalWd ? formatCurrency(totalWd) : ''}</span>`;
 
                 // Chuẩn bị dữ liệu tiền T7, CN
-                let rateWe = savedRates[`${maNV}_we`] || '';
+                let rateWe = '';
+                if (savedRates.hasOwnProperty(`${maNV}_we`)) {
+                    rateWe = savedRates[`${maNV}_we`];
+                } else if (canEnterMoney) {
+                    rateWe = defRateWe;
+                }
+
                 let totalWe = rateWe ? parseInt(rateWe) * u.weekends.length : 0;
                 grandTotalMoney += totalWe;
 
@@ -1165,7 +1350,7 @@
                     `;
                     totalAllNights += u.weekends.length;
                 }
-                if(hasWD || hasWE) stt++;
+                if (hasWD || hasWE) stt++;
             }
 
             if (Object.keys(userShifts).length === 0) {
@@ -1175,9 +1360,13 @@
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
             document.getElementById('lbl-total-nights').textContent = padStt(totalAllNights);
 
-            // Set tổng cộng lúc ban đầu load
-            document.getElementById('lbl-total-amount').textContent = grandTotalMoney > 0 ? formatCurrency(grandTotalMoney) : '';
-            document.getElementById('lbl-money-text').textContent = grandTotalMoney > 0 ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
+            // Cập nhật lại số tiền nếu TCKT đang xem để hiển thị chính xác dòng Tổng (Vì ô input có thể nhận được giá trị tự động)
+            if (canEnterMoney) {
+                calculateTotals();
+            } else {
+                document.getElementById('lbl-total-amount').textContent = grandTotalMoney > 0 ? formatCurrency(grandTotalMoney) : '';
+                document.getElementById('lbl-money-text').textContent = grandTotalMoney > 0 ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
+            }
         }
 
         window.onload = () => {
