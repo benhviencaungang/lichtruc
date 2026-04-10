@@ -212,24 +212,22 @@
             <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
                 <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa gửi</span>
                 
+                <!-- Nhóm nút bấm đa năng tùy theo Phân quyền (isKHTH, isTCKT, isKhoa) -->
                 <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
-                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Gửi duyệt</span>
+                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Gửi KHTH</span>
                 </button>
                 <button id="btn-approve" onclick="approvePhieu()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
                 </button>
-                
-                <!-- NÚT LƯU TIỀN (Chỉ hiện khi đã duyệt và là KHTH/TCHC) -->
                 <button id="btn-save-money" onclick="saveMoney()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Số Tiền
                 </button>
-
                 <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối
                 </button>
             </div>
             
-            <button id="btn-print" onclick="window.print()" class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0" disabled title="Chỉ được in khi phiếu ĐÃ ĐƯỢC DUYỆT">
+            <button id="btn-print" onclick="window.print()" class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0" disabled title="Chỉ được in khi TCKT đã đóng chốt">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Phiếu (A4)
             </button>
         </div>
@@ -247,8 +245,8 @@
                 <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> Từ chối / Trả lại Phiếu
             </div>
             <div class="p-6">
-                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để Khoa nắm thông tin và chỉnh sửa:</p>
-                <textarea id="reject-reason-input" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans" rows="3" placeholder="VD: Sai số ngày trực của BS A..."></textarea>
+                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để bộ phận trước nắm thông tin và chỉnh sửa:</p>
+                <textarea id="reject-reason-input" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans" rows="3" placeholder="VD: Sai số ngày trực của BS A, áp sai định mức..."></textarea>
                 <div class="flex justify-end space-x-3 mt-4">
                     <button onclick="closeRejectModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
                     <button onclick="confirmReject()" class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác nhận Trả lại</button>
@@ -346,7 +344,7 @@
     <script>
         lucide.createIcons();
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzlt_Rh4vnf0-PtfR8BcjgJ0tvN65vLaS2Xvehptmj42XgAox-p9Ag2JzaIUjfz_Fcv/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwSWURLwy4V3y9Z2wJtMIpV1brZsGq7m2wDoFCYx3UbIGjmtAmrCKinLiVEOWBCwbFY/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], phieuBoiDuong: [] };
         let currentUser = null;
 
@@ -635,14 +633,15 @@
             
             let dsKhoa = MOCK_DB.khoa || [];
             
-            // Quyền Duyệt và Nhập Tiền dành cho Tổ chức Hành chánh / KHTH
-            const isApprover = isGlobalAdmin();
+            // Tách biệt quyền Xem Tất Cả (Chỉ KHTH và Kế toán) và Quyền Duyệt
+            const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
             const isKeToan = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
             
-            if (isApprover || isKeToan) {
-                // Cho phép Tài vụ / Kế toán / KHTH / TCHC xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
-                dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN');
-            } else if (currentUser.Role === 'Admin_Khoa') {
+            if (isKHTH_Account || isKeToan) {
+                // Cho phép Tài vụ / Kế toán / KHTH xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
+                dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
+            } else {
+                // Các Admin_Khoa khác (Bao gồm cả Tổ chức hành chánh) chỉ xem các khoa thuộc quyền quản lý của mình
                 dsKhoa = dsKhoa.filter(k => currentUser.KhoaList.includes(k.MaKhoa));
             }
 
@@ -685,54 +684,64 @@
 
             // Tìm thông tin phiếu từ DB
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            const status = phieu ? phieu.TrangThai : 'Nháp';
+            let status = phieu ? phieu.TrangThai : 'Nháp';
             
+            // Chuẩn hóa trạng thái cũ
+            if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
+            if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
+            if (status === 'Trả lại') status = 'KHTH trả lại';
+
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
 
             // CHỈ KHTH / TCHC mới có quyền duyệt và điền tiền
-            const isApprover = isGlobalAdmin();
-            const isOwner = currentUser.KhoaList.includes(maKhoa) || isApprover;
+            const isKHTH = isGlobalAdmin();
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isOwner = currentUser.KhoaList.includes(maKhoa); // Khoa sở hữu phiếu
 
-            // 1. TRẠNG THÁI NHÁP HOẶC BỊ TRẢ LẠI
-            if (status === 'Nháp' || status === 'Trả lại') {
-                badge.textContent = status === 'Nháp' ? "Chưa gửi duyệt" : "Bị Trả Lại";
-                badge.className = "px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap";
+            // 1. TRẠNG THÁI NHÁP HOẶC KHTH TRẢ LẠI
+            if (status === 'Nháp' || status === 'KHTH trả lại') {
+                badge.textContent = status === 'Nháp' ? "Chưa gửi KHTH" : "KHTH Trả Lại";
+                badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Nháp' ? "bg-slate-200 text-slate-600" : "bg-red-100 text-red-700") + " whitespace-nowrap";
                 
-                if(status === 'Trả lại') {
-                    badge.className = "px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap";
-                    
-                    // Chuyển nút sang màu cam "Gửi duyệt lại"
+                if(status === 'KHTH trả lại') {
                     if(btnSendText) btnSendText.textContent = "Gửi duyệt lại";
                     btnSend.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                     btnSend.classList.add('bg-orange-600', 'hover:bg-orange-700');
-
+                    
                     if(noteData.reason) {
                         rejectBanner.classList.remove('hidden');
-                        document.getElementById('reject-reason-text').textContent = "Lý do từ chối: " + noteData.reason;
+                        document.getElementById('reject-reason-text').textContent = "KHTH Từ chối: " + noteData.reason;
                     }
                 } else {
-                    // Mặc định màu xanh dương
-                    if(btnSendText) btnSendText.textContent = "Gửi duyệt";
+                    if(btnSendText) btnSendText.textContent = "Gửi KHTH";
                     btnSend.classList.remove('bg-orange-600', 'hover:bg-orange-700');
                     btnSend.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 }
 
-                if (isOwner) btnSend.classList.remove('hidden');
+                // Chỉ Khoa sở hữu phiếu mới được bấm nút gửi (Kể cả TCHC khi làm nháp phiếu của chính mình)
+                if (isOwner && !isTCKT) btnSend.classList.remove('hidden');
                 
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
                 btnPrint.classList.remove('hover:bg-blue-700');
             } 
             
-            // 2. TRẠNG THÁI CHỜ DUYỆT
-            else if (status === 'Chờ duyệt') {
-                badge.textContent = "Chờ Tổ chức Hành chánh / KHTH Duyệt";
-                badge.className = "px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800 whitespace-nowrap";
+            // 2. TRẠNG THÁI CHỜ KHTH DUYỆT HOẶC TCKT TRẢ LẠI
+            else if (status === 'Chờ KHTH duyệt' || status === 'TCKT trả lại') {
+                badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ KHTH xử lý)";
+                badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Chờ KHTH duyệt' ? "bg-yellow-100 text-yellow-800" : "bg-orange-100 text-orange-800") + " whitespace-nowrap";
                 
-                if (isApprover) {
+                if(status === 'TCKT trả lại' && noteData.reason) {
+                    rejectBanner.classList.remove('hidden');
+                    document.getElementById('reject-reason-text').textContent = "TCKT Từ chối: " + noteData.reason;
+                }
+
+                if (isKHTH) {
                     btnApprove.classList.remove('hidden');
+                    btnApprove.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt chuyển TCKT`;
+                    
                     btnCancel.classList.remove('hidden');
-                    btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối`;
+                    btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại Khoa`;
                 }
 
                 btnPrint.disabled = true;
@@ -740,20 +749,43 @@
                 btnPrint.classList.remove('hover:bg-blue-700');
             } 
             
-            // 3. TRẠNG THÁI ĐÃ DUYỆT
-            else if (status === 'Đã duyệt') {
-                badge.textContent = "Đã được Duyệt";
+            // 3. TRẠNG THÁI CHỜ TCKT CHỐT
+            else if (status === 'Chờ TCKT chốt') {
+                badge.textContent = "Đã Duyệt - Chờ TCKT Nhập Tiền & Chốt";
+                badge.className = "px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 whitespace-nowrap";
+                
+                if (isTCKT) {
+                    btnSaveMoney.classList.remove('hidden');
+                    btnApprove.classList.remove('hidden');
+                    btnApprove.innerHTML = `<i data-lucide="lock" class="w-3 h-3 inline mr-1"></i>Chốt Phiếu`;
+                    
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại KHTH`;
+                }
+
+                if (isKHTH) {
+                    btnCancel.classList.remove('hidden');
+                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Rút lại (Hủy duyệt)`;
+                }
+
+                btnPrint.disabled = true;
+                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
+                btnPrint.classList.remove('hover:bg-blue-700');
+            }
+
+            // 4. TRẠNG THÁI ĐÃ CHỐT
+            else if (status === 'Đã chốt') {
+                badge.textContent = "TCKT Đã Chốt - Được Phép In";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
                 
                 btnPrint.disabled = false;
                 btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnPrint.classList.add('hover:bg-blue-700');
 
-                // Quyền Lưu Tiền và Hủy duyệt chỉ hiển thị cho KHTH / TCHC
-                if (isApprover) {
+                if (isTCKT) {
                     btnSaveMoney.classList.remove('hidden');
                     btnCancel.classList.remove('hidden');
-                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy duyệt`;
+                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy Chốt`;
                 }
             }
             
@@ -778,14 +810,14 @@
                     Thang: month, 
                     Nam: year, 
                     TrangThai: status,
-                    NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
-                    NgayDuyet: status === 'Đã duyệt' ? new Date().toISOString().split('T')[0] : '',
+                    NguoiDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? currentUser.MaNV : '',
+                    NgayDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? new Date().toISOString().split('T')[0] : '',
                     GhiChu: JSON.stringify(currentData)
                 };
                 MOCK_DB.phieuBoiDuong.push(phieu);
             } else {
                 phieu.TrangThai = status;
-                if(status === 'Đã duyệt') {
+                if(status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt') {
                     phieu.NguoiDuyet = currentUser.MaNV;
                     phieu.NgayDuyet = new Date().toISOString().split('T')[0];
                 }
@@ -801,27 +833,44 @@
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            let isResend = phieu && phieu.TrangThai === 'Trả lại';
+            
+            let status = phieu ? phieu.TrangThai : 'Nháp';
+            if (status === 'Trả lại') status = 'KHTH trả lại'; 
+            let isResend = status === 'KHTH trả lại';
 
             showConfirmModal(
-                isResend ? "Xác nhận gửi lại phiếu" : "Xác nhận gửi duyệt",
-                isResend ? "Bạn có chắc chắn muốn GỬI LẠI phiếu bồi dưỡng này cho Tổ chức Hành chánh / KHTH duyệt sau khi đã cập nhật số liệu mới nhất?" : "Bạn có chắc chắn muốn GỬI phiếu bồi dưỡng này cho Tổ chức Hành chánh / KHTH duyệt?\nVui lòng kiểm tra kỹ danh sách công trực.",
+                isResend ? "Xác nhận gửi lại phiếu" : "Xác nhận gửi KHTH",
+                isResend ? "Bạn có chắc chắn muốn GỬI LẠI phiếu bồi dưỡng này cho KHTH duyệt sau khi đã sửa đổi?" : "Bạn có chắc chắn muốn GỬI phiếu bồi dưỡng này cho KHTH duyệt?\nVui lòng kiểm tra kỹ danh sách công trực.",
                 () => {
-                    updatePhieuStatus('Chờ duyệt');
+                    updatePhieuStatus('Chờ KHTH duyệt');
                     showToast("Đã gửi phiếu thành công!", "success");
                 }
             );
         }
 
         function approvePhieu() {
-            showConfirmModal(
-                "Xác nhận phê duyệt",
-                "Xác nhận PHÊ DUYỆT phiếu bồi dưỡng trực này?\nSau khi duyệt, bạn có thể điền Số Tiền bồi dưỡng và in ấn.",
-                () => {
-                    updatePhieuStatus('Đã duyệt');
-                    showToast("Đã duyệt phiếu thành công!", "success");
-                }
-            );
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isKHTH = isGlobalAdmin();
+
+            if (isTCKT) {
+                showConfirmModal(
+                    "Xác nhận Chốt Phiếu",
+                    "Bạn xác nhận CHỐT phiếu và số tiền của khoa này? (Sau khi chốt Khoa sẽ được phép in)",
+                    () => {
+                        updatePhieuStatus('Đã chốt');
+                        showToast("Đã chốt phiếu thành công!", "success");
+                    }
+                );
+            } else if (isKHTH) {
+                showConfirmModal(
+                    "Xác nhận Phê duyệt",
+                    "Xác nhận PHÊ DUYỆT phiếu bồi dưỡng này và chuyển cho Kế toán (TCKT) chốt?",
+                    () => {
+                        updatePhieuStatus('Chờ TCKT chốt');
+                        showToast("Đã duyệt chuyển TCKT thành công!", "success");
+                    }
+                );
+            }
         }
 
         function cancelApprove() {
@@ -830,16 +879,33 @@
             const maKhoa = document.getElementById('sel-khoa').value;
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
             
-            if (phieu && phieu.TrangThai === 'Đã duyệt') {
+            let status = phieu ? phieu.TrangThai : '';
+            if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
+            if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
+
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isKHTH = isGlobalAdmin();
+
+            if (isTCKT && status === 'Đã chốt') {
                 showConfirmModal(
-                    "Xác nhận Hủy duyệt",
-                    "Xác nhận HỦY DUYỆT phiếu này? (Phiếu sẽ chuyển về trạng thái Chờ duyệt để Khoa sửa lại)",
+                    "Xác nhận Hủy chốt",
+                    "Xác nhận HỦY CHỐT phiếu này? (Phiếu sẽ quay về trạng thái Chờ TCKT chốt)",
                     () => {
-                        updatePhieuStatus('Chờ duyệt', "Bị hủy duyệt bởi Tổ chức Hành chánh / KHTH");
-                        showToast("Đã hủy duyệt phiếu!", "warning");
+                        updatePhieuStatus('Chờ TCKT chốt', "Kế toán đã hủy chốt");
+                        showToast("Đã hủy chốt phiếu!", "warning");
+                    }
+                );
+            } else if (isKHTH && status === 'Chờ TCKT chốt') {
+                showConfirmModal(
+                    "Xác nhận Rút lại",
+                    "Xác nhận RÚT LẠI phê duyệt? (Phiếu sẽ quay về trạng thái Chờ KHTH duyệt)",
+                    () => {
+                        updatePhieuStatus('Chờ KHTH duyệt', "KHTH tự rút lại phê duyệt");
+                        showToast("Đã rút lại phiếu!", "warning");
                     }
                 );
             } else {
+                // Mở modal nhập lý do từ chối (KHTH từ chối Khoa, hoặc TCKT từ chối KHTH)
                 document.getElementById('reject-reason-input').value = "";
                 document.getElementById('reject-modal').classList.remove('hidden');
             }
@@ -850,12 +916,21 @@
         }
 
         function confirmReject() {
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isKHTH = isGlobalAdmin();
+
             const reason = document.getElementById('reject-reason-input').value.trim();
             if (!reason) {
                 showToast("Vui lòng nhập lý do từ chối!", "error");
                 return;
             }
-            updatePhieuStatus('Trả lại', reason);
+
+            if (isTCKT) {
+                updatePhieuStatus('TCKT trả lại', reason);
+            } else if (isKHTH) {
+                updatePhieuStatus('KHTH trả lại', reason);
+            }
+            
             closeRejectModal();
             showToast("Đã trả lại phiếu!", "warning");
         }
@@ -956,13 +1031,17 @@
 
             // Kiểm tra quyền và tải dữ liệu Tiền (Nếu có)
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-            const status = phieu ? phieu.TrangThai : 'Nháp';
+            let status = phieu ? phieu.TrangThai : 'Nháp';
+            if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
+            if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
+            if (status === 'Trả lại') status = 'KHTH trả lại';
+
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
             const savedRates = noteData.rates || {};
 
-            // CHỈ KHTH / TCHC mới có quyền nhập số tiền
-            const isApprover = isGlobalAdmin();
-            const canEnterMoney = isApprover;
+            // CHỈ TCKT mới có quyền nhập số tiền
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const canEnterMoney = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
             const userShifts = {}; 
             shiftsInMonth.forEach(s => {
@@ -1015,8 +1094,8 @@
                 grandTotalMoney += totalWd;
 
                 let inputWdHtml = '';
-                let printWdHtml = `<span class="print-value ${canEnterMoney && status === 'Đã duyệt' ? 'hidden' : ''}">${rateWd ? formatCurrency(rateWd) : ''}</span>`;
-                if (canEnterMoney && status === 'Đã duyệt') {
+                let printWdHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${rateWd ? formatCurrency(rateWd) : ''}</span>`;
+                if (canEnterMoney) {
                     inputWdHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_wd" data-nights="${u.weekdays.length}" value="${rateWd}" placeholder="Nhập số..." oninput="calculateTotals()">`;
                 }
                 let cellRateWd = `${inputWdHtml}${printWdHtml}`;
@@ -1028,8 +1107,8 @@
                 grandTotalMoney += totalWe;
 
                 let inputWeHtml = '';
-                let printWeHtml = `<span class="print-value ${canEnterMoney && status === 'Đã duyệt' ? 'hidden' : ''}">${rateWe ? formatCurrency(rateWe) : ''}</span>`;
-                if (canEnterMoney && status === 'Đã duyệt') {
+                let printWeHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${rateWe ? formatCurrency(rateWe) : ''}</span>`;
+                if (canEnterMoney) {
                     inputWeHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_we" data-nights="${u.weekends.length}" value="${rateWe}" placeholder="Nhập số..." oninput="calculateTotals()">`;
                 }
                 let cellRateWe = `${inputWeHtml}${printWeHtml}`;
