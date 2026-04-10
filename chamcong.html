@@ -78,7 +78,7 @@
                 text-align: center;
                 vertical-align: middle;
                 font-size: 9pt !important;
-                line-height: 1.1 !important; /* Thu gọn khoảng cách dòng khi in Sáng/Chiều */
+                line-height: 1.1 !important;
             }
 
             .bg-gray-300 {
@@ -121,20 +121,16 @@
             line-height: 1.2;
         }
 
-        /* Hover effect cho các ô có thể chọn ký hiệu */
         .cell-day:hover {
-            background-color: #fef08a !important; /* Vàng nhạt */
+            background-color: #fef08a !important;
             cursor: pointer;
         }
 
-        /* Cột ngày nhỏ gọn */
         .day-col { min-width: 22px; max-width: 26px; }
 
-        /* Animations */
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* CSS cho ngày tháng có thể chỉnh sửa */
         .editable-date {
             outline: none;
             border-bottom: 1px dashed #94a3b8;
@@ -148,17 +144,14 @@
             background-color: #eff6ff;
         }
         
-        /* Select styling trong popup */
         .shift-select option { font-family: sans-serif; }
     </style>
 </head>
 
 <body class="bg-slate-100 text-slate-900 doc-font h-screen flex flex-col relative" onclick="closeShiftPicker(event)">
 
-    <!-- TOAST CONTAINER -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
 
-    <!-- CUSTOM CONFIRM MODAL -->
     <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden font-sans">
             <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800" id="confirm-modal-title">
@@ -174,7 +167,6 @@
         </div>
     </div>
 
-    <!-- MODULE: MÀN HÌNH ĐĂNG NHẬP -->
     <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
@@ -204,7 +196,6 @@
         </div>
     </div>
 
-    <!-- BỘ TẢI DỮ LIỆU BẢO VỆ MÀN HÌNH -->
     <div id="loading-screen" class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
@@ -217,7 +208,6 @@
         </div>
     </div>
 
-    <!-- BỘ CHỌN KÝ HIỆU 2 CA (SÁNG - CHIỀU) -->
     <div id="shift-picker-popover" onclick="event.stopPropagation()" class="hidden absolute bg-white border border-slate-300 shadow-2xl rounded-xl z-[100] p-4 text-sm font-sans flex flex-col no-print w-80 fade-in">
         <div class="font-bold text-blue-800 border-b border-slate-200 pb-2 mb-3 flex justify-between items-center">
             <span id="sp-title">Chọn công</span>
@@ -227,14 +217,12 @@
             <div class="w-1/2 flex flex-col">
                 <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Sáng</label>
                 <select id="sp-sang" onchange="handleMorningChange()" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer">
-                    <!-- Populated by JS -->
-                </select>
+                    </select>
             </div>
             <div class="w-1/2 flex flex-col">
                 <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Chiều</label>
                 <select id="sp-chieu" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
-                    <!-- Populated by JS -->
-                </select>
+                    </select>
             </div>
         </div>
         <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
@@ -243,12 +231,9 @@
         </div>
     </div>
 
-    <!-- KHU VỰC ĐIỀU KHIỂN (KHÔNG IN) -->
     <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
         
-        <!-- Nhóm lọc dữ liệu bên trái -->
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <!-- NÚT TRANG CHỦ -->
             <button onclick="handleGoHome()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
                 <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
             </button>
@@ -264,13 +249,10 @@
                 <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
             </select>
 
-            <!-- BỘ LỌC CHỌN KHOA RIÊNG ĐỂ DUYỆT (CHỈ HIỆN VỚI ADMIN) -->
             <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
                 <option value="ALL">-- Toàn viện --</option>
-                <!-- JS Populate -->
-            </select>
+                </select>
 
-            <!-- BỘ LỌC GÓC NHÌN -->
             <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium">
                 <option value="chitiet">Chi tiết phòng/trại</option>
                 <option value="khoa">Góc nhìn Khoa (Ẩn H/C)</option>
@@ -282,9 +264,7 @@
             </button>
         </div>
 
-        <!-- Nhóm phê duyệt & in bên phải -->
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
-            <!-- Vùng điều khiển Phê duyệt -->
             <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 transition-all">
                 <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa lưu</span>
                 
@@ -292,7 +272,7 @@
                     <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu
                 </button>
                 <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
-                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Trình KHTH</span>
+                    <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Trình TCHC</span>
                 </button>
                 <button id="btn-approve" onclick="approveBang()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
@@ -302,7 +282,6 @@
                 </button>
             </div>
 
-            <!-- Nút thống kê phép (Chỉ Admin mới thấy) -->
             <button id="btn-leave-stats" onclick="openLeaveStatsModal()" class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0" title="Thống kê Phép năm và Nghỉ bù">
                 <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
             </button>
@@ -313,11 +292,9 @@
         </div>
     </div>
     
-    <!-- KHU VỰC HIỂN THỊ TRANG IN -->
     <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-200 no-print-bg hidden" id="print-workspace">
         <div class="w-[1250px] max-w-full mx-auto bg-white shadow-xl border border-slate-200 p-8 print-area text-black">
             
-            <!-- HEADER CÔNG VĂN -->
             <div class="flex justify-between items-start mb-2">
                 <div class="text-center w-1/3 text-[11pt]">
                     <p class="font-bold">SỞ Y TẾ VĨNH LONG</p>
@@ -331,13 +308,11 @@
                 </div>
             </div>
 
-            <!-- TỔNG NHÂN VIÊN -->
             <div class="font-bold text-[11pt] mb-1 flex justify-between items-end">
                 <span>Tổng số nhân viên : <span id="lbl-total-nv">0</span></span>
                 <span class="text-[10px] italic font-normal text-gray-500 no-print">* Click vào ô ngày để chọn ký hiệu từ danh sách thả xuống</span>
             </div>
 
-            <!-- BẢNG DỮ LIỆU -->
             <table class="w-full table-custom text-center">
                 <thead>
                     <tr class="font-bold bg-white">
@@ -348,20 +323,15 @@
                         <th rowspan="2" class="w-16">Ghi chú</th>
                     </tr>
                     <tr class="font-bold bg-white" id="header-days">
-                        <!-- JS gen ngày 1-31 -->
-                    </tr>
+                        </tr>
                     <tr class="bg-gray-100 font-bold text-[10px]" id="header-col-index">
-                        <!-- JS gen A, B, 1-39 -->
-                    </tr>
+                        </tr>
                 </thead>
                 <tbody id="report-tbody">
-                    <!-- JS sẽ render dữ liệu toàn bộ khoa vào đây -->
-                </tbody>
+                    </tbody>
             </table>
 
-            <!-- FOOTER & LEGEND -->
             <div class="flex justify-between items-start mt-4 text-[10pt]">
-                <!-- GHI CHÚ KÝ HIỆU (CẬP NHẬT ĐẦY ĐỦ) -->
                 <div class="w-1/2">
                     <p class="font-bold underline mb-1">Ký hiệu chấm công</p>
                     <div class="flex">
@@ -374,6 +344,7 @@
                             <p>H : Đi học</p>
                             <p>CT : Công tác</p>
                             <p>CT/2: Công tác 1/2 ngày</p>
+                            <p>LT: Làm thêm ngày (+Phép)</p>
                         </div>
                         <div class="w-1/3">
                             <p>P: Nghỉ phép</p>
@@ -383,6 +354,7 @@
                             <p>HS: Nghỉ hộ sản</p>
                             <p>Rt: Ra trực</p>
                             <p>Rt/2: Ra trực 1/2 ngày</p>
+                            <p>LT/2: Làm thêm 1/2 ngày</p>
                         </div>
                         <div class="w-1/3">
                             <p>T24: Trực 24/24</p>
@@ -396,7 +368,6 @@
                     </div>
                 </div>
 
-                <!-- KÝ TÊN -->
                 <div class="w-1/2 flex justify-between text-center font-bold">
                     <div class="w-1/3">
                         <p class="uppercase">Xác nhận<br>P.Tổ chức Cán bộ</p>
@@ -405,7 +376,6 @@
                         <p class="uppercase"><br>Trưởng Khoa/Phòng</p>
                     </div>
                     <div class="w-1/3 font-normal">
-                        <!-- CHỈNH SỬA NGÀY THÁNG BẰNG contenteditable -->
                         <p class="italic mb-1 whitespace-nowrap">Ngày <span id="lbl-print-day" contenteditable="true" class="editable-date">...</span> tháng <span id="lbl-print-month" contenteditable="true" class="editable-date">...</span> năm <span id="lbl-print-year" contenteditable="true" class="editable-date">20...</span></p>
                         <p class="font-bold uppercase">Phụ trách chấm công</p>
                     </div>
@@ -415,15 +385,14 @@
         </div>
     </div>
 
-    <!-- MODAL THỐNG KÊ PHÉP NĂM VÀ NGHỈ BÙ -->
     <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-purple-50 px-6 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
                 <div>
                     <h3 class="font-bold text-lg text-purple-800 flex items-center">
-                        <i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Thống kê Phép năm & Nghỉ bù
+                        <i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Thống kê Phép năm & Nghỉ bù (Năm Hiện Tại)
                     </h3>
-                    <p class="text-sm text-purple-600 mt-1">Dữ liệu được tính toán dựa trên bảng chấm công của tháng hiện tại.</p>
+                    <p class="text-sm text-purple-600 mt-1">Dữ liệu được hệ thống tự động quét và tính toán dựa trên toàn bộ bảng chấm công trong năm.</p>
                 </div>
                 <button onclick="closeLeaveStatsModal()" class="text-purple-400 hover:text-purple-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
@@ -435,25 +404,26 @@
                             <tr>
                                 <th class="px-4 py-3 border-b">Họ và Tên</th>
                                 <th class="px-4 py-3 border-b">Khoa</th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Sửa để lưu thay đổi">Tổng<br>Phép Năm <i data-lucide="edit-3" class="w-3 h-3 inline text-blue-400"></i></th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50">Phép<br>Đã nghỉ</th>
-                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50">Nghỉ bù<br>Tích lũy (T6, T7)</th>
-                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50">Nghỉ bù<br>Đã nghỉ</th>
-                                <th class="px-4 py-3 border-b text-center bg-purple-50/50 text-purple-700">Tổng Quỹ Còn Lại<br>(Phép + Bù)</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột NgayVaoLam">Tổng<br>Phép Năm</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Cả năm hiện tại">Phép<br>Đã nghỉ (Năm)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong tháng này">NGHỈ BÙ<br>TÍCH LŨY (THÁNG NÀY)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong cả năm">NGHỈ BÙ<br>TÍCH LŨY (CẢ NĂM)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Cả năm hiện tại">Nghỉ bù<br>Đã nghỉ (Năm)</th>
+                                <th class="px-4 py-3 border-b text-center bg-purple-50/50 text-purple-700" title="(Phép năm gốc + Ngày làm thêm LT - Phép đã nghỉ) + (Bù tích lũy năm - Bù đã nghỉ năm)">Tổng Còn Lại<br>(Phép + Bù)</th>
                             </tr>
                         </thead>
                         <tbody id="leave-stats-tbody" class="divide-y divide-slate-200">
-                            <!-- Render bằng JS -->
-                        </tbody>
+                            </tbody>
                     </table>
                 </div>
                 <div class="mt-4 text-xs text-slate-500 bg-white p-3 rounded border border-slate-200">
-                    <p><b>Ghi chú:</b></p>
+                    <p><b>Ghi chú quy tắc tính toán TỰ ĐỘNG:</b></p>
                     <ul class="list-disc pl-5 mt-1 space-y-1">
-                        <li><b>Phép năm:</b> Mặc định 12 ngày. Tự động tính thâm niên (nhân viên cũ được 13-14 ngày). Bạn có thể sửa trực tiếp số trong ô để hệ thống lưu lại.</li>
-                        <li><b>Tích lũy nghỉ bù:</b> <span class="text-red-600 font-medium">Chỉ cộng dồn khi có tham gia Trực (T24, T12) vào Thứ 6, Thứ 7. Không tính Chủ nhật và các ca làm việc bình thường (+, -).</span></li>
-                        <li><b>Không áp dụng nghỉ bù:</b> Khoa Hồi sức cấp cứu (HSCC) theo quy định không cộng dồn nghỉ bù tự động.</li>
-                        <li><b>Cảnh báo:</b> Hệ thống đang tạm tính số liệu hao hụt trong giới hạn <b>tháng đang hiển thị</b>.</li>
+                        <li><b>Phép năm:</b> Mặc định 12 ngày. Hệ thống tự động tính thâm niên dựa trên cột <b>NgayVaoLam</b> (cứ đủ 5 năm được cộng thêm 1 ngày phép). Cột này được khóa và tự động tính toán.</li>
+                        <li><b>Làm thêm (LT):</b> Ký hiệu LT hoặc LT/2 dùng cho nhân sự đi làm để cộng dồn vào quỹ phép năm, đồng thời vẫn được tính là ngày làm việc bình thường.</li>
+                        <li><b>Tích lũy nghỉ bù:</b> <span class="text-red-600 font-medium">Chỉ cộng dồn vào quỹ nghỉ bù khi nhân sự ĐI TRỰC (T24, T12N, T12D) vào Thứ 6 hoặc Thứ 7. Các ngày làm việc hành chính (+, -) hoặc ngày Chủ Nhật sẽ không được tính.</span></li>
+                        <li><b>Ngoại lệ:</b> Khoa Hồi sức cấp cứu (HSCC) theo quy định không được áp dụng tự động cộng dồn nghỉ bù.</li>
+                        <li><b>Phạm vi dữ liệu:</b> Bảng thống kê này được quét tự động trên <b>toàn bộ dữ liệu lịch trực dự kiến và bảng chấm công của năm hiện hành</b> kết hợp với tháng đang hiển thị.</li>
                     </ul>
                 </div>
             </div>
@@ -464,11 +434,10 @@
         </div>
     </div>
 
-    <!-- MÃ JAVASCRIPT -->
     <script>
         lucide.createIcons();
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzlt_Rh4vnf0-PtfR8BcjgJ0tvN65vLaS2Xvehptmj42XgAox-p9Ag2JzaIUjfz_Fcv/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwSWURLwy4V3y9Z2wJtMIpV1brZsGq7m2wDoFCYx3UbIGjmtAmrCKinLiVEOWBCwbFY/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
         let currentUser = null;
         let activeInputCell = null; 
@@ -483,10 +452,10 @@
             }
         });
 
-        // TÁCH MẢNG NHẬN DIỆN NỬA NGÀY (CẬP NHẬT)
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2'];
+        // TÁCH MẢNG NHẬN DIỆN NỬA NGÀY
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2'];
 
-        // DANH SÁCH CÁC KÝ HIỆU CHẤM CÔNG DÙNG CHO DROPDOWN MENU (CẬP NHẬT)
+        // DANH SÁCH CÁC KÝ HIỆU CHẤM CÔNG DÙNG CHO DROPDOWN MENU
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
             { id: '-', name: 'Làm 1 buổi (-)', bg: '' },
@@ -509,7 +478,9 @@
             { id: 'HS', name: 'Nghỉ hộ sản (HS)', bg: 'bg-pink-100 text-pink-700' },
             { id: 'Ô/2', name: 'Nghỉ ốm 1/2 ngày (Ô/2)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'H/2', name: 'Đi học 1/2 ngày (H/2)', bg: '' },
-            { id: 'Cô/2', name: 'Nghỉ con ốm 1/2 ngày (Cô/2)', bg: 'bg-orange-100 text-orange-700' }
+            { id: 'Cô/2', name: 'Nghỉ con ốm 1/2 ngày (Cô/2)', bg: 'bg-orange-100 text-orange-700' },
+            { id: 'LT', name: 'Làm thêm ngày (+Nghỉ bù) (LT)', bg: 'bg-teal-100 text-teal-800 font-bold' },
+            { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
 
         // --- HÀM RENDER SELECT SÁNG CHIỀU ---
@@ -531,20 +502,16 @@
             const sangVal = spSang.value;
 
             if (sangVal === '') {
-                // Sáng trống -> Cho phép chiều chọn thoải mái nửa ngày
                 spChieu.disabled = false;
                 renderShiftOptions(spChieu, 'half');
             } else if (HALF_DAY_SYMBOLS.includes(sangVal)) {
-                // Sáng chọn Nửa Ngày -> Chiều chỉ cho chọn tiếp Nửa Ngày
                 spChieu.disabled = false;
                 renderShiftOptions(spChieu, 'half');
             } else {
-                // Sáng chọn Nguyên Ngày -> Tự động KHÓA chiều và xóa trống
                 spChieu.disabled = true;
                 spChieu.innerHTML = '<option value="">-- Không cần --</option>';
             }
             
-            // Cố gắng giữ lại giá trị Chiều cũ nếu hợp lệ
             const currentChieu = spChieu.getAttribute('data-current') || '';
             if (Array.from(spChieu.options).some(opt => opt.value === currentChieu)) {
                 spChieu.value = currentChieu;
@@ -554,7 +521,7 @@
         }
 
         function openShiftPicker(event, tdElement) {
-            event.stopPropagation(); // Ngăn việc click làm tắt luôn popover
+            event.stopPropagation(); 
             
             if (activeInputCell) activeInputCell.classList.remove('ring-2', 'ring-blue-500');
             
@@ -564,8 +531,6 @@
             const popover = document.getElementById('shift-picker-popover');
             popover.classList.remove('hidden');
 
-            // Cập nhật giá trị đang có trên ô vào Select
-            // Tách giá trị Sáng / Chiều bằng dấu gạch chéo
             const currentVal = tdElement.innerText.trim();
             const parts = currentVal.split('/');
             const sangVal = parts[0] ? parts[0].trim() : '';
@@ -574,20 +539,15 @@
             const spSang = document.getElementById('sp-sang');
             const spChieu = document.getElementById('sp-chieu');
 
-            // Render tất cả lựa chọn cho Sáng
             renderShiftOptions(spSang, 'all');
             spSang.value = sangVal;
 
-            // Lưu tạm giá trị chiều để hàm handleMorningChange khôi phục
             spChieu.setAttribute('data-current', chieuVal); 
-            
-            // Xử lý ẩn/hiện và render cho Chiều
             handleMorningChange();
 
-            // Tính toán vị trí hiển thị popup
             const rect = tdElement.getBoundingClientRect();
             let top = rect.bottom + window.scrollY + 5;
-            let left = rect.left + window.scrollX - 100; // Canh lùi ra giữa
+            let left = rect.left + window.scrollX - 100; 
 
             if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
             if (left < 10) left = 10;
@@ -599,8 +559,6 @@
 
         function closeShiftPicker(event, forceClose = false) {
             const popover = document.getElementById('shift-picker-popover');
-            
-            // Nếu click ra ngoài (body) hoặc click nút X, thì tắt
             if (forceClose || !popover.contains(event.target)) {
                 if (!popover.classList.contains('hidden')) {
                     popover.classList.add('hidden');
@@ -621,17 +579,15 @@
             const sangVal = document.getElementById('sp-sang').value;
             const chieuVal = document.getElementById('sp-chieu').value;
 
-            // Nối Sáng và Chiều bằng dấu gạch chéo
             let finalVal = sangVal;
             if (chieuVal && sangVal) {
                 finalVal = `${sangVal}/${chieuVal}`;
             } else if (chieuVal && !sangVal) {
-                finalVal = chieuVal; // Chỉ chọn chiều
+                finalVal = chieuVal;
             }
 
             activeInputCell.innerText = finalVal;
             
-            // Tìm màu nền (ưu tiên lấy màu của ca Sáng)
             activeInputCell.className = activeInputCell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
             let primarySymbolObj = SYMBOLS_DICT.find(s => s.id === (sangVal || chieuVal));
             if (primarySymbolObj && primarySymbolObj.bg) {
@@ -640,34 +596,23 @@
 
             recalcRow(activeInputCell);
             closeShiftPicker(new Event('click'), true);
-            markUnsaved(); // Ghi nhận có thao tác chỉnh sửa
+            markUnsaved(); 
         }
 
-
         // --- CÁC HÀM TIỆN ÍCH QUẢN LÝ QUYỀN TRUY CẬP ---
-        
-        // CẬP NHẬT LOGIC NHẬN DIỆN ADMIN CHÍNH XÁC HƠN
         function isGlobalAdmin() {
             if (!currentUser) return false;
             
-            // Nếu là Admin_KHTH thì luôn luôn là Global Admin
             if (currentUser.Role === 'Admin_KHTH') return true;
             
-            // Nếu là Admin_Khoa, kiểm tra mảng KhoaList xem có thuộc TCHC không
             if (currentUser.Role === 'Admin_Khoa') {
                 if (currentUser.KhoaList && currentUser.KhoaList.length > 0) {
                     return currentUser.KhoaList.some(k => {
                         if (!k) return false;
-                        
-                        // Chuyển in hoa
                         const upperK = k.toUpperCase();
-                        
-                        // Check thô nhanh
                         if (upperK.includes('TỔ CHỨC') || upperK.includes('HÀNH CHÍNH') || upperK.includes('TCHC')) {
                             return true;
                         }
-                        
-                        // Xử lý tuyệt đối: Bỏ dấu tiếng Việt, bỏ khoảng trắng để so sánh
                         const cleanK = upperK.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
                         return cleanK.includes('TOCHUCHANHCHANH');
                     });
@@ -686,11 +631,9 @@
             document.getElementById('custom-confirm-modal').classList.remove('hidden');
             lucide.createIcons();
             
-            // Bắt sự kiện tắt modal nếu user chọn Hủy
             const cancelBtn = document.getElementById('confirm-cancel-btn');
             cancelBtn.onclick = () => {
                 closeConfirmModal();
-                // Phục hồi lại nút nếu trước đó có đổi chữ
                 const okBtn = document.getElementById('confirm-modal-btn');
                 okBtn.innerHTML = "Đồng ý";
                 okBtn.disabled = false;
@@ -771,8 +714,10 @@
             const btnLeaveStats = document.getElementById('btn-leave-stats');
             const isAdminAll = isGlobalAdmin();
 
-            if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
+            if (currentUser && (currentUser.Role === 'Admin_KHTH' || currentUser.Role === 'Admin_Khoa')) {
                 if (btnLeaveStats) btnLeaveStats.classList.remove('hidden');
+            } else {
+                if (btnLeaveStats) btnLeaveStats.classList.add('hidden');
             }
 
             if (isAdminAll) {
@@ -825,7 +770,6 @@
                 const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
 
                 if (user) {
-                    // FIX: Xử lý triệt để lỗi khoảng trắng dư trong excel ("Admin_Khoa " -> "Admin_Khoa")
                     const rawRole = (user.Role || '').trim();
                     user.Role = rawRole; 
 
@@ -859,7 +803,7 @@
             }
         });
 
-        // ĐỒNG BỘ LÊN GOOGLE SHEETS (HÀM BẤT ĐỒNG BỘ, CHỜ RESPONSE TRẢ VỀ)
+        // ĐỒNG BỘ LÊN GOOGLE SHEETS
         async function syncWithGAS(actionName, payloadData) {
             try {
                 const response = await fetch(GAS_URL, { 
@@ -962,7 +906,6 @@
             document.getElementById('header-col-index').innerHTML = tr2;
         }
 
-        // TÍNH TỔNG CÔNG CHO MỖI HÀNG (HỖ TRỢ DẤU CÁCH NỬA NGÀY /)
         function recalcRow(el) {
             const tr = el.closest('tr');
             if(!tr) return;
@@ -974,15 +917,14 @@
                 let rawVal = cell.innerText.trim().toUpperCase();
                 if (!rawVal) return;
 
-                // Tách giá trị ra làm 2 (Sáng, Chiều) dựa trên dấu /
                 let parts = rawVal.split('/');
 
                 parts.forEach(val => {
                     val = val.trim();
                     if (!val) return;
 
-                    if (val === '+') ngayViec += 1;
-                    if (val === '-') ngayViec += 0.5;
+                    if (val === '+' || val === 'LT') ngayViec += 1;
+                    if (val === '-' || val === 'LT/2') ngayViec += 0.5;
 
                     if (val === 'T24') truc24 += 1;
                     if (val === 'T12D' || val === 'T12N') truc12 += 1;
@@ -1017,6 +959,7 @@
             const btnCancel = document.getElementById('btn-cancel-approve');
             const btnPrint = document.getElementById('btn-print');
             const badge = document.getElementById('badge-status');
+            const btnSendText = document.getElementById('btn-send-text');
 
             btnDraft.classList.add('hidden');
             btnSend.classList.add('hidden');
@@ -1032,12 +975,13 @@
                 if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
                     btnDraft.classList.remove('hidden');
                     btnSend.classList.remove('hidden');
+                    if(btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình TCHC" : "Trình lại TCHC";
                 }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
             } 
             else if (status === 'Chờ duyệt') {
-                badge.textContent = "Chờ Tổ chức/KHTH Duyệt";
+                badge.textContent = "Chờ TCHC Duyệt";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800 whitespace-nowrap";
                 
                 if (isAdminAll) {
@@ -1063,7 +1007,6 @@
             lucide.createIcons();
         }
 
-        // Lấy dữ liệu từ Table và nhóm theo data-khoa của thẻ tr
         function extractGridData() {
             let dataByKhoa = {};
             const rows = document.querySelectorAll('#report-tbody tr.data-row');
@@ -1087,7 +1030,6 @@
             return dataByKhoa;
         }
 
-        // HÀM LƯU DỮ LIỆU (ASYNC ĐỂ CHỜ HOÀN TẤT)
         async function updateBangStatus(status) {
             const month = document.getElementById('sel-month').value;
             const year = document.getElementById('sel-year').value;
@@ -1120,7 +1062,6 @@
             hasUnsavedChanges = false; 
             updateApprovalUI(status);
             
-            // Chờ quá trình đẩy lên server kết thúc
             await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
         }
 
@@ -1130,7 +1071,7 @@
         }
 
         function sendApprove() {
-            showConfirmModal("Xác nhận Trình KHTH", "Bạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
+            showConfirmModal("Xác nhận Trình TCHC", "Bạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
                 await updateBangStatus('Chờ duyệt');
                 showToast("Đã trình Bảng chấm công thành công!", "success");
             });
@@ -1353,7 +1294,6 @@
                                 }
                             }
 
-                            // UPDATE SỰ KIỆN CLICK MỞ BẢNG CHỌN CA
                             const onClickEvent = isLocked ? '' : `onclick="openShiftPicker(event, this)"`;
                             rowHtml += `<td ${onClickEvent} class="${cellClass}">${val}</td>`;
                         }
@@ -1380,7 +1320,6 @@
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
 
-            // Xây dựng dữ liệu gộp của tất cả các khoa trong tháng
             let globalSavedData = {};
             MOCK_DB.bangChamCong.forEach(b => {
                 if (b.Thang == month && b.Nam == year && b.DuLieu) {
@@ -1388,18 +1327,15 @@
                         let savedObj = JSON.parse(b.DuLieu);
                         for (let nv in savedObj) {
                             if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
-                            // Gộp ngày
                             for (let d in savedObj[nv].days) {
                                 if (savedObj[nv].days[d]) globalSavedData[nv].days[d] = savedObj[nv].days[d];
                             }
-                            // Giữ lại ghi chú mới nhất
                             if (savedObj[nv].note) globalSavedData[nv].note = savedObj[nv].note;
                         }
                     } catch(e) {}
                 }
             });
 
-            // Cập nhật dữ liệu vào lưới dựa trên mã NV (áp dụng cho NV có ở nhiều khoa)
             for (let maNV in globalSavedData) {
                 const trs = document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`);
                 trs.forEach(tr => {
@@ -1409,7 +1345,6 @@
                         let val = daysData[idx + 1];
                         if (val) {
                             c.innerText = val;
-                            // Lấy ký hiệu Sáng để gắn background
                             let primarySymbol = val.split('/')[0].trim();
                             let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
                             if(symObj && symObj.bg) c.className += ` ${symObj.bg}`;
@@ -1425,24 +1360,25 @@
         // KHỐI QUẢN LÝ NGHỈ PHÉP & NGHỈ BÙ
         // ==========================================
 
-        // Hàm lấy số phép (Ưu tiên đọc từ cột SoPhep trên Google Sheets, nếu trống mặc định là 12)
-        function getBaseAnnualLeave(maNV) {
+        function getBaseAnnualLeave(maNV, currentYear) {
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-            if (user && user.SoPhep !== undefined && user.SoPhep !== null && user.SoPhep !== '') {
-                return parseFloat(user.SoPhep);
+            let baseP = 12; 
+            
+            if (user && user.NgayVaoLam) {
+                let startYear = 0;
+                if (String(user.NgayVaoLam).includes('-')) {
+                    startYear = new Date(user.NgayVaoLam).getFullYear();
+                } else {
+                    startYear = parseInt(user.NgayVaoLam);
+                }
+                
+                if (startYear > 1900 && startYear <= currentYear) {
+                    let yearsWorked = currentYear - startYear;
+                    let extraDays = Math.floor(yearsWorked / 5);
+                    baseP += extraDays;
+                }
             }
-            return 12; // Mặc định 12 ngày phép năm
-        }
-
-        // Hàm cập nhật phép năm tùy chỉnh lưu vào Sheet
-        async function updatePhepNam(maNV, newVal) {
-            const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-            if(user) {
-                user.SoPhep = parseFloat(newVal) || 0; // Cập nhật trực tiếp vào trường SoPhep
-                await syncWithGAS('sync_NhanVien', MOCK_DB.users); // Đồng bộ lại bảng NhanVien lên Google Sheet
-                showToast("Đã lưu thay đổi số phép năm!", "success");
-                openLeaveStatsModal(); // Cập nhật lại UI sau khi sửa
-            }
+            return baseP;
         }
 
         function openLeaveStatsModal() {
@@ -1457,25 +1393,93 @@
             
             let tbodyHtml = '';
 
+            let dbYearlyStats = {};
+            const initUserStat = (nv) => {
+                if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+            };
+
+            // 1. Quét dữ liệu 12 tháng (Bỏ qua tháng hiện tại)
+            for (let m = 1; m <= 12; m++) {
+                if (m === month) continue;
+
+                let savedBccs = MOCK_DB.bangChamCong.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                
+                if (savedBccs.length > 0) {
+                    // Dùng bảng chấm công ĐÃ LƯU của các tháng cũ
+                    savedBccs.forEach(b => {
+                        let maKhoaDb = b.MaKhoa;
+                        try {
+                            let data = JSON.parse(b.DuLieu);
+                            for (let nv in data) {
+                                initUserStat(nv);
+                                let userMonthData = data[nv];
+                                
+                                if (userMonthData && userMonthData.days) {
+                                    for (let day in userMonthData.days) {
+                                        let valStr = userMonthData.days[day];
+                                        if (!valStr) continue;
+                                        
+                                        let parts = valStr.split('/');
+                                        parts.forEach(v => {
+                                            v = v.trim().toUpperCase();
+                                            
+                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                            
+                                            // KHOA HSCC KHÔNG ĐƯỢC TÍNH NGHỈ BÙ VÀ LÀM THÊM (LT)
+                                            if (maKhoaDb !== 'HSCC') {
+                                                if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                                else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                                const dDate = new Date(year, m - 1, parseInt(day));
+                                                const dw = dDate.getDay();
+                                                if (dw === 5 || dw === 6) {
+                                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') dbYearlyStats[nv].earnedNb += 1;
+                                                }
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+                    });
+                } else {
+                    // Quét từ lịch trực dự kiến MOCK_DB.shifts nếu tháng đó chưa lưu chấm công
+                    let shiftsInMonth = MOCK_DB.shifts.filter(s => {
+                        const d = new Date(s.NgayTruc + "T12:00:00");
+                        return d.getFullYear() === year && (d.getMonth() + 1) === m;
+                    });
+                    
+                    shiftsInMonth.forEach(s => {
+                        if (s.MaKhoa !== 'HSCC') {
+                            const dDate = new Date(s.NgayTruc + "T12:00:00");
+                            const dw = dDate.getDay();
+                            if (dw === 5 || dw === 6) {
+                                initUserStat(s.MaNV);
+                                dbYearlyStats[s.MaNV].earnedNb += 1;
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 2. Duyệt từng dòng trên giao diện để lấy và tính cho tháng hiện tại
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
                 const maKhoa = tr.getAttribute('data-khoa');
                 const hoTen = tr.cells[1].innerText.trim();
                 const tenKhoa = MOCK_DB.khoa.find(k => k.MaKhoa === maKhoa)?.TenKhoa || maKhoa;
 
-                // Lấy thông tin số phép từ cơ sở dữ liệu
-                const baseP = getBaseAnnualLeave(maNV);
+                const baseP = getBaseAnnualLeave(maNV, year);
 
-                // Lấy số phép và số nghỉ bù đã sử dụng (được tính bằng hàm recalcRow)
-                const usedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
-                const usedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                // Dữ liệu lấy trực tiếp từ Grid trên giao diện (Cho tháng hiện tại)
+                let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                let currentEarnedNb = 0;
 
-                const remainingP = baseP - usedP;
-
-                // TÍNH TOÁN SỐ NGÀY NGHỈ BÙ ĐƯỢC HƯỞNG (CHỈ TÍNH T6, T7)
-                let earnedNb = 0;
-                
-                // Quy định: Khoa HSCC không được tự động cộng dồn nghỉ bù
+                // KHOA HSCC KHÔNG ĐƯỢC TÍNH NGHỈ BÙ VÀ LÀM THÊM (LT)
                 if (maKhoa !== 'HSCC') {
                     const cells = tr.querySelectorAll('.cell-day');
                     cells.forEach((cell, idx) => {
@@ -1483,7 +1487,7 @@
                         if (day > daysInMonth) return;
 
                         const dateObj = new Date(year, month - 1, day);
-                        const dw = dateObj.getDay(); // 0: CN, 5: T6, 6: T7
+                        const dw = dateObj.getDay(); 
 
                         const rawVal = cell.innerText.trim().toUpperCase();
                         if (!rawVal) return;
@@ -1491,16 +1495,30 @@
                         let parts = rawVal.split('/');
                         parts.forEach(v => {
                             v = v.trim();
-                            // CHỈ TÍNH TRỰC VÀO THỨ 6 (5) VÀ THỨ 7 (6). KHÔNG TÍNH CHỦ NHẬT (0) VÀ LÀM VIỆC BÌNH THƯỜNG (+, -)
+                            if (v === 'LT') currentEarnedNb += 1;
+                            else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                            // CHỈ TÍNH KHI TRỰC (T24, T12) VÀO T6, T7
                             if (dw === 5 || dw === 6) {
-                                if (v === 'T24' || v === 'T12N' || v === 'T12D') earnedNb += 1;
+                                if (v === 'T24' || v === 'T12N' || v === 'T12D') currentEarnedNb += 1;
                             }
                         });
                     });
                 }
 
-                const remainNb = earnedNb - usedNb;
-                const totalRemaining = remainingP + remainNb; // TỔNG QUỸ CÒN LẠI
+                // 3. Kết hợp DB (các tháng cũ đã lưu) + UI (tháng hiện tại trên màn hình)
+                let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
+                
+                let totalUsedP = currentUsedP + pastStats.usedP;
+                let totalUsedNb = currentUsedNb + pastStats.usedNb;
+                
+                // Tách bạch rõ ràng số tích lũy tháng này và tổng cả năm
+                let totalEarnedNb = currentEarnedNb + pastStats.earnedNb; 
+
+                const remainingP = baseP - totalUsedP;
+                const remainNb = totalEarnedNb - totalUsedNb;
+                
+                const totalRemaining = remainingP + remainNb; 
 
                 const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
                 const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
@@ -1509,12 +1527,11 @@
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
                         <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoa}</td>
-                        <td class="px-4 py-3 border-b text-center">
-                            <input type="number" step="0.5" value="${baseP}" onchange="updatePhepNam('${maNV}', this.value)" class="w-16 text-center border border-slate-300 rounded px-1 py-1 focus:ring-2 focus:ring-blue-500 outline-none text-blue-700 font-bold bg-blue-50/50">
-                        </td>
-                        <td class="px-4 py-3 border-b text-center">${usedP > 0 ? usedP : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center font-bold text-emerald-600">${earnedNb > 0 ? earnedNb : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center">${usedNb > 0 ? usedNb : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
+                        <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center font-bold text-emerald-700">${totalEarnedNb > 0 ? totalEarnedNb : '-'}</td>
+                        <td class="px-4 py-3 border-b text-center">${totalUsedNb > 0 ? totalUsedNb : '-'}</td>
                         <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
                     </tr>
                 `;
