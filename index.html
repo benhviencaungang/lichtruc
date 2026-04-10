@@ -3097,7 +3097,7 @@
                 theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`;
             });
             theadHtml += `</tr>`;
-            document.getElementById('admin-view-dept-thead').innerHTML = heaadHtml;
+            document.getElementById('admin-view-dept-thead').innerHTML = theadHtml;
 
             let html = '';
             for (let i = 0; i < 7; i++) {
@@ -3487,10 +3487,10 @@
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa));
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
-            let heaadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
-            rolesInKhoa.forEach(r => { const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; heaadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; });
-            heaadHtml += `</tr>`;
-            document.getElementById('xem-lich-khoa-thead').innerHTML = heaadHtml;
+            let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
+            rolesInKhoa.forEach(r => { const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; });
+            theadHtml += `</tr>`;
+            document.getElementById('xem-lich-khoa-thead').innerHTML = theadHtml;
             let html = '';
             for (let i = 0; i < 7; i++) {
                 const dateISO = weekDates[i]; const dObj = new Date(dateISO + "T12:00:00"); const disp = `${dObj.getDate()}/${dObj.getMonth() + 1}`;
