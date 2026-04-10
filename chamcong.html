@@ -404,7 +404,7 @@
                             <tr>
                                 <th class="px-4 py-3 border-b">Họ và Tên</th>
                                 <th class="px-4 py-3 border-b">Khoa</th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột NgayVaoLam">Tổng<br>Phép Năm</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột NgayVaoLam và Khoa chuyên môn">Tổng<br>Phép Năm</th>
                                 <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Cả năm hiện tại">Phép<br>Đã nghỉ (Năm)</th>
                                 <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong tháng này">NGHỈ BÙ<br>TÍCH LŨY (THÁNG NÀY)</th>
                                 <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong cả năm">NGHỈ BÙ<br>TÍCH LŨY (CẢ NĂM)</th>
@@ -419,7 +419,7 @@
                 <div class="mt-4 text-xs text-slate-500 bg-white p-3 rounded border border-slate-200">
                     <p><b>Ghi chú quy tắc tính toán TỰ ĐỘNG:</b></p>
                     <ul class="list-disc pl-5 mt-1 space-y-1">
-                        <li><b>Phép năm:</b> Mặc định 12 ngày. Hệ thống tự động tính thâm niên dựa trên cột <b>NgayVaoLam</b> (cứ đủ 5 năm được cộng thêm 1 ngày phép). Cột này được khóa và tự động tính toán.</li>
+                        <li><b>Phép năm:</b> Khối Hành chính/Cận lâm sàng mặc định 12 ngày. Các khoa chuyên môn (Khám bệnh, Nội, Ngoại, Sản, Nhi, Gây mê, YHCT, Hồi sức...) mặc định 14 ngày. Hệ thống tự động tính thâm niên dựa trên cột <b>NgayVaoLam</b> (cứ đủ 5 năm được cộng thêm 1 ngày phép).</li>
                         <li><b>Làm thêm (LT):</b> Ký hiệu LT hoặc LT/2 dùng cho nhân sự đi làm để cộng dồn vào quỹ phép năm, đồng thời vẫn được tính là ngày làm việc bình thường.</li>
                         <li><b>Tích lũy nghỉ bù:</b> <span class="text-red-600 font-medium">Chỉ cộng dồn vào quỹ nghỉ bù khi nhân sự ĐI TRỰC (T24, T12N, T12D) vào Thứ 6 hoặc Thứ 7. Các ngày làm việc hành chính (+, -) hoặc ngày Chủ Nhật sẽ không được tính.</span></li>
                         <li><b>Ngoại lệ:</b> Khoa Hồi sức cấp cứu (HSCC) theo quy định không được áp dụng tự động cộng dồn nghỉ bù.</li>
@@ -1362,9 +1362,40 @@
 
         function getBaseAnnualLeave(maNV, currentYear) {
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-            let baseP = 12; 
-            
-            if (user && user.NgayVaoLam) {
+            if (!user) return 12;
+
+            let baseP = 12; // Mặc định 12 ngày cho khối hành chính / cận lâm sàng
+
+            // Lấy danh sách mã khoa của nhân viên
+            let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
+            let belongsToSpecialty = false;
+
+            // Từ khóa để nhận diện các khoa chuyên môn/lâm sàng được hưởng 14 ngày phép
+            const dsTuKhoa14Ngay = [
+                "khám bệnh", "nội", "ngoại", "sản", "nhi", 
+                "gây mê", "hồi sức", "y học cổ truyền", "yhct", 
+                "hscc", "gmhs", "phẫu thuật"
+            ];
+
+            // Quét qua các khoa của user để kiểm tra
+            for (let mk of userKhoaIds) {
+                let khoaObj = MOCK_DB.khoa.find(k => k.MaKhoa === mk);
+                let tenKhoa = khoaObj ? khoaObj.TenKhoa.toLowerCase() : mk.toLowerCase();
+                
+                // Nếu tên khoa có chứa một trong các từ khóa trên
+                if (dsTuKhoa14Ngay.some(tuKhoa => tenKhoa.includes(tuKhoa))) {
+                    belongsToSpecialty = true;
+                    break;
+                }
+            }
+
+            // Cập nhật số ngày phép mặc định lên 14 nếu thuộc diện chuyên môn
+            if (belongsToSpecialty) {
+                baseP = 14;
+            }
+
+            // Tính thêm phép thâm niên (Cứ 5 năm cộng 1 ngày)
+            if (user.NgayVaoLam) {
                 let startYear = 0;
                 if (String(user.NgayVaoLam).includes('-')) {
                     startYear = new Date(user.NgayVaoLam).getFullYear();
