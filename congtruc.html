@@ -760,13 +760,13 @@
 
             // Tách biệt quyền Xem Tất Cả (Chỉ KHTH và Kế toán) và Quyền Duyệt
             const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
-            const isKeToan = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isKeToan = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
 
             if (isKHTH_Account || isKeToan) {
-                // Cho phép Tài vụ / Kế toán / KHTH xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
+                // Cho phép Kế toán / KHTH xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
                 dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
             } else {
-                // Các Admin_Khoa khác (Bao gồm cả Tổ chức hành chánh) chỉ xem các khoa thuộc quyền quản lý của mình
+                // Các Admin_Khoa khác (Bao gồm cả Tổ chức hành chánh và Tài vụ) chỉ xem các khoa thuộc quyền quản lý của mình
                 dsKhoa = dsKhoa.filter(k => currentUser.KhoaList.includes(k.MaKhoa));
             }
 
@@ -856,7 +856,7 @@
 
             // CHỈ KHTH / TCHC mới có quyền duyệt và điền tiền
             const isKHTH = isGlobalAdmin();
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isOwner = currentUser.KhoaList.includes(maKhoa); // Khoa sở hữu phiếu
 
             // 1. TRẠNG THÁI NHÁP HOẶC KHTH TRẢ LẠI
@@ -1010,7 +1010,7 @@
         }
 
         function approvePhieu() {
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isKHTH = isGlobalAdmin();
 
             if (isTCKT) {
@@ -1044,7 +1044,7 @@
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
 
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isKHTH = isGlobalAdmin();
 
             if (isTCKT && status === 'Đã chốt') {
@@ -1077,7 +1077,7 @@
         }
 
         function confirmReject() {
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isKHTH = isGlobalAdmin();
 
             const reason = document.getElementById('reject-reason-input').value.trim();
@@ -1201,7 +1201,7 @@
             const savedRates = noteData.rates || {};
 
             // CHỈ TCKT mới có quyền nhập số tiền
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && (currentUser.KhoaList.includes('TAIVU') || currentUser.KhoaList.includes('TAICHINHKETOAN'));
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const canEnterMoney = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
             // --- LẤY CÀI ĐẶT ĐƠN GIÁ TỪ LOCAL STORAGE VÀ ÁP DỤNG LUẬT CHIA ĐÔI CHO HSCC ---
