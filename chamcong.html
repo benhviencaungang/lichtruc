@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Chấm Công Gộp</title>
+    <title>Bảng Chấm Công - BVĐKK Cầu Ngang</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -234,32 +234,37 @@
     <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
         
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <button onclick="handleGoHome()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
+            <button onclick="handleGoHome()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0 h-[38px]">
                 <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
             </button>
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
             
-            <select id="sel-month" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+            <select id="sel-month" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
                 <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
                 <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
                 <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
                 <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
             </select>
-            <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+            <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
                 <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
             </select>
 
-            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
+            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
                 <option value="ALL">-- Toàn viện --</option>
                 </select>
 
-            <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium">
+            <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium h-[38px]">
                 <option value="chitiet">Chi tiết phòng/trại</option>
                 <option value="khoa">Góc nhìn Khoa (Ẩn H/C)</option>
                 <option value="gop">Gộp Phòng/Trại</option>
             </select>
             
-            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
+            <!-- NÚT KHÔI PHỤC LỊCH GỐC -->
+            <button onclick="resetToOriginalShifts()" class="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center shadow-sm transition font-medium whitespace-nowrap shrink-0 h-[38px]" title="Xóa bỏ bản nháp hiện tại và nạp lại dữ liệu chuẩn từ Lịch Trực">
+                <i data-lucide="history" class="w-4 h-4 mr-2"></i> Tải lại Lịch gốc
+            </button>
+
+            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới
             </button>
         </div>
@@ -437,12 +442,28 @@
     <script>
         lucide.createIcons();
 
+        // --- CÁC HÀM TÍNH MÚI GIỜ ---
+        function getVNTime() {
+            const d = new Date();
+            const localOffset = d.getTimezoneOffset() * 60000;
+            const utc = d.getTime() + localOffset;
+            return new Date(utc + (3600000 * 7));
+        }
+
+        function getVNFormatYYYYMMDD() {
+            const d = getVNTime();
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        // ------------------------------------------------
+
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwSWURLwy4V3y9Z2wJtMIpV1brZsGq7m2wDoFCYx3UbIGjmtAmrCKinLiVEOWBCwbFY/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
         let currentUser = null;
         let activeInputCell = null; 
         
-        // CỜ ĐÁNH DẤU CÓ SỰ THAY ĐỔI DỮ LIỆU
         let hasUnsavedChanges = false;
 
         window.addEventListener('beforeunload', function (e) {
@@ -452,10 +473,8 @@
             }
         });
 
-        // TÁCH MẢNG NHẬN DIỆN NỬA NGÀY
         const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2'];
 
-        // DANH SÁCH CÁC KÝ HIỆU CHẤM CÔNG DÙNG CHO DROPDOWN MENU
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
             { id: '-', name: 'Làm 1 buổi (-)', bg: '' },
@@ -483,7 +502,6 @@
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
 
-        // --- HÀM RENDER SELECT SÁNG CHIỀU ---
         function renderShiftOptions(selectEle, allowedTypes) {
             let html = '<option value="">-- Trống --</option>';
             SYMBOLS_DICT.forEach(sym => {
@@ -495,7 +513,6 @@
             selectEle.innerHTML = html;
         }
 
-        // --- XỬ LÝ LOGIC CHỌN SÁNG ĐỂ MỞ/KHÓA CHIỀU ---
         function handleMorningChange() {
             const spSang = document.getElementById('sp-sang');
             const spChieu = document.getElementById('sp-chieu');
@@ -599,7 +616,6 @@
             markUnsaved(); 
         }
 
-        // --- CÁC HÀM TIỆN ÍCH QUẢN LÝ QUYỀN TRUY CẬP ---
         function isGlobalAdmin() {
             if (!currentUser) return false;
             
@@ -621,7 +637,6 @@
             return false;
         }
 
-        // --- CÁC HÀM TIỆN ÍCH KHÁC ---
         let confirmActionFn = null;
 
         function showConfirmModal(title, desc, actionFn) {
@@ -707,6 +722,42 @@
                     lucide.createIcons();
                 }
             }
+        }
+
+        // KHÔI PHỤC DỮ LIỆU TỪ LỊCH TRỰC GỐC
+        async function resetToOriginalShifts() {
+            showConfirmModal("Tải lại từ Lịch Trực Gốc?", "Hành động này sẽ XÓA BỎ hoàn toàn bảng chấm công nháp hiện tại và tự động nạp lại dữ liệu chuẩn xác từ Lịch Trực (đồng thời ép lưu lên máy chủ).\n\nBạn có chắc chắn muốn thực hiện?", async () => {
+                const month = document.getElementById('sel-month').value;
+                const year = document.getElementById('sel-year').value;
+                
+                const rows = document.querySelectorAll('#report-tbody tr.data-row');
+                const renderedKhoas = new Set();
+                rows.forEach(tr => renderedKhoas.add(tr.getAttribute('data-khoa')));
+                
+                const khoasToReset = Array.from(renderedKhoas);
+                
+                if (khoasToReset.length === 0) {
+                    showToast("Không có dữ liệu để khôi phục!", "warning");
+                    return;
+                }
+
+                // Xóa bỏ hoàn toàn Bản Nháp khỏi bộ nhớ tạm
+                khoasToReset.forEach(mk => {
+                    const maBang = `BCC_${mk}_${month}_${year}`;
+                    MOCK_DB.bangChamCong = MOCK_DB.bangChamCong.filter(b => b.MaBang !== maBang);
+                });
+
+                hasUnsavedChanges = false;
+                showToast("Đang đồng bộ và nạp lại dữ liệu gốc...", "warning");
+                
+                // Gọi generateReport() để hệ thống tự động vẽ lại lưới ngày tháng chuẩn từ Lịch Trực
+                generateReport();
+
+                // LẬP TỨC Đẩy Bảng vừa được vẽ chuẩn lên Google Sheets đè lên bản lỗi cũ
+                await updateBangStatus('Nháp');
+
+                showToast("Thành công! Đã khôi phục dữ liệu từ Lịch trực gốc!", "success");
+            });
         }
 
         function initKhoaFilter() {
@@ -803,7 +854,6 @@
             }
         });
 
-        // ĐỒNG BỘ LÊN GOOGLE SHEETS
         async function syncWithGAS(actionName, payloadData) {
             try {
                 const response = await fetch(GAS_URL, { 
@@ -836,11 +886,29 @@
                 if (results[3] && results[3].status === "success") MOCK_DB.bangChamCong = results[3].data || [];
                 
                 if (results[2] && results[2].status === "success") {
-                    MOCK_DB.shifts = (results[2].data || []).map(s => ({
-                        ...s,
-                        MaNV: String(s.MaNV),
-                        NgayTruc: s.NgayTruc.substring(0, 10)
-                    }));
+                    MOCK_DB.shifts = (results[2].data || []).map(s => {
+                        let parsedDate = s.NgayTruc;
+                        // Xử lý múi giờ khi Google Sheets gửi về định dạng ISO string UTC
+                        if (parsedDate && parsedDate.includes('T')) {
+                            const utcMs = new Date(parsedDate).getTime();
+                            if (!isNaN(utcMs)) {
+                                const vnMs = utcMs + (7 * 60 * 60 * 1000);
+                                const vnDate = new Date(vnMs);
+                                const y = vnDate.getUTCFullYear();
+                                const m = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
+                                const day = String(vnDate.getUTCDate()).padStart(2, '0');
+                                parsedDate = `${y}-${m}-${day}`;
+                            }
+                        } else if (parsedDate) {
+                            parsedDate = parsedDate.substring(0, 10);
+                        }
+                        
+                        return {
+                            ...s,
+                            MaNV: String(s.MaNV),
+                            NgayTruc: parsedDate
+                        };
+                    });
                 }
 
                 showToast("Đã tải dữ liệu mới nhất.", "success");
@@ -860,7 +928,7 @@
         }
 
         function initUI() {
-            const today = new Date();
+            const today = getVNTime();
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
             
@@ -1045,7 +1113,7 @@
                     bang = { 
                         MaBang: maBang, MaKhoa: maKhoa, Thang: month, Nam: year, TrangThai: status, 
                         NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '', 
-                        NgayDuyet: status === 'Đã duyệt' ? new Date().toISOString().split('T')[0] : '', 
+                        NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '', 
                         DuLieu: gridJson 
                     };
                     MOCK_DB.bangChamCong.push(bang);
@@ -1054,7 +1122,7 @@
                     bang.DuLieu = gridJson;
                     if(status === 'Đã duyệt') {
                         bang.NguoiDuyet = currentUser.MaNV;
-                        bang.NgayDuyet = new Date().toISOString().split('T')[0];
+                        bang.NgayDuyet = getVNFormatYYYYMMDD();
                     }
                 }
             }
@@ -1225,9 +1293,12 @@
             
             hasUnsavedChanges = false;
 
+            // KIỂM TRA LỊCH TRỰC BẰNG CÁCH TÁCH CHUỖI TRỰC TIẾP (BỎ QUA HÀM THỜI GIAN TRÌNH DUYỆT)
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                const d = new Date(s.NgayTruc + "T12:00:00");
-                return (d.getMonth() + 1) === month && d.getFullYear() === year;
+                if(!s.NgayTruc) return false;
+                const parts = s.NgayTruc.split('-');
+                if(parts.length !== 3) return false;
+                return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
             });
 
             let tbodyHtml = '';
@@ -1256,9 +1327,14 @@
 
                     const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
                     const shiftMap = {};
+                    
+                    // Lấy ngày bằng cách tách chuỗi an toàn tuyệt đối 1000%
                     nvShifts.forEach(s => {
-                        let d = new Date(s.NgayTruc + "T12:00:00").getDate();
-                        shiftMap[d] = s.ChucDanh; 
+                        const parts = s.NgayTruc.split('-');
+                        if(parts.length === 3) {
+                            let d = parseInt(parts[2]);
+                            shiftMap[d] = s.ChucDanh; 
+                        }
                     });
 
                     let rowHtml = `<tr class="data-row" data-id="${u.MaNV}" data-khoa="${maKhoa}">
@@ -1356,45 +1432,35 @@
             }
         }
 
-        // ==========================================
-        // KHỐI QUẢN LÝ NGHỈ PHÉP & NGHỈ BÙ
-        // ==========================================
-
         function getBaseAnnualLeave(maNV, currentYear) {
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
             if (!user) return 12;
 
-            let baseP = 12; // Mặc định 12 ngày cho khối hành chính / cận lâm sàng
+            let baseP = 12; 
 
-            // Lấy danh sách mã khoa của nhân viên
             let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
             let belongsToSpecialty = false;
 
-            // Từ khóa để nhận diện các khoa chuyên môn/lâm sàng được hưởng 14 ngày phép
             const dsTuKhoa14Ngay = [
                 "khám bệnh", "nội", "ngoại", "sản", "nhi", 
                 "gây mê", "hồi sức", "y học cổ truyền", "yhct", 
                 "hscc", "gmhs", "phẫu thuật"
             ];
 
-            // Quét qua các khoa của user để kiểm tra
             for (let mk of userKhoaIds) {
                 let khoaObj = MOCK_DB.khoa.find(k => k.MaKhoa === mk);
                 let tenKhoa = khoaObj ? khoaObj.TenKhoa.toLowerCase() : mk.toLowerCase();
                 
-                // Nếu tên khoa có chứa một trong các từ khóa trên
                 if (dsTuKhoa14Ngay.some(tuKhoa => tenKhoa.includes(tuKhoa))) {
                     belongsToSpecialty = true;
                     break;
                 }
             }
 
-            // Cập nhật số ngày phép mặc định lên 14 nếu thuộc diện chuyên môn
             if (belongsToSpecialty) {
                 baseP = 14;
             }
 
-            // Tính thêm phép thâm niên (Cứ 5 năm cộng 1 ngày)
             if (user.NgayVaoLam) {
                 let startYear = 0;
                 if (String(user.NgayVaoLam).includes('-')) {
@@ -1429,14 +1495,12 @@
                 if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
             };
 
-            // 1. Quét dữ liệu 12 tháng (Bỏ qua tháng hiện tại)
             for (let m = 1; m <= 12; m++) {
                 if (m === month) continue;
 
                 let savedBccs = MOCK_DB.bangChamCong.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
                 
                 if (savedBccs.length > 0) {
-                    // Dùng bảng chấm công ĐÃ LƯU của các tháng cũ
                     savedBccs.forEach(b => {
                         let maKhoaDb = b.MaKhoa;
                         try {
@@ -1459,7 +1523,6 @@
                                             else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
                                             else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
                                             
-                                            // KHOA HSCC KHÔNG ĐƯỢC TÍNH NGHỈ BÙ VÀ LÀM THÊM (LT)
                                             if (maKhoaDb !== 'HSCC') {
                                                 if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
                                                 else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
@@ -1477,26 +1540,29 @@
                         } catch(e) {}
                     });
                 } else {
-                    // Quét từ lịch trực dự kiến MOCK_DB.shifts nếu tháng đó chưa lưu chấm công
                     let shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                        const d = new Date(s.NgayTruc + "T12:00:00");
-                        return d.getFullYear() === year && (d.getMonth() + 1) === m;
+                        if(!s.NgayTruc) return false;
+                        const parts = s.NgayTruc.split('-');
+                        if(parts.length !== 3) return false;
+                        return parseInt(parts[0]) === year && parseInt(parts[1]) === m;
                     });
                     
                     shiftsInMonth.forEach(s => {
                         if (s.MaKhoa !== 'HSCC') {
-                            const dDate = new Date(s.NgayTruc + "T12:00:00");
-                            const dw = dDate.getDay();
-                            if (dw === 5 || dw === 6) {
-                                initUserStat(s.MaNV);
-                                dbYearlyStats[s.MaNV].earnedNb += 1;
+                            const parts = s.NgayTruc.split('-');
+                            if(parts.length === 3) {
+                                const dDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                                const dw = dDate.getDay();
+                                if (dw === 5 || dw === 6) {
+                                    initUserStat(s.MaNV);
+                                    dbYearlyStats[s.MaNV].earnedNb += 1;
+                                }
                             }
                         }
                     });
                 }
             }
 
-            // 2. Duyệt từng dòng trên giao diện để lấy và tính cho tháng hiện tại
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
                 const maKhoa = tr.getAttribute('data-khoa');
@@ -1505,12 +1571,10 @@
 
                 const baseP = getBaseAnnualLeave(maNV, year);
 
-                // Dữ liệu lấy trực tiếp từ Grid trên giao diện (Cho tháng hiện tại)
                 let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
                 let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
                 let currentEarnedNb = 0;
 
-                // KHOA HSCC KHÔNG ĐƯỢC TÍNH NGHỈ BÙ VÀ LÀM THÊM (LT)
                 if (maKhoa !== 'HSCC') {
                     const cells = tr.querySelectorAll('.cell-day');
                     cells.forEach((cell, idx) => {
@@ -1529,7 +1593,6 @@
                             if (v === 'LT') currentEarnedNb += 1;
                             else if (v === 'LT/2') currentEarnedNb += 0.5;
 
-                            // CHỈ TÍNH KHI TRỰC (T24, T12) VÀO T6, T7
                             if (dw === 5 || dw === 6) {
                                 if (v === 'T24' || v === 'T12N' || v === 'T12D') currentEarnedNb += 1;
                             }
@@ -1537,13 +1600,11 @@
                     });
                 }
 
-                // 3. Kết hợp DB (các tháng cũ đã lưu) + UI (tháng hiện tại trên màn hình)
                 let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
                 
                 let totalUsedP = currentUsedP + pastStats.usedP;
                 let totalUsedNb = currentUsedNb + pastStats.usedNb;
                 
-                // Tách bạch rõ ràng số tích lũy tháng này và tổng cả năm
                 let totalEarnedNb = currentEarnedNb + pastStats.earnedNb; 
 
                 const remainingP = baseP - totalUsedP;
