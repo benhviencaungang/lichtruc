@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Chấm Công - BVĐKK Cầu Ngang </title>
+    <title>Bảng Chấm Công Gộp</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -259,8 +259,8 @@
                 <option value="gop">Gộp Phòng/Trại</option>
             </select>
             
-            <!-- NÚT KHÔI PHỤC LỊCH GỐC -->
-            <button onclick="resetToOriginalShifts()" class="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center shadow-sm transition font-medium whitespace-nowrap shrink-0 h-[38px]" title="Xóa bỏ bản nháp hiện tại và nạp lại dữ liệu chuẩn từ Lịch Trực">
+            <!-- NÚT KHÔI PHỤC LỊCH GỐC THÔNG MINH -->
+            <button id="btn-reset-shifts" onclick="resetToOriginalShifts()" class="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center shadow-sm transition font-medium whitespace-nowrap shrink-0 h-[38px]" title="Làm mới lịch trực, giữ nguyên các dữ liệu đã chấm tay">
                 <i data-lucide="history" class="w-4 h-4 mr-2"></i> Tải lại Lịch gốc
             </button>
 
@@ -465,6 +465,7 @@
         let activeInputCell = null; 
         
         let hasUnsavedChanges = false;
+        let currentOverallStatus = 'Nháp'; // Biến global lưu trạng thái hiện tại để khóa thao tác
 
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
@@ -538,6 +539,9 @@
         }
 
         function openShiftPicker(event, tdElement) {
+            // Khóa hoàn toàn thao tác click nếu bảng đã trình hoặc đã duyệt
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+
             event.stopPropagation(); 
             
             if (activeInputCell) activeInputCell.classList.remove('ring-2', 'ring-blue-500');
@@ -713,6 +717,9 @@
         }
 
         function markUnsaved() {
+            // Không cho phép đánh dấu thay đổi nếu bảng đã khóa
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+
             if (!hasUnsavedChanges) {
                 hasUnsavedChanges = true;
                 const badge = document.getElementById('badge-status');
@@ -726,9 +733,16 @@
 
         // KHÔI PHỤC DỮ LIỆU TỪ LỊCH TRỰC GỐC
         async function resetToOriginalShifts() {
-            showConfirmModal("Tải lại từ Lịch Trực Gốc?", "Hành động này sẽ XÓA BỎ hoàn toàn bảng chấm công nháp hiện tại và tự động nạp lại dữ liệu chuẩn xác từ Lịch Trực (đồng thời ép lưu lên máy chủ).\n\nBạn có chắc chắn muốn thực hiện?", async () => {
-                const month = document.getElementById('sel-month').value;
-                const year = document.getElementById('sel-year').value;
+            // Khóa nút nếu bảng đang bị khóa
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') {
+                showToast("Bảng chấm công đang bị khóa, không thể thao tác!", "error");
+                return;
+            }
+
+            showConfirmModal("Làm mới Lịch Trực?", "Hệ thống sẽ CẬP NHẬT LẠI lịch trực chuẩn cho những nhân sự CÓ TÊN trong danh sách phân công trực tháng này.\n\nĐặc biệt: Dữ liệu bạn đã chấm tay (Nghỉ phép, Ốm, Bù...) và dữ liệu của người KHÔNG TRỰC sẽ được GIỮ NGUYÊN.\n\nBạn có chắc chắn muốn thực hiện?", async () => {
+                const month = parseInt(document.getElementById('sel-month').value);
+                const year = parseInt(document.getElementById('sel-year').value);
+                const daysInMonth = new Date(year, month, 0).getDate();
                 
                 const rows = document.querySelectorAll('#report-tbody tr.data-row');
                 const renderedKhoas = new Set();
@@ -737,26 +751,91 @@
                 const khoasToReset = Array.from(renderedKhoas);
                 
                 if (khoasToReset.length === 0) {
-                    showToast("Không có dữ liệu để khôi phục!", "warning");
+                    showToast("Không có dữ liệu để thao tác!", "warning");
                     return;
                 }
 
-                // Xóa bỏ hoàn toàn Bản Nháp khỏi bộ nhớ tạm
+                // Tìm những nhân viên CÓ lịch trực trong tháng hiện tại
+                const shiftsInMonth = MOCK_DB.shifts.filter(s => {
+                    if(!s.NgayTruc) return false;
+                    const parts = s.NgayTruc.split('-');
+                    if(parts.length !== 3) return false;
+                    return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
+                });
+                
+                // Tạo danh sách ID của những người có trực
+                const nvsWithShifts = new Set(shiftsInMonth.map(s => String(s.MaNV)));
+
+                // Các ký hiệu được coi là do hệ thống tự sinh (không phải chấm tay)
+                const autoSymbols = ['+', 'T24', 'Rt', 'CN', 'T7', ''];
+
                 khoasToReset.forEach(mk => {
                     const maBang = `BCC_${mk}_${month}_${year}`;
-                    MOCK_DB.bangChamCong = MOCK_DB.bangChamCong.filter(b => b.MaBang !== maBang);
+                    let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
+                    
+                    if (bang && bang.DuLieu) {
+                        try {
+                            let savedObj = JSON.parse(bang.DuLieu);
+                            for (let maNV in savedObj) {
+                                // Nếu người này CÓ lịch trực -> Làm mới ngày trực, giữ ngày chấm tay
+                                if (nvsWithShifts.has(maNV)) {
+                                    let draftDays = savedObj[maNV].days || {};
+                                    
+                                    const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(maNV));
+                                    const shiftMap = {};
+                                    nvShifts.forEach(s => {
+                                        const parts = s.NgayTruc.split('-');
+                                        if(parts.length === 3) {
+                                            let d = parseInt(parts[2]);
+                                            shiftMap[d] = s.ChucDanh; 
+                                        }
+                                    });
+
+                                    for(let day = 1; day <= daysInMonth; day++) {
+                                        let correctVal = '';
+                                        let dateObj = new Date(year, month - 1, day);
+                                        let dw = dateObj.getDay(); 
+
+                                        if (shiftMap[day]) {
+                                            correctVal = 'T24';
+                                        } else if (shiftMap[day - 1]) {
+                                            correctVal = 'Rt';
+                                        } else if (dw === 0 || dw === 6) {
+                                            correctVal = dw === 0 ? 'CN' : 'T7'; 
+                                        } else {
+                                            correctVal = '+';
+                                        }
+
+                                        let draftVal = draftDays[day] || '';
+                                        
+                                        let isManual = false;
+                                        if (draftVal) {
+                                            let parts = draftVal.split('/');
+                                            isManual = parts.some(p => !autoSymbols.includes(p.trim()));
+                                        }
+
+                                        // Nếu ô đó là dữ liệu tự động bị lệch -> Cập nhật thành lịch chuẩn
+                                        if (!isManual) {
+                                            draftDays[day] = correctVal;
+                                        }
+                                    }
+                                    
+                                    savedObj[maNV].days = draftDays;
+                                }
+                                // Những người không trực (nvsWithShifts.has(maNV) == false) thì giữ nguyên savedObj[maNV]
+                            }
+                            bang.DuLieu = JSON.stringify(savedObj);
+                        } catch(e) {}
+                    }
                 });
 
                 hasUnsavedChanges = false;
-                showToast("Đang đồng bộ và nạp lại dữ liệu gốc...", "warning");
+                showToast("Đang đồng bộ và làm mới dữ liệu...", "warning");
                 
-                // Gọi generateReport() để hệ thống tự động vẽ lại lưới ngày tháng chuẩn từ Lịch Trực
                 generateReport();
-
-                // LẬP TỨC Đẩy Bảng vừa được vẽ chuẩn lên Google Sheets đè lên bản lỗi cũ
                 await updateBangStatus('Nháp');
 
-                showToast("Thành công! Đã khôi phục dữ liệu từ Lịch trực gốc!", "success");
+                showToast("Thành công! Đã làm mới lịch trực (Giữ nguyên dữ liệu chấm tay)!", "success");
             });
         }
 
@@ -1028,11 +1107,13 @@
             const btnPrint = document.getElementById('btn-print');
             const badge = document.getElementById('badge-status');
             const btnSendText = document.getElementById('btn-send-text');
+            const btnResetShifts = document.getElementById('btn-reset-shifts');
 
             btnDraft.classList.add('hidden');
             btnSend.classList.add('hidden');
             btnApprove.classList.add('hidden');
             btnCancel.classList.add('hidden');
+            if (btnResetShifts) btnResetShifts.classList.add('hidden');
 
             const isAdminAll = isGlobalAdmin();
 
@@ -1043,6 +1124,7 @@
                 if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
                     btnDraft.classList.remove('hidden');
                     btnSend.classList.remove('hidden');
+                    if (btnResetShifts) btnResetShifts.classList.remove('hidden');
                     if(btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình TCHC" : "Trình lại TCHC";
                 }
                 btnPrint.disabled = true;
@@ -1128,6 +1210,7 @@
             }
 
             hasUnsavedChanges = false; 
+            currentOverallStatus = status; // Cập nhật trạng thái khóa
             updateApprovalUI(status);
             
             await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
@@ -1139,7 +1222,7 @@
         }
 
         function sendApprove() {
-            showConfirmModal("Xác nhận Trình TCHC", "Bạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
+            showConfirmModal("Xác nhận Trình TCHC", "Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa cho đến khi TCHC phê duyệt hoặc từ chối.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
                 await updateBangStatus('Chờ duyệt');
                 showToast("Đã trình Bảng chấm công thành công!", "success");
             });
@@ -1288,6 +1371,7 @@
             else if (hasPending) overallStatus = 'Chờ duyệt';
             else if (hasApproved) overallStatus = 'Đã duyệt';
 
+            currentOverallStatus = overallStatus; // Lưu trạng thái hiện tại
             const isLocked = (overallStatus === 'Chờ duyệt' || overallStatus === 'Đã duyệt');
             updateApprovalUI(overallStatus);
             
