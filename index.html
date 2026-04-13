@@ -203,16 +203,22 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
 
     <!-- CUSTOM CONFIRM MODAL -->
-    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+    <div id="custom-confirm-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans" id="confirm-modal-title">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans"
+                id="confirm-modal-title">
                 <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
             </div>
             <div class="p-6 text-center md:text-left">
-                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed"
+                    id="confirm-modal-desc">Bạn có chắc chắn?</p>
                 <div class="flex justify-end space-x-3">
-                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
-                    <button id="confirm-modal-btn" onclick="executeConfirmAction()" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng ý</button>
+                    <button onclick="closeConfirmModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
+                    <button id="confirm-modal-btn" onclick="executeConfirmAction()"
+                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng
+                        ý</button>
                 </div>
             </div>
         </div>
@@ -1016,19 +1022,29 @@
     <!-- ========================================================================================= -->
 
     <!-- MODAL TỪ CHỐI DUYỆT (TRẢ LẠI LỊCH) -->
-    <div id="reject-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[80] flex items-center justify-center fade-in no-print">
+    <div id="reject-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[80] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="bg-red-50 px-6 py-4 border-b border-red-100 flex justify-between items-center">
-                <h3 class="font-bold text-lg text-red-800 flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> Trả lại Lịch trực</h3>
-                <button onclick="closeRejectModal()" class="text-red-400 hover:text-red-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="font-bold text-lg text-red-800 flex items-center"><i data-lucide="alert-circle"
+                        class="w-5 h-5 mr-2"></i> Trả lại Lịch trực</h3>
+                <button onclick="closeRejectModal()" class="text-red-400 hover:text-red-600"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-4">
-                <p class="text-sm text-slate-600">Bạn đang yêu cầu <span id="reject-khoa-name" class="font-bold text-slate-800"></span> làm lại lịch. Vui lòng nhập lý do để khoa biết và chỉnh sửa:</p>
+                <p class="text-sm text-slate-600">Bạn đang yêu cầu <span id="reject-khoa-name"
+                        class="font-bold text-slate-800"></span> làm lại lịch. Vui lòng nhập lý do để khoa biết và chỉnh
+                    sửa:</p>
                 <input type="hidden" id="reject-ma-phieu">
-                <textarea id="reject-reason" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none" rows="3" placeholder="Ví dụ: Sai luật LĐ, thiếu người trực ngày T7..."></textarea>
+                <textarea id="reject-reason"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 outline-none"
+                    rows="3" placeholder="Ví dụ: Sai luật LĐ, thiếu người trực ngày T7..."></textarea>
                 <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
-                    <button onclick="closeRejectModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Hủy</button>
-                    <button onclick="confirmReject()" class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg flex items-center shadow hover:bg-red-700">Xác nhận Trả lại</button>
+                    <button onclick="closeRejectModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200">Hủy</button>
+                    <button onclick="confirmReject()"
+                        class="px-4 py-2 text-sm text-white bg-red-600 rounded-lg flex items-center shadow hover:bg-red-700">Xác
+                        nhận Trả lại</button>
                 </div>
             </div>
         </div>
@@ -1169,18 +1185,34 @@
                             placeholder="VD: user@gmail.com">
                     </div>
                 </div>
-                
+
                 <!-- BỔ SUNG NGÀY VÀO LÀM & TICK CÓ TRỰC -->
                 <div class="grid grid-cols-2 gap-4 mt-2">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Ngày vào làm</label>
-                        <input type="date" id="u-ngayvaolam" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                        <input type="date" id="u-ngayvaolam"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
                     </div>
                     <div class="flex items-center mt-5">
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="u-cotruc" class="w-4 h-4 text-medical-600 rounded focus:ring-medical-500" checked>
+                            <input type="checkbox" id="u-cotruc"
+                                class="w-4 h-4 text-medical-600 rounded focus:ring-medical-500" checked>
                             <span class="text-sm font-medium text-slate-700">Có tham gia trực</span>
                         </label>
+                    </div>
+                </div>
+
+                <!-- MỚI THÊM: BHXH và CCHN -->
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
+                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm"
+                            placeholder="Nhập mã số BHXH...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Chứng chỉ hành nghề (CCHN)</label>
+                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm"
+                            placeholder="Nhập số CCHN...">
                     </div>
                 </div>
 
@@ -1451,20 +1483,20 @@
         }
 
         function executeConfirmAction() {
-            if(confirmActionFn) confirmActionFn();
+            if (confirmActionFn) confirmActionFn();
             closeConfirmModal();
         }
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
-            if(!container) return;
+            if (!container) return;
             const toast = document.createElement('div');
             const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : 'bg-emerald-600');
             toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
             toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span>${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-            
+
             setTimeout(() => {
                 toast.classList.add('opacity-0');
                 setTimeout(() => toast.remove(), 300);
@@ -1489,16 +1521,16 @@
         function forceMonday(inputId) {
             const input = document.getElementById(inputId);
             if (!input || !input.value) return null;
-            
+
             const originalValue = input.value;
             const d = new Date(originalValue);
-            const day = d.getDay(); 
-            
-            if (day !== 1) { 
+            const day = d.getDay();
+
+            if (day !== 1) {
                 const diff = d.getDate() - day + (day === 0 ? -6 : 1);
                 const monday = new Date(d.setDate(diff));
                 const mondayStr = normalizeDateStr(monday);
-                
+
                 if (originalValue !== mondayStr) {
                     input.value = mondayStr;
                     showToast("Hệ thống tự động điều chỉnh về ngày Thứ 2 đầu tuần.", "warning");
@@ -1616,7 +1648,7 @@
         // KHỐI 2: DỮ LIỆU & KẾT NỐI MÁY CHỦ (API SYNC)
         // ---------------------------------------------------------------------------------------
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwSWURLwy4V3y9Z2wJtMIpV1brZsGq7m2wDoFCYx3UbIGjmtAmrCKinLiVEOWBCwbFY/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwrMT_HDbxEDytLNteIZW0qPrvM3mG1qfKdzl8Fw45eHqkV1R-AsaHHg_gq66yrR2op/exec";
 
         let MOCK_DB = {
             khoa: [], users: [], loaiCa: [], phieu: [], shifts: [], thongBao: [], auditLogs: [], cauHinhKySo: []
@@ -1649,15 +1681,15 @@
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 document.getElementById('login-screen').classList.add('hidden');
-                
+
                 const sidebar = document.getElementById('sidebar');
-                sidebar.classList.remove('hidden'); 
+                sidebar.classList.remove('hidden');
                 sidebar.classList.add('flex');
-                
+
                 document.getElementById('main-content').classList.remove('hidden');
                 document.getElementById('user-fullname').textContent = currentUser.HoTen;
                 document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
-                
+
                 buildMenu();
 
                 if (currentUser.Role === 'Admin_KHTH') {
@@ -1679,11 +1711,11 @@
                 const results = await Promise.all(promises);
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
-                
+
                 if (results[1] && results[1].status === "success") {
-                    MOCK_DB.users = (results[1].data || []).map(u => ({ 
-                        ...u, 
-                        MaNV: String(u.MaNV), 
+                    MOCK_DB.users = (results[1].data || []).map(u => ({
+                        ...u,
+                        MaNV: String(u.MaNV),
                         ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE',
                         CoTruc: u.CoTruc === undefined || String(u.CoTruc).toUpperCase() !== 'FALSE',
                         NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : ""
@@ -2474,7 +2506,7 @@
 
         function deleteThongBao(id) {
             showConfirmModal("Xác nhận Xóa", "Xóa thông báo này khỏi hệ thống?", () => {
-                MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id); 
+                MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
                 renderAdminThongBaoTable(); checkAndRenderNotifications(); syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
                 showToast("Đã xóa thông báo!", "success");
             });
@@ -2523,7 +2555,7 @@
                 }
 
                 if (!keyword) return true;
-                const searchStr = `${u.MaNV} ${u.HoTen} ${u.TenHienThi || ''} ${u.SDT || ''}`.toLowerCase();
+                const searchStr = `${u.MaNV} ${u.HoTen} ${u.TenHienThi || ''} ${u.SDT || ''} ${u.CCHN || ''} ${u.BHXH || ''}`.toLowerCase();
                 return searchStr.includes(keyword);
             });
 
@@ -2537,12 +2569,14 @@
                 const hasAccount = u.Username && u.Username.trim() !== "";
                 const sdtHtml = u.SDT ? formatSDT(u.SDT) : 'Chưa có SĐT';
                 const mailHtml = u.Email ? u.Email : 'Chưa có Email';
-                
+
                 // Format lại ngày vào làm để hiển thị ra UI
                 const ngayVaoLamUI = u.NgayVaoLam ? u.NgayVaoLam.split('-').reverse().join('/') : 'Chưa cập nhật';
-                const coTrucUI = u.CoTruc !== false 
-                    ? '<span class="text-emerald-600"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Có xếp trực</span>' 
+                const coTrucUI = u.CoTruc !== false
+                    ? '<span class="text-emerald-600"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Có xếp trực</span>'
                     : '<span class="text-red-500"><i data-lucide="x-circle" class="w-3 h-3 inline"></i> Không trực</span>';
+
+                const cchnUI = u.CCHN ? `<div class="text-[10px] text-slate-500 mt-1"><i data-lucide="award" class="w-3 h-3 inline"></i> CCHN: ${u.CCHN}</div>` : '';
 
                 return `<tr class="border-b hover:bg-slate-50 transition">
                     <td class="px-4 py-3 font-medium text-slate-700">${u.MaNV}</td>
@@ -2554,6 +2588,7 @@
                     <td class="px-4 py-3 text-xs max-w-xs truncate" title="${k}">${k}</td>
                     <td class="px-4 py-3">
                         <div class="font-medium text-slate-700">${u.ChucDanh}</div>
+                        ${cchnUI}
                         <div class="text-[10px] text-slate-500 mt-1">Vào làm: ${ngayVaoLamUI}</div>
                         <div class="text-[10px] mt-0.5">${coTrucUI}</div>
                     </td>
@@ -2597,7 +2632,9 @@
                     document.getElementById('u-email').value = user.Email || "";
                     document.getElementById('u-username').value = user.Username || "";
                     document.getElementById('u-password').value = user.Password || "";
-                    
+                    document.getElementById('u-bhxh').value = user.BHXH || "";
+                    document.getElementById('u-cchn').value = user.CCHN || "";
+
                     // Gán ngày vào làm và checkbox trực
                     document.getElementById('u-ngayvaolam').value = user.NgayVaoLam || "";
                     document.getElementById('u-cotruc').checked = user.CoTruc !== false;
@@ -2620,9 +2657,9 @@
                 document.getElementById('u-manv').readOnly = true;
                 document.getElementById('u-manv').value = Math.floor(100000000 + Math.random() * 900000000).toString();
 
-                ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password'].forEach(id => document.getElementById(id).value = "");
+                ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password', 'u-bhxh', 'u-cchn'].forEach(id => document.getElementById(id).value = "");
                 document.getElementById('u-cchs').checked = false;
-                
+
                 // Mặc định ngày vào làm là hôm nay và được phép trực khi thêm mới
                 document.getElementById('u-ngayvaolam').value = new Date().toISOString().split('T')[0];
                 document.getElementById('u-cotruc').checked = true;
@@ -2684,7 +2721,9 @@
                 Role: userRole,
                 ChungChiHS: document.getElementById('u-cchs').checked,
                 NgayVaoLam: document.getElementById('u-ngayvaolam').value,
-                CoTruc: document.getElementById('u-cotruc').checked
+                CoTruc: document.getElementById('u-cotruc').checked,
+                BHXH: document.getElementById('u-bhxh').value.trim(),
+                CCHN: document.getElementById('u-cchn').value.trim()
             };
 
             if (document.getElementById('form-mode').value === 'add') {
@@ -2699,9 +2738,9 @@
 
         function deleteUser(maNV) {
             showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`, () => {
-                MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV)); 
-                logActivity("Xóa nhân sự", `Mã: ${maNV}`); 
-                renderAdminUsersTable(); 
+                MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV));
+                logActivity("Xóa nhân sự", `Mã: ${maNV}`);
+                renderAdminUsersTable();
                 syncWithGAS('sync_NhanVien', MOCK_DB.users);
                 showToast("Đã xóa nhân sự", "success");
             });
@@ -2721,11 +2760,11 @@
             if (document.getElementById('d-form-mode').value === 'add') {
                 const tenKhoa = document.getElementById('d-tenkhoa').value;
                 const maKhoa = tenKhoa
-                    .normalize('NFD') 
-                    .replace(/[\u0300-\u036f]/g, '') 
-                    .replace(/đ/g, 'd').replace(/Đ/g, 'D') 
-                    .replace(/[^a-zA-Z0-9]/g, '') 
-                    .toUpperCase(); 
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                    .replace(/[^a-zA-Z0-9]/g, '')
+                    .toUpperCase();
                 document.getElementById('d-makhoa').value = maKhoa;
             }
         }
@@ -2763,8 +2802,8 @@
         function deleteDepartment(m) {
             if (MOCK_DB.users.some(u => (u.MaKhoa || "").includes(m))) return showToast("Không thể xóa Khoa đang có nhân sự!", "error");
             showConfirmModal("Xác nhận xóa", "Xóa khoa phòng này khỏi hệ thống?", () => {
-                MOCK_DB.khoa = MOCK_DB.khoa.filter(d => d.MaKhoa !== m); 
-                logActivity("Xóa khoa", `Mã: ${m}`); 
+                MOCK_DB.khoa = MOCK_DB.khoa.filter(d => d.MaKhoa !== m);
+                logActivity("Xóa khoa", `Mã: ${m}`);
                 renderAdminDepartmentsTable(); populateDeptDropdown(); syncWithGAS('sync_KhoaPhong', MOCK_DB.khoa);
                 showToast("Đã xóa khoa phòng", "success");
             });
@@ -2774,7 +2813,7 @@
         // ---------------------------------------------------------------------------------------
 
         function checkWeeklyStatus() {
-            const tuan = forceMonday('tuan-bat-dau'); 
+            const tuan = forceMonday('tuan-bat-dau');
             if (!tuan) return;
             const weekDates = getDatesInWeek(tuan);
             localShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
@@ -2820,9 +2859,9 @@
 
         function renderNhanVienList() {
             // LỌC THÊM ĐIỀU KIỆN CÓ TRỰC !== FALSE (Chỉ hiện người được tham gia xếp lịch)
-            const nvs = MOCK_DB.users.filter(u => 
+            const nvs = MOCK_DB.users.filter(u =>
                 (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) &&
-                u.CoTruc !== false 
+                u.CoTruc !== false
             );
 
             let nhomNhanSu = {};
@@ -2841,8 +2880,8 @@
                     html += nhomNhanSu[ma].users.map(u => `<div onclick="assignToSelectedCell('${u.MaNV}', '${u.ChucDanh}')" class="px-3 py-1.5 md:p-2 bg-white border border-slate-300 md:border-transparent md:border rounded-full md:rounded shadow-sm inline-flex md:flex cursor-pointer hover:border-medical-500 hover:bg-medical-50 mb-0 md:mb-2 text-xs md:text-sm mr-2 md:mr-0 whitespace-nowrap shrink-0">${u.TenHienThi || u.HoTen}</div>`).join('');
                 }
             }
-            
-            if(html === '') {
+
+            if (html === '') {
                 html = '<div class="text-center text-xs text-slate-500 mt-4">Không có nhân sự nào được cấu hình tham gia trực.</div>';
             }
 
@@ -2925,13 +2964,13 @@
         function autoSchedule() {
             if (currentPhieu && (currentPhieu.TrangThai === "Chờ duyệt" || currentPhieu.TrangThai === "Đã duyệt")) return showToast("Lịch đã khóa, không thể tự động xếp!", "error");
             const tuan = document.getElementById('tuan-bat-dau').value; const weekDates = getDatesInWeek(tuan);
-            
+
             // CHỈ CHỌN NHỮNG NHÂN VIÊN ĐƯỢC PHÉP TRỰC
-            const nvs = MOCK_DB.users.filter(u => 
-                (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && 
+            const nvs = MOCK_DB.users.filter(u =>
+                (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) &&
                 u.CoTruc !== false
             );
-            
+
             let rolesInKhoa = [...new Set(nvs.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
 
             weekDates.forEach(date => {
@@ -2951,7 +2990,7 @@
 
         function openSwapShiftModal() {
             if (localShifts.length === 0) return showToast("Chưa có lịch để đổi!", "warning");
-            const tuan = forceMonday('tuan-bat-dau'); 
+            const tuan = forceMonday('tuan-bat-dau');
             const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
             const isApproved = phieu && phieu.TrangThai === 'Đã duyệt';
 
@@ -2963,13 +3002,13 @@
             }
 
             const srcSel = document.getElementById('swap-source-user'); const tgtSel = document.getElementById('swap-target-user');
-            
+
             // Chỉ hiển thị người được phép tham gia trực vào danh sách xin đổi ca
-            const nvs = MOCK_DB.users.filter(u => 
+            const nvs = MOCK_DB.users.filter(u =>
                 (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) &&
                 u.CoTruc !== false
             );
-            
+
             srcSel.innerHTML = nvs.map(u => `<option value="${u.MaNV}">${u.TenHienThi || u.HoTen} (${u.ChucDanh})</option>`).join('');
             tgtSel.innerHTML = nvs.map(u => `<option value="${u.MaNV}">${u.TenHienThi || u.HoTen} (${u.ChucDanh})</option>`).join('');
             document.getElementById('swap-modal').classList.remove('hidden');
@@ -3017,7 +3056,7 @@
         }
 
         function luuLichNhaps() {
-            const tuan = forceMonday('tuan-bat-dau'); 
+            const tuan = forceMonday('tuan-bat-dau');
             if (!tuan) return;
             const weekDates = getDatesInWeek(tuan);
             MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
@@ -3026,9 +3065,9 @@
         }
 
         function nopLichKHTH() {
-            const tuan = forceMonday('tuan-bat-dau'); 
+            const tuan = forceMonday('tuan-bat-dau');
             if (!tuan) return;
-            
+
             showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", () => {
                 let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
                 if (phieu) { phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; } else { MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); }
@@ -3173,7 +3212,7 @@
 
         function renderAdminApprovalTable() {
             const tuan = forceMonday('admin-tuan-bat-dau');
-            if(!tuan) return;
+            if (!tuan) return;
             const allViolations = getAllViolations(tuan, MOCK_DB.shifts);
             const tbody = document.getElementById('admin-approval-body');
 
@@ -3458,7 +3497,7 @@
         }
 
         function renderUserMasterTable() {
-            const tuan = forceMonday('user-master-tuan'); 
+            const tuan = forceMonday('user-master-tuan');
             if (!tuan) return;
 
             const container = document.getElementById('user-master-container');
@@ -3480,7 +3519,7 @@
         }
 
         function renderXemLichKhoaTable() {
-            const tuan = forceMonday('xem-tuan-bat-dau'); 
+            const tuan = forceMonday('xem-tuan-bat-dau');
             if (!tuan) return;
             const weekDates = getDatesInWeek(tuan);
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
