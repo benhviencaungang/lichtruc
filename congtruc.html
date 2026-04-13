@@ -27,7 +27,6 @@
                 font-family: "Times New Roman", Times, serif !important;
                 color: black !important;
                 display: block !important;
-                /* Gỡ bỏ flex box */
             }
 
             .no-print,
@@ -69,18 +68,15 @@
 
             tr {
                 page-break-inside: avoid;
-                /* Tránh cắt ngang dòng khi sang trang */
                 page-break-after: auto;
             }
 
             thead {
                 display: table-header-group;
-                /* Lặp lại Header bảng khi sang trang mới */
             }
 
             tfoot {
                 display: table-footer-group;
-                /* Lặp lại Footer bảng khi sang trang mới */
             }
 
             th,
@@ -91,11 +87,11 @@
             }
 
             /* Ẩn các input khi in, hiện text span lên */
-            .rate-input {
+            .rate-input, .nights-input, .days-input, .shift-type-select {
                 display: none !important;
             }
 
-            .print-value {
+            .print-value, .print-value-nights, .print-value-days {
                 display: inline !important;
             }
         }
@@ -128,15 +124,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -147,68 +136,107 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
 
     <!-- CUSTOM CONFIRM MODAL -->
-    <div id="custom-confirm-modal"
-        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans"
-                id="confirm-modal-title">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800 font-sans" id="confirm-modal-title">
                 <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
             </div>
             <div class="p-6 text-center md:text-left">
-                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed"
-                    id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <p class="text-sm text-slate-600 mb-6 font-sans whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
                 <div class="flex justify-end space-x-3">
-                    <button onclick="closeConfirmModal()"
-                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
-                    <button id="confirm-modal-btn"
-                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng
-                        ý</button>
+                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans w-full md:w-auto">Hủy</button>
+                    <button id="confirm-modal-btn" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition font-sans w-full md:w-auto">Đồng ý</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- MODAL CÀI ĐẶT ĐƠN GIÁ (DÀNH CHO TCKT) -->
-    <div id="settings-modal"
-        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden font-sans">
+    <div id="settings-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden font-sans mx-4">
             <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800">
-                <i data-lucide="settings" class="w-5 h-5 mr-2 text-purple-600"></i> Cài đặt Đơn giá Mặc định
+                <i data-lucide="settings" class="w-5 h-5 mr-2 text-purple-600"></i> Cài đặt Đơn giá Mặc định (Tất cả Khung giá)
             </div>
-            <div class="p-6">
-                <p class="text-sm text-slate-600 mb-4 italic">Khoa HSCC sẽ tự động chia đôi (/2) so với mức giá này.</p>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá Ngày thường (VNĐ)</label>
-                        <input type="number" id="setting-wd"
-                            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="VD: 50000">
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
+                <p class="text-sm text-slate-600 mb-4 italic bg-purple-50 p-3 rounded-lg border border-purple-100">
+                    <i data-lucide="info" class="w-4 h-4 inline mr-1 text-purple-600"></i>
+                    Hệ thống sẽ tự động áp dụng mức giá tương ứng. KHTH sẽ có quyền điều chỉnh phân loại trực (24/24, 12/24) và ngày trực cụ thể cho từng cá nhân khi kiểm tra phiếu.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Khung Giá Trực 24/24 -->
+                    <div class="space-y-4 p-5 border border-slate-200 rounded-xl bg-slate-50/50 shadow-sm">
+                        <h3 class="font-bold text-slate-800 border-b pb-2 flex items-center">
+                            <i data-lucide="building-2" class="w-4 h-4 mr-2 text-blue-600"></i> Trực 24/24 (Nội, Ngoại...)
+                        </h3>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ngày thường (VNĐ)</label>
+                            <input type="number" id="setting-norm-wd" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Thứ 7, CN (VNĐ)</label>
+                            <input type="number" id="setting-norm-we" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 font-bold text-orange-600">Ngày Lễ, Tết (VNĐ)</label>
+                            <input type="number" id="setting-norm-hol" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-orange-700 bg-orange-50">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Giá Thứ 7, CN (VNĐ)</label>
-                        <input type="number" id="setting-we"
-                            class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-purple-500"
-                            placeholder="VD: 80000">
+
+                    <!-- Khung Giá Trực Cấp Cứu 12/24 -->
+                    <div class="space-y-4 p-5 border border-red-200 rounded-xl bg-red-50/30 shadow-sm">
+                        <h3 class="font-bold text-red-700 border-b border-red-200 pb-2 flex items-center">
+                            <i data-lucide="ambulance" class="w-4 h-4 mr-2 text-red-600"></i> Trực 12/24 (Cấp cứu, HSCC)
+                        </h3>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ngày thường (VNĐ)</label>
+                            <input type="number" id="setting-em-wd" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Thứ 7, CN (VNĐ)</label>
+                            <input type="number" id="setting-em-we" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 font-bold text-orange-600">Ngày Lễ, Tết (VNĐ)</label>
+                            <input type="number" id="setting-em-hol" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-orange-700 bg-orange-50">
+                        </div>
+                    </div>
+
+                    <!-- Khung Giá Trực 24/24 Cấp Cứu -->
+                    <div class="space-y-4 p-5 border border-orange-200 rounded-xl bg-orange-50/50 shadow-sm">
+                        <h3 class="font-bold text-orange-800 border-b border-orange-200 pb-2 flex items-center">
+                            <i data-lucide="siren" class="w-4 h-4 mr-2 text-orange-600"></i> Trực 24/24 (Cấp Cứu)
+                        </h3>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Ngày thường (VNĐ)</label>
+                            <input type="number" id="setting-em24-wd" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Thứ 7, CN (VNĐ)</label>
+                            <input type="number" id="setting-em24-we" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1 font-bold text-orange-600">Ngày Lễ, Tết (VNĐ)</label>
+                            <input type="number" id="setting-em24-hol" class="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-orange-500 font-bold text-orange-700 bg-orange-100">
+                        </div>
                     </div>
                 </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button onclick="closeSettingsModal()"
-                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition">Đóng</button>
-                    <button onclick="saveSettings()"
-                        class="px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow transition">Lưu
-                        Cài đặt</button>
+
+                <div class="flex justify-end space-x-3 mt-6 border-t pt-4">
+                    <button onclick="closeSettingsModal()" class="px-5 py-2.5 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-medium">Đóng</button>
+                    <button onclick="saveSettings()" class="px-5 py-2.5 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow transition font-medium flex items-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu Cấu hình
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODULE: MÀN HÌNH ĐĂNG NHẬP -->
-    <div id="login-screen"
-        class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
-                <div
-                    class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800">Yêu cầu Đăng nhập</h1>
@@ -217,60 +245,40 @@
             <form id="login-form">
                 <div class="mb-4 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label>
-                    <input type="text" id="username" autocomplete="off"
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                        required>
+                    <input type="text" id="username" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
                 </div>
                 <div class="mb-6 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
-                    <input type="password" id="password" autocomplete="off"
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
-                        required>
+                    <input type="password" id="password" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
                 </div>
                 <div id="login-error" class="hidden text-red-500 text-sm mb-4 font-sans text-center"></div>
-                <button type="submit" id="btn-login"
-                    class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
+                <button type="submit" id="btn-login" class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
                     <i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực
                 </button>
-                <div class="mt-6 text-center font-sans">
-                    <a href="index.html"
-                        class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i
-                            data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
-                </div>
             </form>
         </div>
     </div>
 
-    <!-- BỘ TẢI DỮ LIỆU BẢO VỆ MÀN HÌNH -->
-    <div id="loading-screen"
-        class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
+    <!-- MÀN HÌNH LOADING -->
+    <div id="loading-screen" class="fixed inset-0 bg-white z-[40] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
         </div>
-        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ
-            liệu...</p>
+        <p class="font-sans text-slate-600 font-medium text-center" id="loading-text">Đang kiểm tra bảo mật và tải dữ liệu...</p>
         <div id="retry-btn-container" class="hidden mt-4 font-sans">
-            <button onclick="loadDataFromGAS()"
-                class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
+            <button onclick="loadDataFromGAS()" class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Thử lại
             </button>
         </div>
     </div>
 
-    <!-- KHU VỰC ĐIỀU KHIỂN (KHÔNG IN) -->
-    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden"
-        id="control-panel">
-
+    <!-- KHU VỰC ĐIỀU KHIỂN -->
+    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
         <!-- Nhóm lọc dữ liệu bên trái -->
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <button onclick="window.location.href='index.html'"
-                class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
-            </button>
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
 
-            <select id="sel-month" onchange="generateReport()"
-                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+            <select id="sel-month" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
                 <option value="1">Tháng 1</option>
                 <option value="2">Tháng 2</option>
                 <option value="3">Tháng 3</option>
@@ -284,91 +292,72 @@
                 <option value="11">Tháng 11</option>
                 <option value="12">Tháng 12</option>
             </select>
-            <select id="sel-year" onchange="generateReport()"
-                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0">
+            <select id="sel-year" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
                 <option value="2024">2024</option>
                 <option value="2025">2025</option>
                 <option value="2026">2026</option>
             </select>
-            <select id="sel-khoa" onchange="generateReport()"
-                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0">
+            <select id="sel-khoa" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0 font-medium bg-emerald-50 text-emerald-900 border-emerald-200">
                 <!-- Tự động điền qua JS -->
             </select>
 
-            <button onclick="loadDataFromGAS()"
-                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0"
-                title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
-                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới & Tải Dữ liệu
+            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Tải lại DB
             </button>
         </div>
 
         <!-- Nhóm phê duyệt & in bên phải -->
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
             <!-- Nút cài đặt đơn giá (Chỉ TCKT) -->
-            <button id="btn-settings" onclick="openSettingsModal()"
-                class="hidden px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center shadow transition whitespace-nowrap shrink-0">
+            <button id="btn-settings" onclick="openSettingsModal()" class="hidden px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center shadow transition whitespace-nowrap shrink-0">
                 <i data-lucide="settings" class="w-4 h-4 mr-1"></i> Cài đặt Đơn giá
             </button>
 
             <!-- Vùng điều khiển Phê duyệt -->
-            <div id="approval-controls"
-                class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
-                <span id="badge-status"
-                    class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa
-                    gửi</span>
+            <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200">
+                <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap uppercase tracking-wide">Chưa gửi</span>
 
-                <!-- Nhóm nút bấm đa năng tùy theo Phân quyền (isKHTH, isTCKT, isKhoa) -->
-                <button id="btn-send-approve" onclick="sendApprove()"
-                    class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Gửi KHTH</span>
                 </button>
-                <button id="btn-approve" onclick="approvePhieu()"
-                    class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-approve" onclick="approvePhieu()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition font-medium">
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
                 </button>
-                <button id="btn-save-money" onclick="saveMoney()"
-                    class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
-                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Số Tiền
+                
+                <!-- NÚT LƯU ĐIỀU CHỈNH CHUNG (CHO CẢ KHTH VÀ TCKT) -->
+                <button id="btn-save-data" onclick="saveData()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition font-medium">
+                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Điều Chỉnh
                 </button>
-                <button id="btn-cancel-approve" onclick="cancelApprove()"
-                    class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
+
+                <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Từ chối
                 </button>
             </div>
 
-            <button id="btn-print" onclick="window.print()"
-                class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-medium whitespace-nowrap shrink-0"
-                disabled title="Chỉ được in khi TCKT đã đóng chốt">
+            <!-- NÚT IN MỚI (Đã gán cờ in ấn đặc biệt) -->
+            <button id="btn-print" onclick="handlePrint()" class="opacity-50 cursor-not-allowed px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow transition font-bold whitespace-nowrap shrink-0" disabled title="Chỉ được in khi TCKT đã đóng chốt">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Phiếu (A4)
             </button>
         </div>
     </div>
 
     <!-- Hiển thị lý do từ chối -->
-    <div id="reject-reason-banner"
-        class="hidden bg-red-100 text-red-800 px-4 py-2 text-sm font-sans flex items-center justify-center border-b border-red-200 no-print">
+    <div id="reject-reason-banner" class="hidden bg-red-100 text-red-800 px-4 py-2 text-sm font-sans flex items-center justify-center border-b border-red-200 no-print">
         <i data-lucide="info" class="w-4 h-4 mr-2"></i> <span id="reject-reason-text">Lý do từ chối...</span>
     </div>
 
     <!-- MODAL TỪ CHỐI DUYỆT -->
-    <div id="reject-modal"
-        class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
+    <div id="reject-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
             <div class="bg-red-50 px-6 py-4 border-b text-red-700 font-bold flex items-center font-sans">
                 <i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> Từ chối / Trả lại Phiếu
             </div>
             <div class="p-6">
-                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để bộ phận trước nắm thông
-                    tin và chỉnh sửa:</p>
-                <textarea id="reject-reason-input"
-                    class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans"
-                    rows="3" placeholder="VD: Sai số ngày trực của BS A, áp sai định mức..."></textarea>
+                <p class="text-sm text-slate-600 mb-2 font-sans">Vui lòng nhập lý do từ chối để bộ phận trước nắm thông tin và chỉnh sửa:</p>
+                <textarea id="reject-reason-input" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-red-500 outline-none font-sans" rows="3" placeholder="VD: Sai số ngày trực của BS A..."></textarea>
                 <div class="flex justify-end space-x-3 mt-4">
-                    <button onclick="closeRejectModal()"
-                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
-                    <button onclick="confirmReject()"
-                        class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác
-                        nhận Trả lại</button>
+                    <button onclick="closeRejectModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition font-sans">Hủy</button>
+                    <button onclick="confirmReject()" class="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg shadow transition font-sans">Xác nhận Trả lại</button>
                 </div>
             </div>
         </div>
@@ -376,8 +365,7 @@
 
     <!-- KHU VỰC HIỂN THỊ TRANG IN -->
     <div class="flex-1 overflow-y-auto p-4 md:p-8 no-print-bg hidden" id="print-workspace">
-        <div
-            class="max-w-[1100px] mx-auto bg-white shadow-xl border border-slate-200 p-8 md:p-12 print-area text-[13pt] text-black">
+        <div class="max-w-[1100px] mx-auto bg-white shadow-xl border border-slate-200 p-8 md:p-12 print-area text-[13pt] text-black relative">
 
             <!-- HEADER CÔNG VĂN -->
             <div class="flex justify-between items-start mb-6">
@@ -393,72 +381,57 @@
 
             <!-- TIÊU ĐỀ PHIẾU -->
             <div class="text-center mb-6 mt-8">
-                <h1 class="font-bold text-xl uppercase" id="main-report-title">
-                    PHIẾU BỒI DƯỠNG TRỰC KHOA
-                </h1>
-                <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM
-                    <span id="lbl-end-date">.../.../......</span>)
-                </p>
+                <h1 class="font-bold text-xl uppercase" id="main-report-title">PHIẾU BỒI DƯỠNG TRỰC KHOA</h1>
+                <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM <span id="lbl-end-date">.../.../......</span>)</p>
             </div>
 
             <!-- BẢNG DỮ LIỆU -->
-            <table class="w-full table-custom text-center mt-6">
+            <table class="w-full table-custom mt-6">
                 <thead>
-                    <tr class="font-bold bg-gray-50/50">
+                    <tr class="font-bold bg-gray-50/50 text-center">
                         <th class="w-12">Số<br>TT</th>
                         <th class="w-48">HỌ VÀ TÊN</th>
                         <th class="w-24">Chức vụ</th>
                         <th class="w-56">TRỰC ĐÊM</th>
-                        <th class="w-16">Số<br>đêm</th>
+                        <th class="w-20">Số<br>đêm</th>
                         <th class="w-24">Bồi dưỡng<br>một đêm</th>
                         <th class="w-32">THÀNH TIỀN</th>
-                        <th class="w-32">GHI CHÚ</th>
+                        <th class="w-28">GHI CHÚ</th>
                     </tr>
                 </thead>
                 <tbody id="report-tbody">
-                    <!-- JS sẽ render dữ liệu vào đây -->
+                    <!-- JS render dữ liệu -->
                     <tr>
-                        <td colspan="8" class="py-8 italic text-gray-500 font-sans">Bấm "Tải dữ liệu" để lấy danh sách
-                            công trực.</td>
+                        <td colspan="8" class="py-8 italic text-gray-500 font-sans text-center">Bấm "Tải dữ liệu" để lấy danh sách công trực.</td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr class="font-bold">
-                        <td colspan="4" class="text-right pr-4">Tổng cộng</td>
-                        <td id="lbl-total-nights">0</td>
+                        <td colspan="4" class="text-right pr-4 uppercase">Tổng cộng</td>
+                        <td id="lbl-total-nights" class="text-center font-bold text-lg">0</td>
                         <td></td>
-                        <td id="lbl-total-amount" class="font-bold"></td>
+                        <td id="lbl-total-amount" class="font-bold text-right pr-2 text-lg"></td>
                         <td></td>
                     </tr>
                 </tfoot>
             </table>
 
             <div class="mt-4 italic">
-                Tổng cộng tiền là (viết bằng chữ): <span id="lbl-money-text"
-                    class="font-bold">............................................................................................................................................................</span>
+                Tổng cộng tiền là (viết bằng chữ): <span id="lbl-money-text" class="font-bold">............................................................................................................................................................</span>
             </div>
 
             <!-- CHỮ KÝ -->
             <div class="flex justify-between items-start mt-10 text-center font-bold">
-                <div class="w-1/5">
-                    <p>GIÁM ĐỐC</p>
-                </div>
-                <div class="w-1/5">
-                    <p>TP. TÀI CHÍNH -<br>KẾ TOÁN</p>
-                </div>
-                <div class="w-1/5">
-                    <p>TP. KẾ HOẠCH<br>TỔNG HỢP</p>
-                </div>
-                <div class="w-1/5 relative">
-                    <p>TRƯỞNG KHOA</p>
-                </div>
+                <div class="w-1/5"><p>GIÁM ĐỐC</p></div>
+                <div class="w-1/5"><p>TP. TÀI CHÍNH -<br>KẾ TOÁN</p></div>
+                <div class="w-1/5"><p>TP. KẾ HOẠCH<br>TỔNG HỢP</p></div>
+                <div class="w-1/5 relative"><p>TRƯỞNG KHOA</p></div>
                 <div class="w-1/5 font-normal flex flex-col items-center">
                     <div class="italic mb-1 whitespace-nowrap">Ngày ..... tháng ..... năm 20.....</div>
                     <div class="font-bold uppercase">NGƯỜI LẬP PHIẾU</div>
                 </div>
             </div>
 
-            <!-- KHOẢNG TRỐNG KÝ TÊN -->
             <div class="h-32"></div>
 
         </div>
@@ -471,24 +444,22 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwSWURLwy4V3y9Z2wJtMIpV1brZsGq7m2wDoFCYx3UbIGjmtAmrCKinLiVEOWBCwbFY/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], phieuBoiDuong: [] };
         let currentUser = null;
+        let isPrintingMode = false; // Cờ theo dõi trạng thái đang in để ẩn hiện hàng trống
 
-        // TỪ ĐIỂN DỊCH CHỨC VỤ SANG CHỮ DÀI ĐẦY ĐỦ
+        // DANH SÁCH NGÀY LỄ CỐ ĐỊNH
+        const FIXED_HOLIDAYS = [
+            '01-01', '04-30', '05-01', '09-02', '09-03',
+            '2024-02-08', '2024-02-09', '2024-02-10', '2024-02-11', '2024-02-12', '2024-02-13', '2024-02-14', '2024-04-18',
+            '2025-01-28', '2025-01-29', '2025-01-30', '2025-01-31', '2025-02-01', '2025-02-02', '2025-02-03', '2025-04-07',
+            '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-04-26'
+        ];
+
         const ROLE_MAP = {
-            'KS': 'Kỹ sư',
-            'BS': 'Bác sĩ',
-            'DD': 'Điều dưỡng',
-            'NHS': 'Nữ hộ sinh',
-            'KTV': 'Kỹ thuật viên',
-            'DS': 'Dược sĩ',
-            'Y sĩ': 'Y sĩ',
-            'CĐ': 'Cử nhân',
-            'CN': 'Cử nhân',
-            'NV': 'Nhân viên',
-            'Khác': 'Nhân viên',
-            'K': 'Nhân viên'
+            'KS': 'Kỹ sư', 'BS': 'Bác sĩ', 'DD': 'Điều dưỡng', 'NHS': 'Nữ hộ sinh',
+            'KTV': 'Kỹ thuật viên', 'DS': 'Dược sĩ', 'Y sĩ': 'Y sĩ',
+            'CĐ': 'Cử nhân', 'CN': 'Cử nhân', 'NV': 'Nhân viên', 'Khác': 'Nhân viên', 'K': 'Nhân viên'
         };
 
-        // --- CÁC HÀM TIỆN ÍCH ---
         let confirmActionFn = null;
 
         function showConfirmModal(title, desc, actionFn) {
@@ -518,20 +489,14 @@
             toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span>${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
 
-        // Định dạng tiền tệ
         function formatCurrency(num) {
             if (!num) return '';
             return new Intl.NumberFormat('vi-VN').format(num);
         }
 
-        // Đọc số tiền thành chữ
         function docTienTienViet(so) {
             if (!so || isNaN(so) || so == 0) return "Không đồng";
             const m = ["không", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"];
@@ -550,8 +515,7 @@
                 else if (donvi > 0) chuoi += " " + m[donvi];
                 return chuoi;
             }
-            let chuoi = "";
-            so = Math.round(so);
+            let chuoi = ""; so = Math.round(so);
             let ty = Math.floor(so / 1000000000); so = so % 1000000000;
             let trieu = Math.floor(so / 1000000); so = so % 1000000;
             let ngan = Math.floor(so / 1000); let dong = so % 1000;
@@ -564,16 +528,13 @@
             return chuoi + " đồng chẵn.";
         }
 
-        // Parse JSON Ghi chú an toàn
         function parseGhiChu(ghiChuStr) {
             if (!ghiChuStr) return { reason: "", rates: {} };
             try {
                 const obj = JSON.parse(ghiChuStr);
                 if (obj.rates || obj.reason !== undefined) return obj;
                 return { reason: ghiChuStr, rates: {} };
-            } catch (e) {
-                return { reason: ghiChuStr, rates: {} };
-            }
+            } catch (e) { return { reason: ghiChuStr, rates: {} }; }
         }
 
         function normalizeDateStr(val) {
@@ -591,7 +552,6 @@
             return String(val).substring(0, 10);
         }
 
-        // KIỂM TRA QUYỀN TRUY CẬP KẾT HỢP ADMIN KHTH VÀ ADMIN TCHC
         function isGlobalAdmin() {
             if (!currentUser) return false;
             if (currentUser.Role === 'Admin_KHTH') return true;
@@ -616,17 +576,14 @@
                 document.getElementById('login-screen').classList.remove('hidden');
                 return false;
             }
-
             currentUser = JSON.parse(userStr);
             if (currentUser.Role !== 'Admin_KHTH' && currentUser.Role !== 'Admin_Khoa') {
                 alert("Tài khoản của bạn không có quyền sử dụng chức năng này!");
-                window.location.href = 'index.html';
                 return false;
             }
             return true;
         }
 
-        // XỬ LÝ ĐĂNG NHẬP
         document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const u = document.getElementById('username').value.toLowerCase().trim();
@@ -643,9 +600,7 @@
                     const res = await fetch(GAS_URL + "?action=NhanVien").then(r => r.json());
                     if (res && res.status === "success") MOCK_DB.users = res.data || [];
                 }
-
                 const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
-
                 if (user) {
                     if (user.Role !== 'Admin_KHTH' && user.Role !== 'Admin_Khoa') {
                         errorDiv.textContent = "Bạn không có quyền Admin để truy cập chức năng này!";
@@ -654,13 +609,10 @@
                         lucide.createIcons();
                         return;
                     }
-
                     user.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
                     user.ActiveKhoa = user.KhoaList[0] || 'KHTH';
-
                     localStorage.setItem('currentUser', JSON.stringify(user));
                     currentUser = user;
-
                     document.getElementById('login-screen').classList.add('hidden');
                     document.getElementById('loading-screen').classList.remove('hidden');
                     loadDataFromGAS();
@@ -678,7 +630,6 @@
             }
         });
 
-        // ĐỒNG BỘ LÊN GOOGLE SHEETS
         async function syncWithGAS(actionName, payloadData) {
             try {
                 await fetch(GAS_URL, {
@@ -692,11 +643,9 @@
             }
         }
 
-        // TẢI DỮ LIỆU TỪ GOOGLE SHEET
         async function loadDataFromGAS() {
             document.getElementById('loading-screen').classList.remove('hidden');
             document.getElementById('retry-btn-container').classList.add('hidden');
-
             document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
             document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
             lucide.createIcons();
@@ -708,22 +657,16 @@
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
                 if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
-
                 if (results[3] && results[3].status === "success") MOCK_DB.phieuBoiDuong = results[3].data || [];
                 else MOCK_DB.phieuBoiDuong = [];
 
                 if (results[2] && results[2].status === "success") {
                     MOCK_DB.shifts = (results[2].data || []).map(s => ({
-                        ...s,
-                        MaNV: String(s.MaNV),
-                        NgayTruc: normalizeDateStr(s.NgayTruc)
+                        ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc)
                     }));
                 }
-
                 showToast("Đã cập nhật dữ liệu mới nhất", "success");
-
             } catch (e) {
-                console.error("Lỗi khi fetch dữ liệu:", e);
                 document.getElementById('retry-btn-container').classList.remove('hidden');
                 document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
                 document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
@@ -737,82 +680,118 @@
             }
         }
 
-        // KHỞI TẠO CÁC DROPDOWN VÀ QUYỀN GIAO DIỆN
         function initUI() {
             const today = new Date();
-
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
             if (today.getDate() < 5) {
                 defaultMonth -= 1;
-                if (defaultMonth === 0) {
-                    defaultMonth = 12;
-                    defaultYear -= 1;
-                }
+                if (defaultMonth === 0) { defaultMonth = 12; defaultYear -= 1; }
             }
 
             document.getElementById('sel-month').value = defaultMonth;
             document.getElementById('sel-year').value = defaultYear;
 
             const selKhoa = document.getElementById('sel-khoa');
-
             let dsKhoa = MOCK_DB.khoa || [];
 
-            // Tách biệt quyền Xem Tất Cả (Chỉ KHTH và Kế toán) và Quyền Duyệt
             const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
             const isKeToan = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
 
             if (isKHTH_Account || isKeToan) {
-                // Cho phép Kế toán / KHTH xem tất cả các khoa (trừ các phòng ban quản lý) để họ có thể xem/in
                 dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
             } else {
-                // Các Admin_Khoa khác (Bao gồm cả Tổ chức hành chánh và Tài vụ) chỉ xem các khoa thuộc quyền quản lý của mình
                 dsKhoa = dsKhoa.filter(k => currentUser.KhoaList.includes(k.MaKhoa));
             }
 
             selKhoa.innerHTML = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
 
-            // Hiển thị nút Cài đặt đơn giá nếu là Kế toán
-            if (isKeToan) {
-                document.getElementById('btn-settings').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-settings').classList.add('hidden');
-            }
+            if (isKeToan) document.getElementById('btn-settings').classList.remove('hidden');
+            else document.getElementById('btn-settings').classList.add('hidden');
 
             if (dsKhoa.length > 0) generateReport();
         }
 
         // ==========================================
-        // CÀI ĐẶT ĐƠN GIÁ (DÀNH CHO TCKT)
+        // CÀI ĐẶT ĐƠN GIÁ MẶC ĐỊNH
         // ==========================================
-        function openSettingsModal() {
-            let ratesStr = localStorage.getItem('defaultRates');
-            let rates = ratesStr ? JSON.parse(ratesStr) : { wd: '', we: '' };
+        function getParsedDefaultRates() {
+            const defaultRatesStr = localStorage.getItem('defaultRates');
+            let rates = { 
+                normWd: 65000, normWe: 84500, normHol: 117000,
+                emWd: 48750, emWe: 63375, emHol: 87750,
+                em24Wd: 97500, em24We: 126750, em24Hol: 175500
+            };
+            if (defaultRatesStr) {
+                try {
+                    const temp = JSON.parse(defaultRatesStr);
+                    if (temp.normWd !== undefined) {
+                        rates = { ...rates, ...temp };
+                    } else if (temp.wd !== undefined) { 
+                        rates.normWd = temp.wd; rates.normWe = temp.we;
+                    }
+                } catch(e) {}
+            }
+            return rates;
+        }
 
-            document.getElementById('setting-wd').value = rates.wd;
-            document.getElementById('setting-we').value = rates.we;
+        function openSettingsModal() {
+            let rates = getParsedDefaultRates();
+            document.getElementById('setting-norm-wd').value = rates.normWd;
+            document.getElementById('setting-norm-we').value = rates.normWe;
+            document.getElementById('setting-norm-hol').value = rates.normHol;
+            document.getElementById('setting-em-wd').value = rates.emWd;
+            document.getElementById('setting-em-we').value = rates.emWe;
+            document.getElementById('setting-em-hol').value = rates.emHol;
+            document.getElementById('setting-em24-wd').value = rates.em24Wd;
+            document.getElementById('setting-em24-we').value = rates.em24We;
+            document.getElementById('setting-em24-hol').value = rates.em24Hol;
 
             document.getElementById('settings-modal').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        function closeSettingsModal() {
-            document.getElementById('settings-modal').classList.add('hidden');
-        }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
 
         function saveSettings() {
-            let wd = document.getElementById('setting-wd').value;
-            let we = document.getElementById('setting-we').value;
-
-            localStorage.setItem('defaultRates', JSON.stringify({ wd: wd, we: we }));
+            let rates = {
+                normWd: document.getElementById('setting-norm-wd').value,
+                normWe: document.getElementById('setting-norm-we').value,
+                normHol: document.getElementById('setting-norm-hol').value,
+                emWd: document.getElementById('setting-em-wd').value,
+                emWe: document.getElementById('setting-em-we').value,
+                emHol: document.getElementById('setting-em-hol').value,
+                em24Wd: document.getElementById('setting-em24-wd').value,
+                em24We: document.getElementById('setting-em24-we').value,
+                em24Hol: document.getElementById('setting-em24-hol').value
+            };
+            localStorage.setItem('defaultRates', JSON.stringify(rates));
             closeSettingsModal();
-
-            showToast("Đã lưu Cài đặt đơn giá!", "info");
-            generateReport(); // Cập nhật lại báo cáo với giá mới
+            showToast("Đã lưu Cấu hình giá thành công!", "info");
+            generateReport();
         }
 
         // ==========================================
-        // KHỐI QUẢN LÝ PHÊ DUYỆT & NHẬP SỐ TIỀN
+        // QUẢN LÝ IN ẤN (TỰ ĐỘNG LỌC HÀNG TRỐNG KHI IN)
+        // ==========================================
+        function handlePrint() {
+            isPrintingMode = true;
+            generateReport(); // Re-render lại HTML loại bỏ hoàn toàn các hàng trống để rowspan chính xác
+            
+            // Đợi 100ms để trình duyệt kịp cập nhật DOM rồi mới mở hộp thoại Print
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        // Bắt sự kiện sau khi hộp thoại In tắt để trả lại giao diện gốc
+        window.onafterprint = (event) => {
+            isPrintingMode = false;
+            generateReport();
+        };
+
+        // ==========================================
+        // QUẢN LÝ PHÊ DUYỆT VÀ CHỈNH SỬA KHTH / TCKT
         // ==========================================
         function updateApprovalUI(shiftsCount) {
             const month = document.getElementById('sel-month').value;
@@ -820,19 +799,17 @@
             const maKhoa = document.getElementById('sel-khoa').value;
 
             const btnSend = document.getElementById('btn-send-approve');
-            const btnSendText = document.getElementById('btn-send-text');
             const btnApprove = document.getElementById('btn-approve');
-            const btnSaveMoney = document.getElementById('btn-save-money');
+            const btnSaveData = document.getElementById('btn-save-data');
             const btnCancel = document.getElementById('btn-cancel-approve');
             const btnPrint = document.getElementById('btn-print');
             const badge = document.getElementById('badge-status');
             const rejectBanner = document.getElementById('reject-reason-banner');
 
-            // Reset tất cả UI
             btnSend.classList.add('hidden');
             btnApprove.classList.add('hidden');
             btnCancel.classList.add('hidden');
-            btnSaveMoney.classList.add('hidden');
+            btnSaveData.classList.add('hidden');
             rejectBanner.classList.add('hidden');
 
             if (shiftsCount === 0) {
@@ -843,193 +820,148 @@
                 return;
             }
 
-            // Tìm thông tin phiếu từ DB
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
             let status = phieu ? phieu.TrangThai : 'Nháp';
 
-            // Chuẩn hóa trạng thái cũ
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
             if (status === 'Trả lại') status = 'KHTH trả lại';
 
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
-
-            // CHỈ KHTH / TCHC mới có quyền duyệt và điền tiền
             const isKHTH = isGlobalAdmin();
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const isOwner = currentUser.KhoaList.includes(maKhoa); // Khoa sở hữu phiếu
+            const isOwner = currentUser.KhoaList.includes(maKhoa);
 
-            // 1. TRẠNG THÁI NHÁP HOẶC KHTH TRẢ LẠI
             if (status === 'Nháp' || status === 'KHTH trả lại') {
                 badge.textContent = status === 'Nháp' ? "Chưa gửi KHTH" : "KHTH Trả Lại";
                 badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Nháp' ? "bg-slate-200 text-slate-600" : "bg-red-100 text-red-700") + " whitespace-nowrap";
 
                 if (status === 'KHTH trả lại') {
-                    if (btnSendText) btnSendText.textContent = "Gửi duyệt lại";
-                    btnSend.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    btnSend.classList.add('bg-orange-600', 'hover:bg-orange-700');
-
+                    document.getElementById('btn-send-text').textContent = "Gửi duyệt lại";
+                    btnSend.classList.replace('bg-blue-600', 'bg-orange-600');
+                    btnSend.classList.replace('hover:bg-blue-700', 'hover:bg-orange-700');
                     if (noteData.reason) {
                         rejectBanner.classList.remove('hidden');
                         document.getElementById('reject-reason-text').textContent = "KHTH Từ chối: " + noteData.reason;
                     }
                 } else {
-                    if (btnSendText) btnSendText.textContent = "Gửi KHTH";
-                    btnSend.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-                    btnSend.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                    document.getElementById('btn-send-text').textContent = "Gửi KHTH";
+                    btnSend.classList.replace('bg-orange-600', 'bg-blue-600');
+                    btnSend.classList.replace('hover:bg-orange-700', 'hover:bg-blue-700');
                 }
-
-                // Chỉ Khoa sở hữu phiếu mới được bấm nút gửi (Kể cả TCHC khi làm nháp phiếu của chính mình)
                 if (isOwner && !isTCKT) btnSend.classList.remove('hidden');
-
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
-                btnPrint.classList.remove('hover:bg-blue-700');
             }
-
-            // 2. TRẠNG THÁI CHỜ KHTH DUYỆT HOẶC TCKT TRẢ LẠI
             else if (status === 'Chờ KHTH duyệt' || status === 'TCKT trả lại') {
-                badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ KHTH xử lý)";
+                badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ xử lý)";
                 badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Chờ KHTH duyệt' ? "bg-yellow-100 text-yellow-800" : "bg-orange-100 text-orange-800") + " whitespace-nowrap";
 
                 if (status === 'TCKT trả lại' && noteData.reason) {
                     rejectBanner.classList.remove('hidden');
                     document.getElementById('reject-reason-text').textContent = "TCKT Từ chối: " + noteData.reason;
                 }
-
+                
                 if (isKHTH) {
+                    btnSaveData.classList.remove('hidden');
+                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Điều Chỉnh`;
+
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt chuyển TCKT`;
-
+                    
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại Khoa`;
                 }
-
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
-                btnPrint.classList.remove('hover:bg-blue-700');
             }
-
-            // 3. TRẠNG THÁI CHỜ TCKT CHỐT
             else if (status === 'Chờ TCKT chốt') {
-                badge.textContent = "Đã Duyệt - Chờ TCKT Nhập Tiền & Chốt";
+                badge.textContent = "Chờ Kế Toán Tính Tiền & Chốt";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-blue-100 text-blue-800 whitespace-nowrap";
 
                 if (isTCKT) {
-                    btnSaveMoney.classList.remove('hidden');
+                    btnSaveData.classList.remove('hidden');
+                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Chỉnh Sửa`;
+                    
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="lock" class="w-3 h-3 inline mr-1"></i>Chốt Phiếu`;
-
+                    
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại KHTH`;
                 }
-
                 if (isKHTH) {
                     btnCancel.classList.remove('hidden');
-                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Rút lại (Hủy duyệt)`;
+                    btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy duyệt (Rút lại)`;
                 }
-
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
-                btnPrint.classList.remove('hover:bg-blue-700');
             }
-
-            // 4. TRẠNG THÁI ĐÃ CHỐT
             else if (status === 'Đã chốt') {
                 badge.textContent = "TCKT Đã Chốt - Được Phép In";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
 
                 btnPrint.disabled = false;
                 btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
-                btnPrint.classList.add('hover:bg-blue-700');
 
                 if (isTCKT) {
-                    btnSaveMoney.classList.remove('hidden');
+                    btnSaveData.classList.remove('hidden');
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy Chốt`;
                 }
             }
-
             lucide.createIcons();
         }
 
-        // HÀM LƯU TRẠNG THÁI VÀ ĐỒNG BỘ GOOGLE SHEET
         function updatePhieuStatus(status, reasonStr = "") {
             const month = document.getElementById('sel-month').value;
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
-
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
             let currentData = parseGhiChu(phieu ? phieu.GhiChu : "");
-
-            currentData.reason = reasonStr; // Cập nhật lý do
+            currentData.reason = reasonStr;
 
             if (!phieu) {
                 phieu = {
-                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`,
-                    MaKhoa: maKhoa,
-                    Thang: month,
-                    Nam: year,
-                    TrangThai: status,
-                    NguoiDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? currentUser.MaNV : '',
-                    NgayDuyet: status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt' ? new Date().toISOString().split('T')[0] : '',
+                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
+                    TrangThai: status, NguoiDuyet: status.includes('duyệt') || status.includes('chốt') ? currentUser.MaNV : '',
+                    NgayDuyet: status.includes('duyệt') || status.includes('chốt') ? new Date().toISOString().split('T')[0] : '',
                     GhiChu: JSON.stringify(currentData)
                 };
                 MOCK_DB.phieuBoiDuong.push(phieu);
             } else {
                 phieu.TrangThai = status;
-                if (status === 'Đã duyệt' || status === 'Chờ TCKT chốt' || status === 'Đã chốt') {
+                if (status.includes('duyệt') || status.includes('chốt')) {
                     phieu.NguoiDuyet = currentUser.MaNV;
                     phieu.NgayDuyet = new Date().toISOString().split('T')[0];
                 }
                 phieu.GhiChu = JSON.stringify(currentData);
             }
-
             generateReport();
             syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
         }
 
         function sendApprove() {
-            const month = document.getElementById('sel-month').value;
-            const year = document.getElementById('sel-year').value;
-            const maKhoa = document.getElementById('sel-khoa').value;
-            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-
-            let status = phieu ? phieu.TrangThai : 'Nháp';
-            if (status === 'Trả lại') status = 'KHTH trả lại';
-            let isResend = status === 'KHTH trả lại';
-
+            let isResend = document.getElementById('badge-status').textContent.includes('Trả Lại');
             showConfirmModal(
                 isResend ? "Xác nhận gửi lại phiếu" : "Xác nhận gửi KHTH",
-                isResend ? "Bạn có chắc chắn muốn GỬI LẠI phiếu bồi dưỡng này cho KHTH duyệt sau khi đã sửa đổi?" : "Bạn có chắc chắn muốn GỬI phiếu bồi dưỡng này cho KHTH duyệt?\nVui lòng kiểm tra kỹ danh sách công trực.",
-                () => {
-                    updatePhieuStatus('Chờ KHTH duyệt');
-                    showToast("Đã gửi phiếu thành công!", "success");
-                }
+                isResend ? "GỬI LẠI phiếu bồi dưỡng này cho KHTH duyệt sau khi sửa đổi?" : "GỬI phiếu bồi dưỡng này cho KHTH duyệt?",
+                () => { updatePhieuStatus('Chờ KHTH duyệt'); showToast("Đã gửi phiếu thành công!", "success"); }
             );
         }
 
         function approvePhieu() {
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const isKHTH = isGlobalAdmin();
+            
+            // Lưu dữ liệu trước khi duyệt để lưu lại thao tác cuối
+            saveData(false);
 
             if (isTCKT) {
-                showConfirmModal(
-                    "Xác nhận Chốt Phiếu",
-                    "Bạn xác nhận CHỐT phiếu và số tiền của khoa này? (Sau khi chốt Khoa sẽ được phép in)",
-                    () => {
-                        updatePhieuStatus('Đã chốt');
-                        showToast("Đã chốt phiếu thành công!", "success");
-                    }
+                showConfirmModal("Xác nhận Chốt Phiếu", "Xác nhận CHỐT phiếu và số tiền? (Khoa sẽ được phép in)",
+                    () => { updatePhieuStatus('Đã chốt'); showToast("Đã chốt phiếu thành công!", "success"); }
                 );
-            } else if (isKHTH) {
-                showConfirmModal(
-                    "Xác nhận Phê duyệt",
-                    "Xác nhận PHÊ DUYỆT phiếu bồi dưỡng này và chuyển cho Kế toán (TCKT) chốt?",
-                    () => {
-                        updatePhieuStatus('Chờ TCKT chốt');
-                        showToast("Đã duyệt chuyển TCKT thành công!", "success");
-                    }
+            } else {
+                showConfirmModal("Xác nhận Phê duyệt", "PHÊ DUYỆT cấu hình loại trực, số ngày và chuyển cho Kế toán (TCKT)?",
+                    () => { updatePhieuStatus('Chờ TCKT chốt'); showToast("Đã duyệt chuyển TCKT thành công!", "success"); }
                 );
             }
         }
@@ -1039,7 +971,6 @@
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-
             let status = phieu ? phieu.TrangThai : '';
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
@@ -1048,118 +979,148 @@
             const isKHTH = isGlobalAdmin();
 
             if (isTCKT && status === 'Đã chốt') {
-                showConfirmModal(
-                    "Xác nhận Hủy chốt",
-                    "Xác nhận HỦY CHỐT phiếu này? (Phiếu sẽ quay về trạng thái Chờ TCKT chốt)",
-                    () => {
-                        updatePhieuStatus('Chờ TCKT chốt', "Kế toán đã hủy chốt");
-                        showToast("Đã hủy chốt phiếu!", "warning");
-                    }
+                showConfirmModal("Xác nhận Hủy chốt", "HỦY CHỐT phiếu này? (Quay về Chờ TCKT chốt)",
+                    () => { updatePhieuStatus('Chờ TCKT chốt', "Kế toán đã hủy chốt"); showToast("Đã hủy chốt!", "warning"); }
                 );
             } else if (isKHTH && status === 'Chờ TCKT chốt') {
-                showConfirmModal(
-                    "Xác nhận Rút lại",
-                    "Xác nhận RÚT LẠI phê duyệt? (Phiếu sẽ quay về trạng thái Chờ KHTH duyệt)",
-                    () => {
-                        updatePhieuStatus('Chờ KHTH duyệt', "KHTH tự rút lại phê duyệt");
-                        showToast("Đã rút lại phiếu!", "warning");
-                    }
+                showConfirmModal("Xác nhận Rút lại", "RÚT LẠI phê duyệt? (Quay về Chờ KHTH duyệt)",
+                    () => { updatePhieuStatus('Chờ KHTH duyệt', "KHTH tự rút lại"); showToast("Đã rút lại phiếu!", "warning"); }
                 );
             } else {
-                // Mở modal nhập lý do từ chối (KHTH từ chối Khoa, hoặc TCKT từ chối KHTH)
                 document.getElementById('reject-reason-input').value = "";
                 document.getElementById('reject-modal').classList.remove('hidden');
             }
         }
 
-        function closeRejectModal() {
-            document.getElementById('reject-modal').classList.add('hidden');
-        }
-
+        function closeRejectModal() { document.getElementById('reject-modal').classList.add('hidden'); }
         function confirmReject() {
-            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const isKHTH = isGlobalAdmin();
-
             const reason = document.getElementById('reject-reason-input').value.trim();
-            if (!reason) {
-                showToast("Vui lòng nhập lý do từ chối!", "error");
-                return;
-            }
-
-            if (isTCKT) {
-                updatePhieuStatus('TCKT trả lại', reason);
-            } else if (isKHTH) {
-                updatePhieuStatus('KHTH trả lại', reason);
-            }
-
-            closeRejectModal();
-            showToast("Đã trả lại phiếu!", "warning");
+            if (!reason) return showToast("Vui lòng nhập lý do từ chối!", "error");
+            if (currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN')) updatePhieuStatus('TCKT trả lại', reason);
+            else updatePhieuStatus('KHTH trả lại', reason);
+            closeRejectModal(); showToast("Đã trả lại phiếu!", "warning");
         }
 
-        // TÍNH TỔNG TIỀN ĐỘNG TRÊN GIAO DIỆN KHI KẾ TOÁN NHẬP
+        // TÍNH TOÁN DỰA TRÊN SỐ ĐÊM VÀ ĐƠN GIÁ
         function calculateTotals() {
             let sum = 0;
-            document.querySelectorAll('.rate-input').forEach(input => {
-                const id = input.getAttribute('data-id');
-                const nights = parseInt(input.getAttribute('data-nights') || 0);
-                const rate = parseInt(input.value || 0);
-                const total = nights * rate;
+            let totalNights = 0;
+
+            const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
+            const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
+            const canViewMoney = isStrictKHTH || isTCKT; // Chỉ có KHTH và TCKT được xem tiền
+
+            document.querySelectorAll('.rate-input').forEach(rateInput => {
+                const id = rateInput.getAttribute('data-id');
+                const nightsInput = document.querySelector(`.nights-input[data-id="${id}_n"]`);
+                
+                let rate = parseInt(rateInput.value || 0);
+                let nights = nightsInput ? parseInt(nightsInput.value || 0) : parseInt(rateInput.getAttribute('data-nights') || 0);
+                let total = nights * rate;
 
                 const totalEl = document.getElementById(`total_${id}`);
-                if (totalEl) totalEl.textContent = total > 0 ? formatCurrency(total) : '';
+                if (totalEl) totalEl.textContent = (canViewMoney && total > 0) ? formatCurrency(total) : '';
 
-                const printSpan = input.nextElementSibling;
-                if (printSpan && printSpan.classList.contains('print-value')) {
-                    printSpan.textContent = rate > 0 ? formatCurrency(rate) : '';
+                const printRateSpan = rateInput.nextElementSibling;
+                if (printRateSpan && printRateSpan.classList.contains('print-value')) {
+                    printRateSpan.textContent = (canViewMoney && rate > 0) ? formatCurrency(rate) : '';
+                }
+
+                if (nightsInput) {
+                    const printNightsSpan = nightsInput.nextElementSibling;
+                    if (printNightsSpan && printNightsSpan.classList.contains('print-value-nights')) {
+                        printNightsSpan.textContent = nights < 10 ? '0' + nights : nights;
+                    }
                 }
 
                 sum += total;
+                totalNights += nights;
             });
 
-            document.getElementById('lbl-total-amount').textContent = sum > 0 ? formatCurrency(sum) : '';
-            document.getElementById('lbl-money-text').textContent = sum > 0 ? docTienTienViet(sum) : '............................................................................................................................................................';
+            document.getElementById('lbl-total-amount').textContent = (canViewMoney && sum > 0) ? formatCurrency(sum) : '';
+            document.getElementById('lbl-money-text').textContent = (canViewMoney && sum > 0) ? docTienTienViet(sum) : '............................................................................................................................................................';
+            
+            if (document.querySelector('.nights-input')) {
+                document.getElementById('lbl-total-nights').textContent = totalNights < 10 ? '0' + totalNights : totalNights;
+            }
         }
 
-        // LƯU DỮ LIỆU SỐ TIỀN VÀO GOOGLE SHEETS DƯỚI DẠNG JSON
-        function saveMoney() {
+        // ĐỔI LOẠI TRỰC
+        function changeShiftType(selectEl, maNV) {
+            const type = selectEl.value;
+            const rates = getParsedDefaultRates();
+            let wd = rates.normWd, we = rates.normWe, hol = rates.normHol;
+            
+            if (type === 'em12') { wd = rates.emWd; we = rates.emWe; hol = rates.emHol; }
+            if (type === 'em24') { wd = rates.em24Wd; we = rates.em24We; hol = rates.em24Hol; }
+
+            const wdInput = document.querySelector(`.rate-input[data-id="${maNV}_wd"]`);
+            if (wdInput) { wdInput.value = wd; wdInput.nextElementSibling.textContent = formatCurrency(wd); }
+
+            const weInput = document.querySelector(`.rate-input[data-id="${maNV}_we"]`);
+            if (weInput) { weInput.value = we; weInput.nextElementSibling.textContent = formatCurrency(we); }
+
+            const holInput = document.querySelector(`.rate-input[data-id="${maNV}_hol"]`);
+            if (holInput) { holInput.value = hol; holInput.nextElementSibling.textContent = formatCurrency(hol); }
+
+            const printLabel = selectEl.nextElementSibling;
+            if (printLabel && printLabel.classList.contains('print-value')) {
+                printLabel.textContent = type === 'em24' ? '(Trực 24/24 CC)' : (type === 'em12' ? '(Trực 12/24 CC)' : '');
+            }
+
+            calculateTotals();
+        }
+
+        // HÀM LƯU DỮ LIỆU ĐIỀU CHỈNH CHUNG (CHUỖI NGÀY, SỐ ĐÊM, ĐƠN GIÁ, LOẠI TRỰC)
+        function saveData(showToastMsg = true) {
             const month = document.getElementById('sel-month').value;
             const year = document.getElementById('sel-year').value;
             const maKhoa = document.getElementById('sel-khoa').value;
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
 
-            if (!phieu) return showToast("Phiếu không tồn tại!", "error");
+            if (!phieu) return;
 
             let noteData = parseGhiChu(phieu.GhiChu);
-            noteData.rates = {};
+            if (!noteData.rates) noteData.rates = {};
 
-            document.querySelectorAll('.rate-input').forEach(input => {
-                const id = input.getAttribute('data-id');
-                const rate = input.value;
-                if (rate) noteData.rates[id] = rate; // Nếu input trống thì bỏ qua (ko lưu)
+            // Lưu Chuỗi Ngày (KHTH nhập tay vào)
+            document.querySelectorAll('.days-input').forEach(daysInput => {
+                const id = daysInput.getAttribute('data-id');
+                noteData.rates[id] = daysInput.value.trim();
+            });
+
+            // Lưu Đơn giá (TCKT)
+            document.querySelectorAll('.rate-input').forEach(rateInput => {
+                const id = rateInput.getAttribute('data-id');
+                const rate = rateInput.value;
+                if (rate) noteData.rates[id] = rate;
+            });
+
+            // Lưu Số đêm (KHTH, TCKT)
+            document.querySelectorAll('.nights-input').forEach(nightsInput => {
+                const id = nightsInput.getAttribute('data-id');
+                const nights = nightsInput.value;
+                if (nights !== null && nights !== "") noteData.rates[id] = nights;
+            });
+
+            // Lưu Loại Trực (em12, em24, norm)
+            document.querySelectorAll('.shift-type-select').forEach(sel => {
+                const id = sel.getAttribute('data-id');
+                noteData.rates[id] = sel.value;
             });
 
             phieu.GhiChu = JSON.stringify(noteData);
             syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
-            showToast("Đã tính và lưu thành công Số tiền Bồi dưỡng!", "success");
+            if(showToastMsg) showToast("Đã lưu các điều chỉnh thành công!", "success");
         }
 
-        // THUẬT TOÁN TẠO PHIẾU VÀ TÍNH TOÁN
         function generateReport() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
             const maKhoa = document.getElementById('sel-khoa').value;
             const tenKhoa = MOCK_DB.khoa.find(k => k.MaKhoa === maKhoa)?.TenKhoa || maKhoa;
 
-            // XỬ LÝ TIÊU ĐỀ
-            let titleHtml = "";
-            let upperKhoa = tenKhoa.toUpperCase();
-
-            if (upperKhoa.startsWith("KHOA ")) {
-                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC ${upperKhoa}`;
-            } else {
-                titleHtml = `PHIẾU BỒI DƯỠNG TRỰC KHOA ${upperKhoa}`;
-            }
-
+            let titleHtml = tenKhoa.toUpperCase().startsWith("KHOA ") ? `PHIẾU BỒI DƯỠNG TRỰC ${tenKhoa.toUpperCase()}` : `PHIẾU BỒI DƯỠNG TRỰC KHOA ${tenKhoa.toUpperCase()}`;
             if (maKhoa === 'CNTT') {
                 titleHtml = `PHIẾU BỒI DƯỠNG TRỰC TỔ CÔNG NGHỆ THÔNG TIN PHÒNG KẾ HOẠCH TỔNG HỢP`;
             } else if (maKhoa === 'TAIVU' || maKhoa === 'TAICHINHKETOAN') {
@@ -1180,61 +1141,58 @@
             document.getElementById('lbl-start-date').textContent = `01/${month < 10 ? '0' + month : month}/${year}`;
             document.getElementById('lbl-end-date').textContent = `${lastDay}/${month < 10 ? '0' + month : month}/${year}`;
 
-            // Lọc ca trực trong tháng
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
                 if (s.MaKhoa !== maKhoa) return false;
                 const d = new Date(s.NgayTruc + "T12:00:00");
                 return (d.getMonth() + 1) === month && d.getFullYear() === year;
             });
 
-            // GỌI HÀM CẬP NHẬT GIAO DIỆN PHÊ DUYỆT NÚT BẤM
             updateApprovalUI(shiftsInMonth.length);
 
-            // Kiểm tra quyền và tải dữ liệu Tiền (Nếu có)
             const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
             let status = phieu ? phieu.TrangThai : 'Nháp';
             if (status === 'Chờ duyệt') status = 'Chờ KHTH duyệt';
             if (status === 'Đã duyệt') status = 'Chờ TCKT chốt';
-            if (status === 'Trả lại') status = 'KHTH trả lại';
 
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
             const savedRates = noteData.rates || {};
 
-            // CHỈ TCKT mới có quyền nhập số tiền
+            const isGlobalKHTH = isGlobalAdmin(); 
+            const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const canEnterMoney = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
+            
+            const canViewMoney = isStrictKHTH || isTCKT; // Chỉ Admin KHTH chính chủ và TCKT mới được xem tiền
+            
+            // XÁC ĐỊNH QUYỀN TRÊN GIAO DIỆN & IN ẤN
+            const isKHTHChecking = isGlobalKHTH && status === 'Chờ KHTH duyệt';
+            const isTCKTChecking = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
-            // --- LẤY CÀI ĐẶT ĐƠN GIÁ TỪ LOCAL STORAGE VÀ ÁP DỤNG LUẬT CHIA ĐÔI CHO HSCC ---
-            const defaultRatesStr = localStorage.getItem('defaultRates');
-            const parsedDefRates = defaultRatesStr ? JSON.parse(defaultRatesStr) : { wd: '', we: '' };
+            // NẾU ĐANG BẤM NÚT "IN", TẤT CẢ QUYỀN SỬA ĐỀU PHẢI TẮT LÀM FALSE ĐỂ GIAO DIỆN TRỞ VỀ CHUẨN IN
+            const isEditMode = (isKHTHChecking || isTCKTChecking) && !isPrintingMode;
+            const canEnterMoney = isTCKTChecking && !isPrintingMode;
 
-            // Nếu mã khoa là HSCC -> Chia 2 đơn giá
-            const priceMultiplier = (maKhoa.toUpperCase() === 'HSCC') ? 0.5 : 1;
-            const defRateWd = parsedDefRates.wd ? Math.round(parseInt(parsedDefRates.wd) * priceMultiplier) : '';
-            const defRateWe = parsedDefRates.we ? Math.round(parseInt(parsedDefRates.we) * priceMultiplier) : '';
-
+            const parsedDefRates = getParsedDefaultRates();
+            const isEmergency = (maKhoa.toUpperCase() === 'HSCC' || maKhoa.toUpperCase() === 'CẤP CỨU' || maKhoa.toUpperCase().includes('CẤP CỨU'));
+            
             const userShifts = {};
             shiftsInMonth.forEach(s => {
                 if (!userShifts[s.MaNV]) {
                     const uInfo = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
-
                     let roleDisplay = ROLE_MAP[s.ChucDanh] || s.ChucDanh;
                     if (roleDisplay.toLowerCase() === 'khác' || roleDisplay.toLowerCase() === 'k') roleDisplay = 'Nhân viên';
-
-                    userShifts[s.MaNV] = {
-                        maNV: s.MaNV,
-                        name: uInfo ? (uInfo.HoTen || uInfo.TenHienThi) : s.MaNV,
-                        role: roleDisplay,
-                        weekdays: [],
-                        weekends: []
-                    };
+                    userShifts[s.MaNV] = { name: uInfo ? (uInfo.HoTen || uInfo.TenHienThi) : s.MaNV, role: roleDisplay, weekdays: [], weekends: [], holidays: [] };
                 }
 
                 const d = new Date(s.NgayTruc + "T12:00:00");
                 const dayOfWeek = d.getDay();
                 const dateNum = d.getDate();
+                const shortDateStr = s.NgayTruc.substring(5); // "MM-DD"
+                
+                let isHoliday = FIXED_HOLIDAYS.includes(s.NgayTruc) || FIXED_HOLIDAYS.includes(shortDateStr);
 
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                if (isHoliday) {
+                    if (!userShifts[s.MaNV].holidays.includes(dateNum)) userShifts[s.MaNV].holidays.push(dateNum);
+                } else if (dayOfWeek === 0 || dayOfWeek === 6) {
                     if (!userShifts[s.MaNV].weekends.includes(dateNum)) userShifts[s.MaNV].weekends.push(dateNum);
                 } else {
                     if (!userShifts[s.MaNV].weekdays.includes(dateNum)) userShifts[s.MaNV].weekdays.push(dateNum);
@@ -1248,109 +1206,116 @@
 
             const padStt = (n) => n < 10 ? '0' + n : n;
             const padNum = (n) => n < 10 ? '0' + n : n;
-            const formatDates = (arr) => arr.join(', ');
+            const formatDates = (arr) => arr.sort((a,b)=>a-b).join(', ');
 
             for (let maNV in userShifts) {
                 const u = userShifts[maNV];
-                u.weekdays.sort((a, b) => a - b);
-                u.weekends.sort((a, b) => a - b);
 
-                const hasWD = u.weekdays.length > 0;
-                const hasWE = u.weekends.length > 0;
-
-                // Chuẩn bị dữ liệu tiền Ngày thường
-                let rateWd = '';
-                // 1. Nếu đã lưu dữ liệu tuỳ chỉnh thì dùng
-                if (savedRates.hasOwnProperty(`${maNV}_wd`)) {
-                    rateWd = savedRates[`${maNV}_wd`];
-                }
-                // 2. Nếu chưa lưu nhưng đang ở phiên TCKT thì tự động lấy giá mặc định
-                else if (canEnterMoney) {
-                    rateWd = defRateWd;
+                let userShiftType = savedRates[`${maNV}_shift_type`];
+                if (!userShiftType) {
+                    userShiftType = isEmergency ? 'em12' : 'norm';
                 }
 
-                let totalWd = rateWd ? parseInt(rateWd) * u.weekdays.length : 0;
-                grandTotalMoney += totalWd;
-
-                let inputWdHtml = '';
-                let printWdHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${rateWd ? formatCurrency(rateWd) : ''}</span>`;
-                if (canEnterMoney) {
-                    inputWdHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_wd" data-nights="${u.weekdays.length}" value="${rateWd}" placeholder="Nhập số..." oninput="calculateTotals()">`;
-                }
-                let cellRateWd = `${inputWdHtml}${printWdHtml}`;
-                let cellTotalWd = `<span id="total_${maNV}_wd" class="row-total font-bold">${totalWd ? formatCurrency(totalWd) : ''}</span>`;
-
-                // Chuẩn bị dữ liệu tiền T7, CN
-                let rateWe = '';
-                if (savedRates.hasOwnProperty(`${maNV}_we`)) {
-                    rateWe = savedRates[`${maNV}_we`];
-                } else if (canEnterMoney) {
-                    rateWe = defRateWe;
+                let defWd = parsedDefRates.normWd, defWe = parsedDefRates.normWe, defHol = parsedDefRates.normHol;
+                if (userShiftType === 'em12') {
+                    defWd = parsedDefRates.emWd; defWe = parsedDefRates.emWe; defHol = parsedDefRates.emHol;
+                } else if (userShiftType === 'em24') {
+                    defWd = parsedDefRates.em24Wd; defWe = parsedDefRates.em24We; defHol = parsedDefRates.em24Hol;
                 }
 
-                let totalWe = rateWe ? parseInt(rateWe) * u.weekends.length : 0;
-                grandTotalMoney += totalWe;
+                // Lấy chuỗi ngày, nếu KHTH đã sửa và lưu thì dùng của KHTH, ko thì tự gen
+                let autoDaysWd = formatDates(u.weekdays);
+                let autoDaysWe = formatDates(u.weekends);
+                let autoDaysHol = formatDates(u.holidays);
 
-                let inputWeHtml = '';
-                let printWeHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${rateWe ? formatCurrency(rateWe) : ''}</span>`;
-                if (canEnterMoney) {
-                    inputWeHtml = `<input type="number" class="rate-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-center no-print" data-id="${maNV}_we" data-nights="${u.weekends.length}" value="${rateWe}" placeholder="Nhập số..." oninput="calculateTotals()">`;
+                let finalDaysWd = savedRates[`${maNV}_wd_days`] !== undefined ? savedRates[`${maNV}_wd_days`] : autoDaysWd;
+                let finalDaysWe = savedRates[`${maNV}_we_days`] !== undefined ? savedRates[`${maNV}_we_days`] : autoDaysWe;
+                let finalDaysHol = savedRates[`${maNV}_hol_days`] !== undefined ? savedRates[`${maNV}_hol_days`] : autoDaysHol;
+
+                // Lấy số lượng đêm đã lưu
+                let wdNights = savedRates[`${maNV}_wd_n`] !== undefined ? parseInt(savedRates[`${maNV}_wd_n`]) : u.weekdays.length;
+                let weNights = savedRates[`${maNV}_we_n`] !== undefined ? parseInt(savedRates[`${maNV}_we_n`]) : u.weekends.length;
+                let holNights = savedRates[`${maNV}_hol_n`] !== undefined ? parseInt(savedRates[`${maNV}_hol_n`]) : u.holidays.length;
+
+                let rateWd = savedRates[`${maNV}_wd`] !== undefined ? savedRates[`${maNV}_wd`] : defWd;
+                let rateWe = savedRates[`${maNV}_we`] !== undefined ? savedRates[`${maNV}_we`] : defWe;
+                let rateHol = savedRates[`${maNV}_hol`] !== undefined ? savedRates[`${maNV}_hol`] : defHol;
+
+                let categories = [
+                    { id: 'wd', label: 'Ngày thường', daysStr: finalDaysWd, nights: wdNights, rate: rateWd },
+                    { id: 'we', label: 'T7, CN', daysStr: finalDaysWe, nights: weNights, rate: rateWe },
+                    { id: 'hol', label: 'Lễ, Tết', daysStr: finalDaysHol, nights: holNights, rate: rateHol }
+                ];
+
+                let activeCats = [];
+                if (isEditMode) {
+                    // Chế độ chỉnh sửa: Show đủ 3 hàng (Thường, Cuối tuần, Lễ Tết) để admin gõ thêm vào nếu thiếu
+                    activeCats = categories;
+                } else {
+                    // Chế độ View hoặc Đang In: Lọc bay mất các hàng không có số đêm và không có chữ ngày nào
+                    activeCats = categories.filter(c => c.nights > 0 || (c.daysStr && c.daysStr.trim() !== ""));
                 }
-                let cellRateWe = `${inputWeHtml}${printWeHtml}`;
-                let cellTotalWe = `<span id="total_${maNV}_we" class="row-total font-bold">${totalWe ? formatCurrency(totalWe) : ''}</span>`;
 
-                // Render Hàng
-                if (hasWD && hasWE) {
-                    tbodyHtml += `
-                    <tr>
-                        <td rowspan="2" class="text-center">${padStt(stt)}</td>
-                        <td rowspan="2" class="text-left font-bold pl-2">${u.name}</td>
-                        <td rowspan="2" class="text-center">${u.role}</td>
-                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekdays)}</td>
-                        <td class="text-center font-medium">${padNum(u.weekdays.length)}</td>
-                        <td class="text-center">${cellRateWd}</td>
-                        <td class="text-center">${cellTotalWd}</td>
-                        <td class="text-center italic text-sm">Ngày thường</td>
-                    </tr>
-                    <tr>
-                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekends)}</td>
-                        <td class="text-center font-medium">${padNum(u.weekends.length)}</td>
-                        <td class="text-center">${cellRateWe}</td>
-                        <td class="text-center">${cellTotalWe}</td>
-                        <td class="text-center italic text-sm font-medium">T7, CN</td>
-                    </tr>
+                if (activeCats.length === 0) continue; 
+                let rowSpan = activeCats.length;
+
+                let shiftTypeSelectorHtml = '';
+                if (isEditMode) {
+                    shiftTypeSelectorHtml = `
+                    <div class="mt-1">
+                        <select class="text-[10pt] border border-blue-300 rounded p-1 text-blue-800 bg-blue-50 w-full outline-none shift-type-select" data-id="${maNV}_shift_type" onchange="changeShiftType(this, '${maNV}')">
+                            <option value="norm" ${userShiftType === 'norm' ? 'selected' : ''}>Trực 24/24</option>
+                            <option value="em12" ${userShiftType === 'em12' ? 'selected' : ''}>Trực 12/24 CC</option>
+                            <option value="em24" ${userShiftType === 'em24' ? 'selected' : ''}>Trực 24/24 CC</option>
+                        </select>
+                        <span class="print-value hidden text-[10pt] italic text-gray-600 font-normal">${userShiftType === 'em24' ? '(Trực 24/24 CC)' : (userShiftType === 'em12' ? '(Trực 12/24 CC)' : '')}</span>
+                    </div>`;
+                } else if (userShiftType === 'em24' || userShiftType === 'em12') {
+                    shiftTypeSelectorHtml = `<div class="text-[10pt] italic text-gray-600 mt-1 font-normal">${userShiftType === 'em24' ? '(Trực 24/24 CC)' : '(Trực 12/24 CC)'}</div>`;
+                }
+
+                activeCats.forEach((c, index) => {
+                    let total = c.nights * (parseInt(c.rate) || 0);
+                    if (c.nights > 0) {
+                        grandTotalMoney += total;
+                        totalAllNights += c.nights;
+                    }
+
+                    // QUYỀN SỬA CHUỖI NGÀY TRỰC
+                    let inputDaysHtml = isEditMode ? `<input type="text" class="days-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-left text-[11pt] font-sans" data-id="${maNV}_${c.id}_days" value="${c.daysStr}" placeholder="VD: 1, 5, 10">` : '';
+                    let printDaysHtml = `<span class="print-value-days ${isEditMode ? 'hidden' : ''}">${c.daysStr}</span>`;
+
+                    // QUYỀN SỬA SỐ ĐÊM 
+                    let inputNightsHtml = isEditMode ? `<input type="number" class="nights-input w-12 border border-slate-300 rounded px-1 py-1 outline-none text-center font-bold text-blue-700 bg-blue-50 text-[11pt]" data-id="${maNV}_${c.id}_n" value="${c.nights}" oninput="calculateTotals()">` : '';
+                    let printNightsHtml = `<span class="print-value-nights ${isEditMode ? 'hidden' : ''}">${padNum(c.nights)}</span>`;
+
+                    // QUYỀN SỬA ĐƠN GIÁ (CHỈ CÓ TCKT ĐƯỢC HIỂN THỊ INPUT)
+                    let inputRateHtml = `<input type="number" class="rate-input ${canEnterMoney ? 'w-full border border-slate-300 rounded px-2 py-1 outline-none text-center text-[11pt] font-medium' : 'hidden'}" data-id="${maNV}_${c.id}" data-nights="${c.nights}" value="${c.rate}" placeholder="Giá" oninput="calculateTotals()">`;
+                    let printRateHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${(canViewMoney && c.rate) ? formatCurrency(c.rate) : ''}</span>`;
+
+                    let tdCommon = `
+                        <td class="text-left pl-2 leading-relaxed tracking-wider text-[11pt] border-slate-400">${inputDaysHtml}${printDaysHtml}</td>
+                        <td class="text-center font-medium border-slate-400">${inputNightsHtml}${printNightsHtml}</td>
+                        <td class="text-center border-slate-400">${inputRateHtml}${printRateHtml}</td>
+                        <td class="text-right pr-2 border-slate-400"><span id="total_${maNV}_${c.id}" class="row-total font-bold">${(canViewMoney && total) ? formatCurrency(total) : ''}</span></td>
+                        <td class="text-center italic text-sm text-slate-700 border-slate-400">${c.label}</td>
                     `;
-                    totalAllNights += u.weekdays.length + u.weekends.length;
-                } else if (hasWD) {
-                    tbodyHtml += `
-                    <tr>
-                        <td class="text-center">${padStt(stt)}</td>
-                        <td class="text-left font-bold pl-2">${u.name}</td>
-                        <td class="text-center">${u.role}</td>
-                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekdays)}</td>
-                        <td class="text-center font-medium">${padNum(u.weekdays.length)}</td>
-                        <td class="text-center">${cellRateWd}</td>
-                        <td class="text-center">${cellTotalWd}</td>
-                        <td class="text-center italic text-sm">Ngày thường</td>
-                    </tr>
-                    `;
-                    totalAllNights += u.weekdays.length;
-                } else if (hasWE) {
-                    tbodyHtml += `
-                    <tr>
-                        <td class="text-center">${padStt(stt)}</td>
-                        <td class="text-left font-bold pl-2">${u.name}</td>
-                        <td class="text-center">${u.role}</td>
-                        <td class="text-left pl-2 leading-relaxed tracking-wider">${formatDates(u.weekends)}</td>
-                        <td class="text-center font-medium">${padNum(u.weekends.length)}</td>
-                        <td class="text-center">${cellRateWe}</td>
-                        <td class="text-center">${cellTotalWe}</td>
-                        <td class="text-center italic text-sm font-medium">T7, CN</td>
-                    </tr>
-                    `;
-                    totalAllNights += u.weekends.length;
-                }
-                if (hasWD || hasWE) stt++;
+
+                    if (index === 0) {
+                        tbodyHtml += `<tr>
+                            <td rowspan="${rowSpan}" class="text-center border-slate-400 align-middle">${padStt(stt)}</td>
+                            <td rowspan="${rowSpan}" class="text-left font-bold pl-2 border-slate-400 align-middle">
+                                ${u.name}
+                                ${shiftTypeSelectorHtml}
+                            </td>
+                            <td rowspan="${rowSpan}" class="text-center border-slate-400 align-middle">${u.role}</td>
+                            ${tdCommon}
+                        </tr>`;
+                    } else {
+                        tbodyHtml += `<tr>${tdCommon}</tr>`;
+                    }
+                });
+                stt++;
             }
 
             if (Object.keys(userShifts).length === 0) {
@@ -1358,22 +1323,19 @@
             }
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
-            document.getElementById('lbl-total-nights').textContent = padStt(totalAllNights);
+            document.getElementById('lbl-total-nights').textContent = padNum(totalAllNights);
 
-            // Cập nhật lại số tiền nếu TCKT đang xem để hiển thị chính xác dòng Tổng (Vì ô input có thể nhận được giá trị tự động)
-            if (canEnterMoney) {
-                calculateTotals();
+            if (isEditMode) {
+                calculateTotals(); 
             } else {
-                document.getElementById('lbl-total-amount').textContent = grandTotalMoney > 0 ? formatCurrency(grandTotalMoney) : '';
-                document.getElementById('lbl-money-text').textContent = grandTotalMoney > 0 ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
+                document.getElementById('lbl-total-amount').textContent = (canViewMoney && grandTotalMoney > 0) ? formatCurrency(grandTotalMoney) : '';
+                document.getElementById('lbl-money-text').textContent = (canViewMoney && grandTotalMoney > 0) ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
             }
         }
 
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
-            if (checkAuth()) {
-                loadDataFromGAS();
-            }
+            if (checkAuth()) loadDataFromGAS();
         };
 
     </script>
