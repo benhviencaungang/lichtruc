@@ -324,7 +324,7 @@
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
                 </button>
                 
-                <!-- NÚT LƯU ĐIỀU CHỈNH CHUNG (CHO CẢ KHTH VÀ TCKT) -->
+                <!-- NÚT LƯU ĐIỀU CHỈNH CHUNG -->
                 <button id="btn-save-data" onclick="saveData()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition font-medium">
                     <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Điều Chỉnh
                 </button>
@@ -791,7 +791,7 @@
         };
 
         // ==========================================
-        // QUẢN LÝ PHÊ DUYỆT VÀ CHỈNH SỬA KHTH / TCKT
+        // QUẢN LÝ PHÊ DUYỆT VÀ CHỈNH SỬA KHTH / TCKT / KHOA
         // ==========================================
         function updateApprovalUI(shiftsCount) {
             const month = document.getElementById('sel-month').value;
@@ -849,7 +849,12 @@
                     btnSend.classList.replace('bg-orange-600', 'bg-blue-600');
                     btnSend.classList.replace('hover:bg-orange-700', 'hover:bg-blue-700');
                 }
-                if (isOwner && !isTCKT) btnSend.classList.remove('hidden');
+                if (isOwner && !isTCKT) {
+                    btnSend.classList.remove('hidden');
+                    // Khoa được phép lưu dữ liệu
+                    btnSaveData.classList.remove('hidden');
+                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Dữ Liệu`;
+                }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
             }
@@ -863,9 +868,7 @@
                 }
                 
                 if (isKHTH) {
-                    btnSaveData.classList.remove('hidden');
-                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Điều Chỉnh`;
-
+                    // KHTH không có nút Lưu, chỉ duyệt hoặc từ chối
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt chuyển TCKT`;
                     
@@ -881,7 +884,7 @@
 
                 if (isTCKT) {
                     btnSaveData.classList.remove('hidden');
-                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Chỉnh Sửa`;
+                    btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Đơn Giá`;
                     
                     btnApprove.classList.remove('hidden');
                     btnApprove.innerHTML = `<i data-lucide="lock" class="w-3 h-3 inline mr-1"></i>Chốt Phiếu`;
@@ -942,6 +945,7 @@
 
         function sendApprove() {
             let isResend = document.getElementById('badge-status').textContent.includes('Trả Lại');
+            saveData(false); // Lưu lại dữ liệu do Khoa sửa trước khi gửi
             showConfirmModal(
                 isResend ? "Xác nhận gửi lại phiếu" : "Xác nhận gửi KHTH",
                 isResend ? "GỬI LẠI phiếu bồi dưỡng này cho KHTH duyệt sau khi sửa đổi?" : "GỬI phiếu bồi dưỡng này cho KHTH duyệt?",
@@ -960,7 +964,7 @@
                     () => { updatePhieuStatus('Đã chốt'); showToast("Đã chốt phiếu thành công!", "success"); }
                 );
             } else {
-                showConfirmModal("Xác nhận Phê duyệt", "PHÊ DUYỆT cấu hình loại trực, số ngày và chuyển cho Kế toán (TCKT)?",
+                showConfirmModal("Xác nhận Phê duyệt", "PHÊ DUYỆT xác nhận số ngày trực và chuyển cho Kế toán (TCKT)?",
                     () => { updatePhieuStatus('Chờ TCKT chốt'); showToast("Đã duyệt chuyển TCKT thành công!", "success"); }
                 );
             }
@@ -1015,6 +1019,7 @@
                 const nightsInput = document.querySelector(`.nights-input[data-id="${id}_n"]`);
                 
                 let rate = parseInt(rateInput.value || 0);
+                // Lấy từ thẻ input nếu đang chế độ Edit, nếu không lấy từ attribute
                 let nights = nightsInput ? parseInt(nightsInput.value || 0) : parseInt(rateInput.getAttribute('data-nights') || 0);
                 let total = nights * rate;
 
@@ -1078,40 +1083,54 @@
             const maKhoa = document.getElementById('sel-khoa').value;
             let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
 
-            if (!phieu) return;
+            if (!phieu) {
+                // Tự động tạo bản nháp nếu lần đầu Khoa bấm lưu
+                phieu = {
+                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
+                    TrangThai: 'Nháp', NguoiDuyet: '', NgayDuyet: '', GhiChu: '{}'
+                };
+                MOCK_DB.phieuBoiDuong.push(phieu);
+            }
 
             let noteData = parseGhiChu(phieu.GhiChu);
             if (!noteData.rates) noteData.rates = {};
 
-            // Lưu Chuỗi Ngày (KHTH nhập tay vào)
-            document.querySelectorAll('.days-input').forEach(daysInput => {
-                const id = daysInput.getAttribute('data-id');
-                noteData.rates[id] = daysInput.value.trim();
-            });
+            const daysInputs = document.querySelectorAll('.days-input');
+            const rateInputs = document.querySelectorAll('.rate-input');
 
-            // Lưu Đơn giá (TCKT)
-            document.querySelectorAll('.rate-input').forEach(rateInput => {
-                const id = rateInput.getAttribute('data-id');
-                const rate = rateInput.value;
-                if (rate) noteData.rates[id] = rate;
-            });
+            // Chỉ lưu Chuỗi Ngày, Số đêm, Loại Trực nếu Admin Khoa đang mở chế độ Edit (có thẻ input)
+            if (daysInputs.length > 0) {
+                daysInputs.forEach(daysInput => {
+                    const id = daysInput.getAttribute('data-id');
+                    noteData.rates[id] = daysInput.value.trim();
+                });
 
-            // Lưu Số đêm (KHTH, TCKT)
-            document.querySelectorAll('.nights-input').forEach(nightsInput => {
-                const id = nightsInput.getAttribute('data-id');
-                const nights = nightsInput.value;
-                if (nights !== null && nights !== "") noteData.rates[id] = nights;
-            });
+                document.querySelectorAll('.nights-input').forEach(nightsInput => {
+                    const id = nightsInput.getAttribute('data-id');
+                    const nights = nightsInput.value;
+                    if (nights !== null && nights !== "") noteData.rates[id] = nights;
+                });
 
-            // Lưu Loại Trực (em12, em24, norm)
-            document.querySelectorAll('.shift-type-select').forEach(sel => {
-                const id = sel.getAttribute('data-id');
-                noteData.rates[id] = sel.value;
-            });
+                document.querySelectorAll('.shift-type-select').forEach(sel => {
+                    const id = sel.getAttribute('data-id');
+                    noteData.rates[id] = sel.value;
+                });
+            }
+
+            // Chỉ lưu Đơn giá nếu TCKT đang thao tác (các thẻ input không bị ẩn)
+            if (rateInputs.length > 0) {
+                rateInputs.forEach(rateInput => {
+                    if (!rateInput.classList.contains('hidden')) {
+                        const id = rateInput.getAttribute('data-id');
+                        const rate = rateInput.value;
+                        if (rate) noteData.rates[id] = rate;
+                    }
+                });
+            }
 
             phieu.GhiChu = JSON.stringify(noteData);
             syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
-            if(showToastMsg) showToast("Đã lưu các điều chỉnh thành công!", "success");
+            if(showToastMsg) showToast("Đã lưu dữ liệu thành công!", "success");
         }
 
         function generateReport() {
@@ -1163,13 +1182,15 @@
             
             const canViewMoney = isStrictKHTH || isTCKT; // Chỉ Admin KHTH chính chủ và TCKT mới được xem tiền
             
-            // XÁC ĐỊNH QUYỀN TRÊN GIAO DIỆN & IN ẤN
-            const isKHTHChecking = isGlobalKHTH && status === 'Chờ KHTH duyệt';
+            // XÁC ĐỊNH QUYỀN TRÊN GIAO DIỆN & IN ẤN THEO LOGIC MỚI
+            // Khoa chỉ được sửa ngày khi đang là bản nháp / hoặc bị từ chối
+            const isKhoaDrafting = currentUser.KhoaList.includes(maKhoa) && !isTCKT && !isStrictKHTH && (status === 'Nháp' || status === 'KHTH trả lại');
+            // TCKT được sửa đơn giá khi chờ chốt
             const isTCKTChecking = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
             // NẾU ĐANG BẤM NÚT "IN", TẤT CẢ QUYỀN SỬA ĐỀU PHẢI TẮT LÀM FALSE ĐỂ GIAO DIỆN TRỞ VỀ CHUẨN IN
-            const isEditMode = (isKHTHChecking || isTCKTChecking) && !isPrintingMode;
-            const canEnterMoney = isTCKTChecking && !isPrintingMode;
+            const isEditMode = isKhoaDrafting && !isPrintingMode; // Khoa điền ngày, đêm, loại trực
+            const canEnterMoney = isTCKTChecking && !isPrintingMode; // TCKT điền đơn giá
 
             const parsedDefRates = getParsedDefaultRates();
             const isEmergency = (maKhoa.toUpperCase() === 'HSCC' || maKhoa.toUpperCase() === 'CẤP CỨU' || maKhoa.toUpperCase().includes('CẤP CỨU'));
@@ -1223,7 +1244,7 @@
                     defWd = parsedDefRates.em24Wd; defWe = parsedDefRates.em24We; defHol = parsedDefRates.em24Hol;
                 }
 
-                // Lấy chuỗi ngày, nếu KHTH đã sửa và lưu thì dùng của KHTH, ko thì tự gen
+                // Lấy chuỗi ngày, nếu Khoa đã sửa và lưu thì dùng của Khoa, ko thì tự gen
                 let autoDaysWd = formatDates(u.weekdays);
                 let autoDaysWe = formatDates(u.weekends);
                 let autoDaysHol = formatDates(u.holidays);
@@ -1249,10 +1270,10 @@
 
                 let activeCats = [];
                 if (isEditMode) {
-                    // Chế độ chỉnh sửa: Show đủ 3 hàng (Thường, Cuối tuần, Lễ Tết) để admin gõ thêm vào nếu thiếu
+                    // Chế độ chỉnh sửa (Dành cho Khoa): Show đủ 3 hàng (Thường, Cuối tuần, Lễ Tết) để admin gõ thêm vào nếu thiếu
                     activeCats = categories;
                 } else {
-                    // Chế độ View hoặc Đang In: Lọc bay mất các hàng không có số đêm và không có chữ ngày nào
+                    // Chế độ View (KHTH) hoặc Đang In: Lọc bay mất các hàng không có số đêm và không có chữ ngày nào
                     activeCats = categories.filter(c => c.nights > 0 || (c.daysStr && c.daysStr.trim() !== ""));
                 }
 
@@ -1281,11 +1302,11 @@
                         totalAllNights += c.nights;
                     }
 
-                    // QUYỀN SỬA CHUỖI NGÀY TRỰC
+                    // QUYỀN SỬA CHUỖI NGÀY TRỰC (Khoa)
                     let inputDaysHtml = isEditMode ? `<input type="text" class="days-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-left text-[11pt] font-sans" data-id="${maNV}_${c.id}_days" value="${c.daysStr}" placeholder="VD: 1, 5, 10">` : '';
                     let printDaysHtml = `<span class="print-value-days ${isEditMode ? 'hidden' : ''}">${c.daysStr}</span>`;
 
-                    // QUYỀN SỬA SỐ ĐÊM 
+                    // QUYỀN SỬA SỐ ĐÊM (Khoa)
                     let inputNightsHtml = isEditMode ? `<input type="number" class="nights-input w-12 border border-slate-300 rounded px-1 py-1 outline-none text-center font-bold text-blue-700 bg-blue-50 text-[11pt]" data-id="${maNV}_${c.id}_n" value="${c.nights}" oninput="calculateTotals()">` : '';
                     let printNightsHtml = `<span class="print-value-nights ${isEditMode ? 'hidden' : ''}">${padNum(c.nights)}</span>`;
 
