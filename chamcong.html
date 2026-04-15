@@ -8,6 +8,8 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Thêm thư viện xuất Excel SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         /* CSS DÀNH RIÊNG CHO BẢN IN A4 NẰM NGANG */
@@ -259,7 +261,6 @@
                 <option value="gop">Gộp Phòng/Trại</option>
             </select>
             
-            <!-- NÚT KHÔI PHỤC LỊCH GỐC THÔNG MINH -->
             <button id="btn-reset-shifts" onclick="resetToOriginalShifts()" class="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center shadow-sm transition font-medium whitespace-nowrap shrink-0 h-[38px]" title="Làm mới lịch trực, giữ nguyên các dữ liệu đã chấm tay">
                 <i data-lucide="history" class="w-4 h-4 mr-2"></i> Tải lại Lịch gốc
             </button>
@@ -286,6 +287,11 @@
                     <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Hủy/Từ chối
                 </button>
             </div>
+
+            <!-- Nút xuất Excel (Chỉ Admin_KHTH mới thấy) -->
+            <button id="btn-export-excel" onclick="openExportExcelModal()" class="hidden px-4 py-2 bg-green-600 text-white rounded-lg flex items-center shadow hover:bg-green-700 transition font-medium whitespace-nowrap shrink-0" title="Xuất dữ liệu chấm công ra file Excel">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Xuất Excel
+            </button>
 
             <button id="btn-leave-stats" onclick="openLeaveStatsModal()" class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0" title="Thống kê Phép năm và Nghỉ bù">
                 <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
@@ -390,6 +396,33 @@
         </div>
     </div>
 
+    <!-- MODAL XUẤT EXCEL TÙY CHỈNH THỜI GIAN -->
+    <div id="export-excel-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div class="bg-green-50 px-6 py-4 border-b border-green-100 font-bold flex items-center text-green-800">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-green-600"></i> Xuất Dữ Liệu Chấm Công
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Từ ngày</label>
+                        <input type="date" id="export-from-date" class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Đến ngày</label>
+                        <input type="date" id="export-to-date" class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closeExportExcelModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto">Hủy</button>
+                    <button onclick="processExportExcel()" class="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition w-full md:w-auto flex justify-center items-center">
+                        <i data-lucide="download" class="w-4 h-4 mr-2"></i> Xuất File
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-purple-50 px-6 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
@@ -420,16 +453,6 @@
                         <tbody id="leave-stats-tbody" class="divide-y divide-slate-200">
                             </tbody>
                     </table>
-                </div>
-                <div class="mt-4 text-xs text-slate-500 bg-white p-3 rounded border border-slate-200">
-                    <p><b>Ghi chú quy tắc tính toán TỰ ĐỘNG:</b></p>
-                    <ul class="list-disc pl-5 mt-1 space-y-1">
-                        <li><b>Phép năm:</b> Khối Hành chính/Cận lâm sàng mặc định 12 ngày. Các khoa chuyên môn (Khám bệnh, Nội, Ngoại, Sản, Nhi, Gây mê, YHCT, Hồi sức...) mặc định 14 ngày. Hệ thống tự động tính thâm niên dựa trên cột <b>NgayVaoLam</b> (cứ đủ 5 năm được cộng thêm 1 ngày phép).</li>
-                        <li><b>Làm thêm (LT):</b> Ký hiệu LT hoặc LT/2 dùng cho nhân sự đi làm để cộng dồn vào quỹ phép năm, đồng thời vẫn được tính là ngày làm việc bình thường.</li>
-                        <li><b>Tích lũy nghỉ bù:</b> <span class="text-red-600 font-medium">Chỉ cộng dồn vào quỹ nghỉ bù khi nhân sự ĐI TRỰC (T24, T12N, T12D) vào Thứ 6 hoặc Thứ 7. Các ngày làm việc hành chính (+, -) hoặc ngày Chủ Nhật sẽ không được tính.</span></li>
-                        <li><b>Ngoại lệ:</b> Khoa Hồi sức cấp cứu (HSCC) theo quy định không được áp dụng tự động cộng dồn nghỉ bù.</li>
-                        <li><b>Phạm vi dữ liệu:</b> Bảng thống kê này được quét tự động trên <b>toàn bộ dữ liệu lịch trực dự kiến và bảng chấm công của năm hiện hành</b> kết hợp với tháng đang hiển thị.</li>
-                    </ul>
                 </div>
             </div>
             
@@ -539,7 +562,6 @@
         }
 
         function openShiftPicker(event, tdElement) {
-            // Khóa hoàn toàn thao tác click nếu bảng đã trình hoặc đã duyệt
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
 
             event.stopPropagation(); 
@@ -717,7 +739,6 @@
         }
 
         function markUnsaved() {
-            // Không cho phép đánh dấu thay đổi nếu bảng đã khóa
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
 
             if (!hasUnsavedChanges) {
@@ -733,7 +754,6 @@
 
         // KHÔI PHỤC DỮ LIỆU TỪ LỊCH TRỰC GỐC
         async function resetToOriginalShifts() {
-            // Khóa nút nếu bảng đang bị khóa
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') {
                 showToast("Bảng chấm công đang bị khóa, không thể thao tác!", "error");
                 return;
@@ -755,7 +775,6 @@
                     return;
                 }
 
-                // Tìm những nhân viên CÓ lịch trực trong tháng hiện tại
                 const shiftsInMonth = MOCK_DB.shifts.filter(s => {
                     if(!s.NgayTruc) return false;
                     const parts = s.NgayTruc.split('-');
@@ -763,10 +782,7 @@
                     return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
                 });
                 
-                // Tạo danh sách ID của những người có trực
                 const nvsWithShifts = new Set(shiftsInMonth.map(s => String(s.MaNV)));
-
-                // Các ký hiệu được coi là do hệ thống tự sinh (không phải chấm tay)
                 const autoSymbols = ['+', 'T24', 'Rt', 'CN', 'T7', ''];
 
                 khoasToReset.forEach(mk => {
@@ -777,7 +793,6 @@
                         try {
                             let savedObj = JSON.parse(bang.DuLieu);
                             for (let maNV in savedObj) {
-                                // Nếu người này CÓ lịch trực -> Làm mới ngày trực, giữ ngày chấm tay
                                 if (nvsWithShifts.has(maNV)) {
                                     let draftDays = savedObj[maNV].days || {};
                                     
@@ -814,15 +829,12 @@
                                             isManual = parts.some(p => !autoSymbols.includes(p.trim()));
                                         }
 
-                                        // Nếu ô đó là dữ liệu tự động bị lệch -> Cập nhật thành lịch chuẩn
                                         if (!isManual) {
                                             draftDays[day] = correctVal;
                                         }
                                     }
-                                    
                                     savedObj[maNV].days = draftDays;
                                 }
-                                // Những người không trực (nvsWithShifts.has(maNV) == false) thì giữ nguyên savedObj[maNV]
                             }
                             bang.DuLieu = JSON.stringify(savedObj);
                         } catch(e) {}
@@ -842,12 +854,21 @@
         function initKhoaFilter() {
             const filterKhoa = document.getElementById('filter-khoa');
             const btnLeaveStats = document.getElementById('btn-leave-stats');
+            const btnExportExcel = document.getElementById('btn-export-excel');
             const isAdminAll = isGlobalAdmin();
 
+            // Phân quyền hiển thị
             if (currentUser && (currentUser.Role === 'Admin_KHTH' || currentUser.Role === 'Admin_Khoa')) {
                 if (btnLeaveStats) btnLeaveStats.classList.remove('hidden');
             } else {
                 if (btnLeaveStats) btnLeaveStats.classList.add('hidden');
+            }
+
+            // Chỉ Admin_KHTH mới thấy nút Xuất Excel
+            if (currentUser && currentUser.Role === 'Admin_KHTH') {
+                if (btnExportExcel) btnExportExcel.classList.remove('hidden');
+            } else {
+                if (btnExportExcel) btnExportExcel.classList.add('hidden');
             }
 
             if (isAdminAll) {
@@ -967,7 +988,6 @@
                 if (results[2] && results[2].status === "success") {
                     MOCK_DB.shifts = (results[2].data || []).map(s => {
                         let parsedDate = s.NgayTruc;
-                        // Xử lý múi giờ khi Google Sheets gửi về định dạng ISO string UTC
                         if (parsedDate && parsedDate.includes('T')) {
                             const utcMs = new Date(parsedDate).getTime();
                             if (!isNaN(utcMs)) {
@@ -1210,7 +1230,7 @@
             }
 
             hasUnsavedChanges = false; 
-            currentOverallStatus = status; // Cập nhật trạng thái khóa
+            currentOverallStatus = status; 
             updateApprovalUI(status);
             
             await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
@@ -1371,13 +1391,12 @@
             else if (hasPending) overallStatus = 'Chờ duyệt';
             else if (hasApproved) overallStatus = 'Đã duyệt';
 
-            currentOverallStatus = overallStatus; // Lưu trạng thái hiện tại
+            currentOverallStatus = overallStatus; 
             const isLocked = (overallStatus === 'Chờ duyệt' || overallStatus === 'Đã duyệt');
             updateApprovalUI(overallStatus);
             
             hasUnsavedChanges = false;
 
-            // KIỂM TRA LỊCH TRỰC BẰNG CÁCH TÁCH CHUỖI TRỰC TIẾP (BỎ QUA HÀM THỜI GIAN TRÌNH DUYỆT)
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
                 if(!s.NgayTruc) return false;
                 const parts = s.NgayTruc.split('-');
@@ -1412,7 +1431,6 @@
                     const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
                     const shiftMap = {};
                     
-                    // Lấy ngày bằng cách tách chuỗi an toàn tuyệt đối 1000%
                     nvShifts.forEach(s => {
                         const parts = s.NgayTruc.split('-');
                         if(parts.length === 3) {
@@ -1513,6 +1531,203 @@
                     tr.querySelector('.cell-ghichu').innerText = globalSavedData[maNV].note || '';
                     recalcRow(cells[0]);
                 });
+            }
+        }
+
+        // --- CÁC HÀM XỬ LÝ XUẤT EXCEL TÙY CHỌN THỜI GIAN ---
+        function openExportExcelModal() {
+            if (!currentUser || currentUser.Role !== 'Admin_KHTH') {
+                showToast("Tính năng này chỉ dành cho tài khoản Admin KHTH", "error");
+                return;
+            }
+            
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            // Set mặc định từ ngày đầu tháng đến cuối tháng hiện tại
+            document.getElementById('export-from-date').value = `${year}-${String(month).padStart(2, '0')}-01`;
+            document.getElementById('export-to-date').value = `${year}-${String(month).padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+
+            document.getElementById('export-excel-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeExportExcelModal() {
+            document.getElementById('export-excel-modal').classList.add('hidden');
+        }
+
+        function processExportExcel() {
+            const fromDateStr = document.getElementById('export-from-date').value;
+            const toDateStr = document.getElementById('export-to-date').value;
+
+            if (!fromDateStr || !toDateStr) {
+                showToast("Vui lòng chọn đầy đủ Từ ngày và Đến ngày", "warning");
+                return;
+            }
+
+            const dStart = new Date(fromDateStr);
+            const dEnd = new Date(toDateStr);
+
+            if (dStart > dEnd) {
+                showToast("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày", "error");
+                return;
+            }
+
+            closeExportExcelModal();
+            showToast("Đang thu thập và kết xuất dữ liệu...", "warning");
+
+            // 1. Lọc danh sách nhân viên cần xuất (dựa theo filter Khoa hiện tại)
+            const filterKhoaEle = document.getElementById('filter-khoa');
+            const selectedKhoaFilter = filterKhoaEle && !filterKhoaEle.classList.contains('hidden') ? filterKhoaEle.value : 'ALL';
+            const isAdminAll = isGlobalAdmin();
+            let allowedKhoas = isAdminAll ? MOCK_DB.khoa.map(k => k.MaKhoa) : currentUser.KhoaList;
+            if (isAdminAll && selectedKhoaFilter !== 'ALL') {
+                allowedKhoas = [selectedKhoaFilter];
+            }
+
+            let targetUsers = MOCK_DB.users.filter(u => {
+                if (u.ChucDanh === 'Quản lý') return false;
+                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
+                return uKhoas.some(k => allowedKhoas.includes(k));
+            });
+
+            if (targetUsers.length === 0) {
+                showToast("Không có nhân sự nào trong danh sách lọc để xuất!", "warning");
+                return;
+            }
+
+            // Hàm chuyển đổi ký hiệu
+            function getReasonName(symbolStr) {
+                if (!symbolStr) return "";
+                return symbolStr.split('/').map(s => {
+                    let sym = s.trim();
+                    let found = SYMBOLS_DICT.find(x => x.id === sym);
+                    return found ? found.name.split(' (')[0].trim() : sym;
+                }).join(' / ');
+            }
+
+            // Tạo bộ đệm Lịch trực để tra cứu siêu tốc: shiftsCache['YYYY-M-D']['maNV'] = 'ChucDanh'
+            let shiftsCache = {}; 
+            MOCK_DB.shifts.forEach(s => {
+                if(!s.NgayTruc) return;
+                const parts = s.NgayTruc.split('-');
+                if(parts.length === 3) {
+                    let y = parseInt(parts[0]);
+                    let m = parseInt(parts[1]);
+                    let d = parseInt(parts[2]);
+                    let key = `${y}-${m}-${d}`;
+                    if(!shiftsCache[key]) shiftsCache[key] = {};
+                    shiftsCache[key][String(s.MaNV)] = s.ChucDanh;
+                }
+            });
+
+            let exportData = [];
+
+            // 2. Vòng lặp quét qua TỪNG NGÀY trong khoảng thời gian đã chọn
+            let currDate = new Date(dStart);
+            
+            // Tối ưu: Lấy trước các dữ liệu chấm công đã lưu để không phải JSON.parse nhiều lần
+            let cachedSavedMonths = {}; // 'YYYY-M': { maNV: { days: {...} } }
+            
+            while (currDate <= dEnd) {
+                let y = currDate.getFullYear();
+                let m = currDate.getMonth() + 1;
+                let d = currDate.getDate();
+                let dw = currDate.getDay(); // 0: CN, 6: T7
+                let monthKey = `${y}-${m}`;
+
+                // Nạp dữ liệu tháng vào cache nếu chưa nạp
+                if (!cachedSavedMonths[monthKey]) {
+                    cachedSavedMonths[monthKey] = {};
+                    allowedKhoas.forEach(mk => {
+                        const maBang = `BCC_${mk}_${m}_${y}`;
+                        const b = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
+                        if (b && b.DuLieu) {
+                            try {
+                                let parsed = JSON.parse(b.DuLieu);
+                                for (let nv in parsed) {
+                                    cachedSavedMonths[monthKey][nv] = parsed[nv];
+                                }
+                            } catch(e) {}
+                        }
+                    });
+                }
+
+                // Xét từng nhân viên cho ngày currDate
+                targetUsers.forEach(u => {
+                    const maNV = String(u.MaNV);
+                    let val = '';
+
+                    // 2.1: Lấy dữ liệu ĐÃ LƯU (Chấm tay)
+                    if (cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days && cachedSavedMonths[monthKey][maNV].days[d]) {
+                        val = cachedSavedMonths[monthKey][maNV].days[d];
+                    } 
+                    // 2.2: Nếu không có dữ liệu lưu -> Tự động nội suy (Auto Generate) từ Lịch trực gốc
+                    else {
+                        let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
+                        
+                        let prevD = new Date(currDate);
+                        prevD.setDate(prevD.getDate() - 1);
+                        let py = prevD.getFullYear();
+                        let pm = prevD.getMonth() + 1;
+                        let pd = prevD.getDate();
+                        let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
+
+                        if (shiftToday) {
+                            val = 'T24';
+                        } else if (shiftYesterday) {
+                            val = 'Rt';
+                        } else if (dw === 0 || dw === 6) {
+                            val = dw === 0 ? 'CN' : 'T7';
+                        } else {
+                            val = '+';
+                        }
+                    }
+
+                    if (val && val !== '') {
+                        exportData.push({
+                            "Tên nhân viên": u.HoTen,
+                            "CCHN": u.CCHN || "",
+                            "Ngày chấm công": `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`,
+                            "Lý do": getReasonName(val)
+                        });
+                    }
+                });
+
+                // Tiến lên 1 ngày
+                currDate.setDate(currDate.getDate() + 1);
+            }
+
+            if (exportData.length === 0) {
+                showToast("Không phát sinh dữ liệu chấm công nào trong khoảng thời gian này.", "warning");
+                return;
+            }
+
+            // 3. Kết xuất ra Excel
+            try {
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "ChamCong");
+                
+                const wscols = [
+                    {wch: 25}, // Tên nhân viên
+                    {wch: 15}, // CCHN
+                    {wch: 18}, // Ngày chấm công
+                    {wch: 35}  // Lý do
+                ];
+                worksheet['!cols'] = wscols;
+
+                const nameStart = `${String(dStart.getDate()).padStart(2,'0')}${String(dStart.getMonth()+1).padStart(2,'0')}${dStart.getFullYear()}`;
+                const nameEnd = `${String(dEnd.getDate()).padStart(2,'0')}${String(dEnd.getMonth()+1).padStart(2,'0')}${dEnd.getFullYear()}`;
+                
+                const fileName = `ChamCong_${nameStart}_den_${nameEnd}.xlsx`;
+                XLSX.writeFile(workbook, fileName);
+                
+                showToast("Xuất Excel thành công!", "success");
+            } catch (error) {
+                console.error("Lỗi khi xuất Excel: ", error);
+                showToast("Có lỗi xảy ra khi tạo file Excel.", "error");
             }
         }
 
