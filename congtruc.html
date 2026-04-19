@@ -1081,6 +1081,31 @@
             calculateTotals();
         }
 
+        // TỰ ĐỘNG ĐẾM SỐ NGÀY TRỰC
+        function autoUpdateNights(inputEl) {
+            const text = inputEl.value;
+            let count = 0;
+            if (text.trim() !== '') {
+                // Tách chuỗi theo dấu phẩy, lọc các phần tử không hợp lệ
+                const daysArray = text.split(',').map(item => item.trim()).filter(item => item !== '');
+                count = daysArray.length;
+            }
+            
+            const nightsId = inputEl.getAttribute('data-id').replace('_days', '_n');
+            const nightsInput = document.querySelector(`.nights-input[data-id="${nightsId}"]`);
+            
+            if (nightsInput) {
+                nightsInput.value = count;
+                // Cập nhật thẻ in ấn
+                const printNightsSpan = nightsInput.nextElementSibling;
+                if (printNightsSpan && printNightsSpan.classList.contains('print-value-nights')) {
+                    printNightsSpan.textContent = count < 10 ? '0' + count : count;
+                }
+                // Tính lại toàn bộ bảng
+                calculateTotals();
+            }
+        }
+
         // HÀM LƯU DỮ LIỆU ĐIỀU CHỈNH CHUNG (CHUỖI NGÀY, SỐ ĐÊM, ĐƠN GIÁ, LOẠI TRỰC)
         function saveData(showToastMsg = true) {
             const month = document.getElementById('sel-month').value;
@@ -1320,7 +1345,7 @@
                     }
 
                     // QUYỀN SỬA CHUỖI NGÀY TRỰC (Khoa)
-                    let inputDaysHtml = isEditMode ? `<input type="text" class="days-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-left text-[11pt] font-sans" data-id="${maNV}_${c.id}_days" value="${c.daysStr}" placeholder="VD: 1, 5, 10">` : '';
+                    let inputDaysHtml = isEditMode ? `<input type="text" class="days-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-left text-[11pt] font-sans" data-id="${maNV}_${c.id}_days" value="${c.daysStr}" placeholder="VD: 1, 5, 10" oninput="autoUpdateNights(this)">` : '';
                     let printDaysHtml = `<span class="print-value-days ${isEditMode ? 'hidden' : ''}">${c.daysStr}</span>`;
 
                     // QUYỀN SỬA SỐ ĐÊM (Khoa)
