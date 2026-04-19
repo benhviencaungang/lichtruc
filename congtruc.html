@@ -276,6 +276,11 @@
     <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
         <!-- Nhóm lọc dữ liệu bên trái -->
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
+            <!-- NÚT TRỞ VỀ TRANG CHÍNH -->
+            <button onclick="window.location.href='index.html'" class="px-3 py-2 bg-slate-100 text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-200 flex items-center shadow-sm transition whitespace-nowrap shrink-0 font-medium" title="Trở về Trang chủ">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-1.5"></i> Trở về
+            </button>
+            
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
 
             <select id="sel-month" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
@@ -1193,7 +1198,19 @@
             const canEnterMoney = isTCKTChecking && !isPrintingMode; // TCKT điền đơn giá
 
             const parsedDefRates = getParsedDefaultRates();
-            const isEmergency = (maKhoa.toUpperCase() === 'HSCC' || maKhoa.toUpperCase() === 'CẤP CỨU' || maKhoa.toUpperCase().includes('CẤP CỨU'));
+            
+            // Cập nhật điều kiện xác định Khoa Hệ Cấp Cứu: Chỉ HSCC/Cấp cứu mới tự động chia đôi (em12)
+            // Loại bỏ hoàn toàn Khoa Gây Mê Hồi Sức ra khỏi danh sách tự động này.
+            const upperMaKhoa = maKhoa.toUpperCase();
+            const upperTenKhoa = tenKhoa.toUpperCase();
+
+            const isEmergency = (
+                upperMaKhoa === 'HSCC' || 
+                upperMaKhoa.includes('CẤP CỨU') ||
+                upperTenKhoa.includes('CẤP CỨU') ||
+                upperTenKhoa === 'HỒI SỨC CẤP CỨU' ||
+                upperTenKhoa === 'HSCC'
+            ) && !upperTenKhoa.includes('GÂY MÊ') && !upperMaKhoa.includes('GMHS');
             
             const userShifts = {};
             shiftsInMonth.forEach(s => {
