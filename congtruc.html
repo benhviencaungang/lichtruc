@@ -331,7 +331,12 @@
                 
                 <!-- NÚT LƯU ĐIỀU CHỈNH CHUNG -->
                 <button id="btn-save-data" onclick="saveData()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition font-medium">
-                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Điều Chỉnh
+                    <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Dữ Liệu
+                </button>
+
+                <!-- NÚT ĐỒNG BỘ LẠI LỊCH (Khắc phục lỗi không tự update khi DB đổi) -->
+                <button id="btn-reset-data" onclick="resetShiftData()" class="hidden px-3 py-1.5 bg-amber-500 text-white rounded hover:bg-amber-600 text-sm whitespace-nowrap shadow-sm transition font-medium" title="Xóa bỏ các ngày đã sửa tay và lấy lại dữ liệu mới nhất từ DB">
+                    <i data-lucide="refresh-ccw" class="w-3 h-3 inline mr-1"></i>Đồng bộ Lịch
                 </button>
 
                 <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
@@ -806,6 +811,7 @@
             const btnSend = document.getElementById('btn-send-approve');
             const btnApprove = document.getElementById('btn-approve');
             const btnSaveData = document.getElementById('btn-save-data');
+            const btnResetData = document.getElementById('btn-reset-data'); // THÊM NÚT RESET
             const btnCancel = document.getElementById('btn-cancel-approve');
             const btnPrint = document.getElementById('btn-print');
             const badge = document.getElementById('badge-status');
@@ -815,6 +821,7 @@
             btnApprove.classList.add('hidden');
             btnCancel.classList.add('hidden');
             btnSaveData.classList.add('hidden');
+            btnResetData.classList.add('hidden'); // Ẩn mặc định
             rejectBanner.classList.add('hidden');
 
             if (shiftsCount === 0) {
@@ -859,6 +866,9 @@
                     // Khoa được phép lưu dữ liệu
                     btnSaveData.classList.remove('hidden');
                     btnSaveData.innerHTML = `<i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu Dữ Liệu`;
+                    
+                    // Khoa được phép Đồng bộ lại dữ liệu gốc nếu có sự thay đổi
+                    btnResetData.classList.remove('hidden');
                 }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
@@ -1161,6 +1171,36 @@
             phieu.GhiChu = JSON.stringify(noteData);
             syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
             if(showToastMsg) showToast("Đã lưu dữ liệu thành công!", "success");
+        }
+
+        // HÀM ĐỒNG BỘ LẠI DỮ LIỆU LỊCH TRỰC (KHẮC PHỤC LỖI KHÔNG TỰ UPDATE DATA MỚI)
+        function resetShiftData() {
+            showConfirmModal(
+                "Đồng bộ lại Lịch trực",
+                "Bạn có muốn XÓA BỎ các chỉnh sửa ngày/đêm thủ công trước đó và CẬP NHẬT LẠI theo lịch trực mới nhất từ phần mềm không?",
+                () => {
+                    const month = document.getElementById('sel-month').value;
+                    const year = document.getElementById('sel-year').value;
+                    const maKhoa = document.getElementById('sel-khoa').value;
+                    let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+
+                    if (phieu) {
+                        let noteData = parseGhiChu(phieu.GhiChu);
+                        if (noteData.rates) {
+                            // Xóa các dữ liệu ngày và số đêm đã lưu thủ công để nó tự tính lại từ MOCK_DB.shifts
+                            for (let key in noteData.rates) {
+                                if (key.endsWith('_days') || key.endsWith('_n')) {
+                                    delete noteData.rates[key];
+                                }
+                            }
+                        }
+                        phieu.GhiChu = JSON.stringify(noteData);
+                        syncWithGAS('sync_PhieuBoiDuong', MOCK_DB.phieuBoiDuong);
+                    }
+                    generateReport(); // Gọi lại render bảng
+                    showToast("Đã đồng bộ lại dữ liệu thành công!", "success");
+                }
+            );
         }
 
         function generateReport() {
