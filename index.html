@@ -1663,6 +1663,8 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwrMT_HDbxEDytLNteIZW0qPrvM3mG1qfKdzl8Fw45eHqkV1R-AsaHHg_gq66yrR2op/exec";
 
+        let isPushingData = false; // Cờ khóa đồng bộ ngầm khi đang lưu dữ liệu
+
         let MOCK_DB = {
             khoa: [], users: [], loaiCa: [], phieu: [], shifts: [], thongBao: [], auditLogs: [], cauHinhKySo: []
         };
@@ -1797,7 +1799,7 @@
         }
 
         async function silentBackgroundSync() {
-            if (!GAS_URL || !currentUser) return;
+            if (!GAS_URL || !currentUser || isPushingData) return; // Không lấy dữ liệu nếu đang đẩy lên
             try {
                 // Tải dữ liệu âm thầm không hiện UI loading
                 const endpoints = ["KhoaPhong", "NhanVien", "LoaiCaTruc", "PhieuLichTruc", "ChiTietLichTruc", "ThongBao", "LichSuThaoTac", "CauHinhKySo"];
@@ -1863,12 +1865,15 @@
 
         async function syncWithGAS(actionName, payloadData) {
             document.getElementById('sync-status').classList.remove('hidden');
+            isPushingData = true; // Khóa đồng bộ ngầm
             try {
                 await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: actionName, data: payloadData }) });
                 document.getElementById('sync-status').classList.add('hidden');
             } catch (e) {
                 document.getElementById('sync-status').classList.add('hidden');
                 showToast("Lỗi mạng: Dữ liệu hiện chỉ lưu tạm trên trình duyệt.", "error");
+            } finally {
+                isPushingData = false; // Mở khóa đồng bộ ngầm
             }
         }
 
@@ -2153,6 +2158,8 @@
             if (idx > -1) {
                 MOCK_DB.users[idx] = currentUser;
             }
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Cập nhật local storage để không bị mất khi reload
 
             syncWithGAS('sync_NhanVien', MOCK_DB.users);
 
@@ -2793,6 +2800,7 @@
         function saveUser(e) {
             e.preventDefault();
             const maNV = document.getElementById('u-manv').value.toUpperCase().trim();
+            const hoTenInput = document.getElementById('u-hoten').value.trim();
 
             const selectedKhoas = Array.from(document.querySelectorAll('input[name="u-khoa-cb"]'))
                 .filter(c => c.checked)
@@ -2821,10 +2829,28 @@
 
             if (!finalKhoas) return showToast("Phải chọn ít nhất 1 khoa cho nhân viên!", "error");
 
+            // --- BỔ SUNG KIỂM TRA TRÙNG TÊN TRONG KHOA ---
+            if (document.getElementById('form-mode').value === 'add') {
+                const isDuplicate = MOCK_DB.users.some(u => {
+                    const nameMatches = u.HoTen.trim().toLowerCase() === hoTenInput.toLowerCase() || 
+                                        (u.TenHienThi && u.TenHienThi.trim().toLowerCase() === hoTenInput.toLowerCase());
+                    if (nameMatches) {
+                        const uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
+                        return uKhoas.some(k => selectedKhoas.includes(k));
+                    }
+                    return false;
+                });
+
+                if (isDuplicate) {
+                    return showToast("Tên nhân viên đã tồn tại trong khoa này. Vui lòng kiểm tra lại hoặc liên hệ CNTT.", "error");
+                }
+            }
+            // ---------------------------------------------
+
             const newUser = {
                 ...existingUser, // Giữ lại những trường DB cũ (nếu có)
                 MaNV: maNV,
-                HoTen: document.getElementById('u-hoten').value.trim(),
+                HoTen: hoTenInput,
                 MaKhoa: finalKhoas,
                 ChucDanh: document.getElementById('u-chucdanh').value,
                 SDT: document.getElementById('u-sdt').value.trim(),
