@@ -1308,7 +1308,7 @@
                         class="w-full px-3 py-2 border rounded text-sm"></select></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs">Bắt đầu</label><input type="date" id="tb-ngaybd"
-                            class="w-full px-3 py-2 border rounded text-sm" required></div>
+                            class="w-full px-3 py-2 border rounded text-sm" required onchange="updateEndDateBasedOnStartDate()"></div>
                     <div><label class="block text-xs">Hết hạn</label><input type="date" id="tb-ngaykt"
                             class="w-full px-3 py-2 border rounded text-sm" required></div>
                 </div>
@@ -1468,6 +1468,19 @@
         const ACTIVE_SHIFT_DEPTS = ['BGD', 'HSCC', 'NOI', 'NGOAI', 'GMHS', 'SAN', 'NHI', 'XN', 'CDHA', 'YHCT', 'CNTT', 'TAIVU', 'DN', 'TAIXE', 'BAOVE'];
 
         let confirmActionFn = null;
+
+        // Hàm tiện ích: Lấy ngày Chủ Nhật của tuần chứa dateStr cung cấp
+        function getSundayOfWeek(dateStr) {
+            if (!dateStr) return "";
+            let d = new Date(dateStr + "T12:00:00");
+            let day = d.getDay(); // 0 = Chủ Nhật, 1 = Thứ 2...
+            let diff = (day === 0) ? 0 : 7 - day; 
+            d.setDate(d.getDate() + diff);
+            let year = d.getFullYear();
+            let month = String(d.getMonth() + 1).padStart(2, '0');
+            let dd = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${dd}`;
+        }
 
         function showConfirmModal(title, desc, actionFn) {
             document.getElementById('confirm-modal-title').innerHTML = `<i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> ${title}`;
@@ -1661,6 +1674,10 @@
         let chartInstances = { workload: null, progress: null, trend: null };
         let ZALO_TARGET_URL = localStorage.getItem('ZALO_TARGET_URL') || 'https://chat.zalo.me/';
 
+        // --- CƠ CHẾ ĐỒNG BỘ NGẦM (BACKGROUND POLLING) ---
+        let autoSyncInterval = null;
+        const AUTO_SYNC_TIME = 15000; // 15 giây tự động lấy dữ liệu 1 lần
+
         lucide.createIcons();
         document.getElementById('current-date-display').textContent = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -1697,6 +1714,9 @@
                 } else {
                     switchView('view-khoa-schedule');
                 }
+
+                // Bắt đầu tiến trình đồng bộ ngầm
+                startAutoSync();
             }
         }
         checkAutoLogin();
@@ -1764,6 +1784,81 @@
         function forceRefreshData() {
             showToast("Đang làm mới dữ liệu từ máy chủ...", "success");
             loadDataFromGAS();
+        }
+
+        // --- CÁC HÀM XỬ LÝ ĐỒNG BỘ NGẦM ---
+        function startAutoSync() {
+            if (autoSyncInterval) clearInterval(autoSyncInterval);
+            autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
+        }
+
+        function stopAutoSync() {
+            if (autoSyncInterval) clearInterval(autoSyncInterval);
+        }
+
+        async function silentBackgroundSync() {
+            if (!GAS_URL || !currentUser) return;
+            try {
+                // Tải dữ liệu âm thầm không hiện UI loading
+                const endpoints = ["KhoaPhong", "NhanVien", "LoaiCaTruc", "PhieuLichTruc", "ChiTietLichTruc", "ThongBao", "LichSuThaoTac", "CauHinhKySo"];
+                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
+                const results = await Promise.all(promises);
+
+                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
+                if (results[1] && results[1].status === "success") {
+                    MOCK_DB.users = (results[1].data || []).map(u => ({ ...u, MaNV: String(u.MaNV), ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE', CoTruc: u.CoTruc === undefined || String(u.CoTruc).toUpperCase() !== 'FALSE', NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "" }));
+                }
+                if (results[2] && results[2].status === "success") MOCK_DB.loaiCa = results[2].data || [];
+                if (results[3] && results[3].status === "success") MOCK_DB.phieu = (results[3].data || []).map(p => ({ ...p, TuanTruc: normalizeDateStr(p.TuanTruc) }));
+                if (results[4] && results[4].status === "success") MOCK_DB.shifts = (results[4].data || []).map(s => ({ ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc) }));
+                if (results[5] && results[5].status === "success") MOCK_DB.thongBao = (results[5].data || []).map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
+                if (results[6] && results[6].status === "success") MOCK_DB.auditLogs = results[6].data || [];
+                if (results[7] && results[7].status === "success") MOCK_DB.cauHinhKySo = results[7].data || [];
+
+                refreshCurrentView(); // Cập nhật lại UI nếu có dữ liệu mới
+            } catch (e) {
+                // Lỗi mạng thì bỏ qua, chờ chu kỳ tiếp theo
+            }
+        }
+
+        function refreshCurrentView() {
+            if (!currentUser) return;
+            
+            checkAndRenderNotifications(); // Luôn kiểm tra thông báo mới
+
+            if (!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardStats();
+            
+            if (!document.getElementById('view-admin-review').classList.contains('hidden')) renderAdminApprovalTable();
+            
+            if (!document.getElementById('view-admin-users').classList.contains('hidden')) renderAdminUsersTable();
+            
+            if (!document.getElementById('view-admin-departments').classList.contains('hidden')) renderAdminDepartmentsTable();
+            
+            if (!document.getElementById('view-admin-audit').classList.contains('hidden')) renderAuditLog();
+            
+            if (!document.getElementById('view-admin-thongbao').classList.contains('hidden')) renderAdminThongBaoTable();
+            
+            if (!document.getElementById('view-user-master-schedule').classList.contains('hidden')) renderUserMasterTable();
+            
+            if (!document.getElementById('view-contacts').classList.contains('hidden')) renderContactsTable();
+
+            if (!document.getElementById('view-xem-lich-khoa').classList.contains('hidden')) renderXemLichKhoaTable();
+
+            if (!document.getElementById('view-khoa-schedule').classList.contains('hidden')) {
+                // ĐẶC BIỆT: Màn hình xếp lịch Khoa
+                const tuan = forceMonday('tuan-bat-dau');
+                const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
+                
+                // Chỉ refresh lại lưới lịch nếu trạng thái lịch đã bị khóa (KHTH duyệt/chốt) 
+                // hoặc KHTH Trả lại. Còn nếu đang là "Nháp", ta KHÔNG refresh lưới để 
+                // tránh ghi đè làm mất dữ liệu user đang xếp dở tay chưa kịp Lưu.
+                if (phieu && (phieu.TrangThai === 'Chờ duyệt' || phieu.TrangThai === 'Đã duyệt' || phieu.TrangThai === 'Trả lại')) {
+                    checkWeeklyStatus();
+                } else {
+                    // Update nhân viên lỡ có KHTH vừa thêm mới
+                    renderNhanVienList();
+                }
+            }
         }
 
         async function syncWithGAS(actionName, payloadData) {
@@ -1857,12 +1952,16 @@
                     if (xemSel) xemSel.innerHTML = options;
                     switchView('view-khoa-schedule');
                 }
+                
+                // Bắt đầu tiến trình đồng bộ ngầm khi đăng nhập thành công
+                startAutoSync();
             } else {
                 showToast("Sai tài khoản hoặc máy chủ chưa kịp tải!", "error");
             }
         }
 
         function logout() {
+            stopAutoSync();
             logActivity("Đăng xuất hệ thống");
             localStorage.removeItem('currentUser');
             setTimeout(() => { location.reload(); }, 500);
@@ -1964,7 +2063,7 @@
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
                 if (currentUser.Role === 'Admin_KHTH') {
                     let opts = `<option value="ALL">Tất cả khoa/phòng</option>`;
-                    MOCK_DB.khoa.forEach(k => { opts += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`; });
+                    MOCK_DB.khoa.forEach(k => { opts += `<option value="${k}">${k.TenKhoa}</option>`; });
                     filterSelect.innerHTML = opts;
                     document.getElementById('users-module-title').textContent = `Danh sách Nhân viên`;
                 } else if (currentUser.Role === 'Admin_Khoa') {
@@ -2484,10 +2583,24 @@
             lucide.createIcons();
         }
 
+        // --- Cập nhật logic: Tính toán thông báo hết hạn vào Chủ Nhật của cùng tuần ---
+        function updateEndDateBasedOnStartDate() {
+            const startDate = document.getElementById('tb-ngaybd').value;
+            if (startDate) {
+                document.getElementById('tb-ngaykt').value = getSundayOfWeek(startDate);
+            }
+        }
+
         function openThongBaoModal() {
-            document.getElementById('tb-tieude').value = ''; document.getElementById('tb-noidung').value = ''; document.getElementById('tb-nguoinhan').value = 'ALL';
-            const today = new Date().toISOString().split('T')[0]; let nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
-            document.getElementById('tb-ngaybd').value = today; document.getElementById('tb-ngaykt').value = nextWeek.toISOString().split('T')[0];
+            document.getElementById('tb-tieude').value = ''; 
+            document.getElementById('tb-noidung').value = ''; 
+            document.getElementById('tb-nguoinhan').value = 'ALL';
+            
+            const today = new Date().toISOString().split('T')[0]; 
+            const sunday = getSundayOfWeek(today); // Tính luôn Chủ Nhật của tuần hiện tại
+            
+            document.getElementById('tb-ngaybd').value = today; 
+            document.getElementById('tb-ngaykt').value = sunday; 
             document.getElementById('thongbao-modal').classList.remove('hidden');
         }
 
@@ -3030,8 +3143,10 @@
             const deptName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
 
             if (isApproved) {
-                const today = new Date().toISOString().split('T')[0]; let nextWeek = new Date(); nextWeek.setDate(nextWeek.getDate() + 7);
-                const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - ${deptName}`, NoiDung: `${deptName} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: nextWeek.toISOString().split('T')[0] };
+                const today = new Date().toISOString().split('T')[0]; 
+                const sunday = getSundayOfWeek(today); // <-- Sử dụng logic chủ nhật
+
+                const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - ${deptName}`, NoiDung: `${deptName} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: sunday };
                 MOCK_DB.thongBao.push(newTB); syncWithGAS('sync_ThongBao', MOCK_DB.thongBao); logActivity("Xin trực thế", `Ngày ${sDate}: ${sNV} -> ${tNV}`);
 
                 document.getElementById('swap-modal').classList.add('hidden');
