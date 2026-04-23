@@ -447,7 +447,12 @@
         </div>
     </div>
 
-    <!-- MÃ JAVASCRIPT -->
+    <!-- MÀN HÌNH CHỜ REFRESH NGẦM -->
+    <div id="silent-refreshing-indicator" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium flex items-center transition-opacity duration-300 opacity-0 pointer-events-none z-[110] no-print">
+        <i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang làm mới dữ liệu...
+    </div>
+
+    <!-- MÀN HÌNH JAVASCRIPT -->
     <script>
         lucide.createIcons();
 
@@ -1435,6 +1440,38 @@
                 document.getElementById('lbl-money-text').textContent = (canViewMoney && grandTotalMoney > 0) ? docTienTienViet(grandTotalMoney) : '............................................................................................................................................................';
             }
         }
+
+        // --- AUTO REFRESH LOGIC (SILENT POLLING) ---
+        async function silentRefreshData() {
+            // Không quét khi đang ẩn tab hoặc khi người dùng đang click vào thẻ input (chống ghi đè)
+            const isEditing = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+            if (document.hidden || isEditing) return;
+
+            try {
+                // Chỉ fetch dữ liệu phiếu (không cần lấy danh sách khoa/nhân viên để tránh nặng máy)
+                const res = await fetch(GAS_URL + "?action=PhieuBoiDuong").then(r => r.json());
+                if (res && res.status === "success") {
+                    const newData = res.data || [];
+                    
+                    // So sánh sự thay đổi của dữ liệu
+                    if (JSON.stringify(newData) !== JSON.stringify(MOCK_DB.phieuBoiDuong)) {
+                        MOCK_DB.phieuBoiDuong = newData;
+                        
+                        // Kiểm tra an toàn lần 2 trước khi vẽ lại bảng
+                        const stillEditing = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+                        if (!stillEditing) {
+                            generateReport();
+                            showToast("Dữ liệu vừa được cập nhật từ máy chủ.", "info");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Auto refresh failed", e);
+            }
+        }
+
+        // Tự động quét lại máy chủ mỗi 60 giây
+        setInterval(silentRefreshData, 15000);
 
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
