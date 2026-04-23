@@ -2063,7 +2063,7 @@
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
                 if (currentUser.Role === 'Admin_KHTH') {
                     let opts = `<option value="ALL">Tất cả khoa/phòng</option>`;
-                    MOCK_DB.khoa.forEach(k => { opts += `<option value="${k}">${k.TenKhoa}</option>`; });
+                    MOCK_DB.khoa.forEach(k => { opts += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`; }); // ĐÃ FIX BUG [object Object] TẠI ĐÂY
                     filterSelect.innerHTML = opts;
                     document.getElementById('users-module-title').textContent = `Danh sách Nhân viên`;
                 } else if (currentUser.Role === 'Admin_Khoa') {
