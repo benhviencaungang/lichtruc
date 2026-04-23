@@ -1937,6 +1937,36 @@
             document.getElementById('leave-stats-modal').classList.add('hidden');
         }
 
+        // --- AUTO REFRESH LOGIC (SILENT POLLING) ---
+        async function silentRefreshData() {
+            // Không quét khi ẩn tab hoặc người dùng đang nhập liệu nháp (tránh mất dữ liệu)
+            if (document.hidden || hasUnsavedChanges) return;
+
+            try {
+                // Fetch ngầm bảng chấm công mới nhất
+                const res = await fetch(GAS_URL + "?action=BangChamCong").then(r => r.json());
+                if (res && res.status === "success") {
+                    const newData = res.data || [];
+                    
+                    // Chỉ vẽ lại (render) khi phát hiện sự thay đổi so với dữ liệu hiện tại
+                    if (JSON.stringify(newData) !== JSON.stringify(MOCK_DB.bangChamCong)) {
+                        MOCK_DB.bangChamCong = newData;
+                        
+                        // Check an toàn 1 lần nữa trước khi render (lỡ tay người dùng vừa gõ chữ ngay lúc đó)
+                        if (!hasUnsavedChanges) {
+                            generateReport();
+                            showToast("Dữ liệu vừa được cập nhật từ máy chủ.", "info");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Auto refresh failed", e);
+            }
+        }
+
+        // Kích hoạt quét tự động mỗi 60 giây (1 phút/lần) để vừa giảm tải cho Google Sheet, vừa giữ realtime
+        setInterval(silentRefreshData, 15000);
+
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
             if (checkAuth()) {
