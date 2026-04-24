@@ -554,31 +554,44 @@
             
             let str = String(dateStr).trim();
             
-            // Xử lý chuỗi ISO từ Google Sheets
+            // Xử lý chuỗi ISO từ Google Sheets (Sửa triệt để lỗi múi giờ UTC+7)
             if (str.includes('T')) {
-                str = str.split('T')[0];
+                let utcMs = new Date(str).getTime();
+                if (!isNaN(utcMs)) {
+                    // Google Sheets trả về giờ UTC (tận cùng bằng Z), cần cộng thêm 7 tiếng (25200000ms) để về giờ Việt Nam
+                    let offset = str.endsWith('Z') ? (7 * 3600 * 1000) : 0;
+                    let vnDate = new Date(utcMs + offset);
+                    let y = vnDate.getUTCFullYear();
+                    let m = vnDate.getUTCMonth();
+                    let d = vnDate.getUTCDate();
+                    // Đổi mốc giờ nghỉ việc về 00:00:00 để đúng bản chất "Nghỉ BẮT ĐẦU TỪ ngày này"
+                    return new Date(y, m, d, 0, 0, 0);
+                } else {
+                    str = str.split('T')[0];
+                }
             }
 
-            // Xử lý định dạng YYYY-MM-DD
+            // Đồng nhất dấu phân cách (thay / bằng -)
+            str = str.replace(/\//g, '-');
+
+            // Xử lý định dạng có dấu gạch ngang (DD-MM-YYYY hoặc YYYY-MM-DD)
             if (str.includes('-')) {
                 let parts = str.split('-');
                 if (parts.length === 3) {
-                    let y = parseInt(parts[0]);
-                    let m = parseInt(parts[1]) - 1;
-                    let d = parseInt(parts[2]);
-                    return isEndDate ? new Date(y, m, d, 23, 59, 59) : new Date(y, m, d, 0, 0, 0);
-                }
-            }
-            
-            // Xử lý định dạng chuẩn Việt Nam DD/MM/YYYY
-            if (str.includes('/')) {
-                let parts = str.split('/');
-                if (parts.length === 3) {
-                    let d = parseInt(parts[0]);
-                    let m = parseInt(parts[1]) - 1;
-                    let y = parseInt(parts[2]);
-                    if (y < 100) y += 2000; // Hỗ trợ gõ tắt năm (VD: 26 -> 2026)
-                    return isEndDate ? new Date(y, m, d, 23, 59, 59) : new Date(y, m, d, 0, 0, 0);
+                    if (parts[0].length === 4) { 
+                        // Format: YYYY-MM-DD
+                        let y = parseInt(parts[0]);
+                        let m = parseInt(parts[1]) - 1;
+                        let d = parseInt(parts[2]);
+                        return new Date(y, m, d, 0, 0, 0);
+                    } else {
+                        // Format: DD-MM-YYYY
+                        let d = parseInt(parts[0]);
+                        let m = parseInt(parts[1]) - 1;
+                        let y = parseInt(parts[2]);
+                        if (y < 100) y += 2000; // Hỗ trợ gõ tắt năm (VD: 26 -> 2026)
+                        return new Date(y, m, d, 0, 0, 0);
+                    }
                 }
             }
             
@@ -1486,8 +1499,8 @@
                 let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
                 let leaveDate = parseEmployeeDate(u.NgayNghi, true);
 
-                // LỌC THÔNG MINH: Nếu đã nghỉ TRƯỚC đầu tháng, hoặc vào làm SAU cuối tháng -> KHÔNG HIỂN THỊ TÊN VÀO BẢNG
-                if (leaveDate < firstDayOfViewedMonth || joinDate > lastDayOfViewedMonth) return;
+                // LỌC THÔNG MINH: Nếu đã nghỉ TỪ NGÀY ĐẦU THÁNG trở về trước, hoặc vào làm SAU cuối tháng -> KHÔNG HIỂN THỊ TÊN VÀO BẢNG
+                if (leaveDate <= firstDayOfViewedMonth || joinDate > lastDayOfViewedMonth) return;
 
                 let maNVStr = String(u.MaNV);
                 let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
@@ -1631,7 +1644,8 @@
                             let cellClass = 'cell-day transition';
                             
                             // 1. KIỂM TRA XEM NGÀY NÀY CÓ NẰM TRONG THỜI GIAN LÀM VIỆC KHÔNG
-                            if (dateObj >= joinDate && dateObj <= leaveDate) {
+                            // Dùng toán tử < leaveDate vì leaveDate đã được đặt ở mốc 00:00 của ngày nghỉ
+                            if (dateObj >= joinDate && dateObj < leaveDate) {
                                 
                                 // Cố gắng lấy dữ liệu đã chấm bằng tay (nếu có)
                                 if (nvSavedData && nvSavedData.days[day]) {
@@ -1800,7 +1814,8 @@
                 let leaveDate = parseEmployeeDate(u.NgayNghi, true);
 
                 // CHỈ XUẤT NHỮNG NGƯỜI ĐÃ VÀO LÀM VÀ CHƯA NGHỈ TÍNH TRONG KHOẢNG THỜI GIAN XUẤT
-                if (leaveDate < dStart || joinDate > dEnd) return;
+                // Đổi thành <= dStart vì người đó đã nghỉ kể từ đầu khoảng thời gian xuất
+                if (leaveDate <= dStart || joinDate > dEnd) return;
 
                 let maNVStr = String(u.MaNV);
                 let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
@@ -1884,7 +1899,8 @@
                     let leaveDate = parseEmployeeDate(u.NgayNghi, true);
 
                     // CHỈ THAO TÁC NẾU NGÀY NÀY LÀ NGÀY CÒN LÀM VIỆC CỦA HỌ
-                    if (currDate >= joinDate && currDate <= leaveDate) {
+                    // Dùng < leaveDate thay vì <=
+                    if (currDate >= joinDate && currDate < leaveDate) {
                         
                         // 1. Thử lấy dữ liệu đã lưu
                         if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days[d]) {
