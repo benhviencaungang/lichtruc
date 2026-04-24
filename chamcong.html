@@ -482,7 +482,7 @@
         }
         // ------------------------------------------------
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwrMT_HDbxEDytLNteIZW0qPrvM3mG1qfKdzl8Fw45eHqkV1R-AsaHHg_gq66yrR2op/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyAavB0oEd8Wiel25NEz_vJZmvSwWaJ99JlXDYJyutyTZArYV7VotaDInC1Ro5QQoND/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
         let currentUser = null;
         let activeInputCell = null; 
@@ -545,6 +545,49 @@
                 }
                 return parsed;
             }
+        }
+
+        // BỘ LỌC NGÀY VÀO LÀM & NGÀY NGHỈ THÔNG MINH
+        // Chuyển đổi định dạng ngày từ CSDL sang kiểu Date chuẩn xác
+        function parseEmployeeDate(dateStr, isEndDate = false) {
+            if (!dateStr) return isEndDate ? new Date(2100, 0, 1) : new Date(1900, 0, 1);
+            
+            let str = String(dateStr).trim();
+            
+            // Xử lý chuỗi ISO từ Google Sheets
+            if (str.includes('T')) {
+                str = str.split('T')[0];
+            }
+
+            // Xử lý định dạng YYYY-MM-DD
+            if (str.includes('-')) {
+                let parts = str.split('-');
+                if (parts.length === 3) {
+                    let y = parseInt(parts[0]);
+                    let m = parseInt(parts[1]) - 1;
+                    let d = parseInt(parts[2]);
+                    return isEndDate ? new Date(y, m, d, 23, 59, 59) : new Date(y, m, d, 0, 0, 0);
+                }
+            }
+            
+            // Xử lý định dạng chuẩn Việt Nam DD/MM/YYYY
+            if (str.includes('/')) {
+                let parts = str.split('/');
+                if (parts.length === 3) {
+                    let d = parseInt(parts[0]);
+                    let m = parseInt(parts[1]) - 1;
+                    let y = parseInt(parts[2]);
+                    if (y < 100) y += 2000; // Hỗ trợ gõ tắt năm (VD: 26 -> 2026)
+                    return isEndDate ? new Date(y, m, d, 23, 59, 59) : new Date(y, m, d, 0, 0, 0);
+                }
+            }
+            
+            // Xử lý nếu chỉ nhập năm
+            if (!isNaN(parseInt(str)) && str.length === 4) {
+                return isEndDate ? new Date(parseInt(str), 11, 31, 23, 59, 59) : new Date(parseInt(str), 0, 1, 0, 0, 0);
+            }
+            
+            return isEndDate ? new Date(2100, 0, 1) : new Date(1900, 0, 1);
         }
 
         // --- THUẬT TOÁN XÁC ĐỊNH KHOA GỐC (BỎ QUA BGD NẾU CÓ KHOA KÉP) ---
@@ -1366,6 +1409,8 @@
             const year = parseInt(document.getElementById('sel-year').value);
             document.getElementById('lbl-month-year').textContent = `${String(month).padStart(2, '0')}/${year}`;
             const daysInMonth = new Date(year, month, 0).getDate();
+            const firstDayOfViewedMonth = new Date(year, month - 1, 1);
+            const lastDayOfViewedMonth = new Date(year, month, 0, 23, 59, 59); // Ngày cuối cùng của tháng đang xem
 
             const viewModeEle = document.getElementById('view-mode');
             const viewMode = viewModeEle ? viewModeEle.value : 'chitiet';
@@ -1434,12 +1479,17 @@
                 }
             });
 
-            // --- BƯỚC 3: PHÂN BỔ NHÂN VIÊN VÀO KHOA (ĐỘT PHÁ) ---
+            // --- BƯỚC 3: PHÂN BỔ NHÂN VIÊN VÀO KHOA ---
             MOCK_DB.users.forEach(u => {
                 if (u.ChucDanh === 'Quản lý') return;
 
+                let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
+                let leaveDate = parseEmployeeDate(u.NgayNghi, true);
+
+                // LỌC THÔNG MINH: Nếu đã nghỉ TRƯỚC đầu tháng, hoặc vào làm SAU cuối tháng -> KHÔNG HIỂN THỊ TÊN VÀO BẢNG
+                if (leaveDate < firstDayOfViewedMonth || joinDate > lastDayOfViewedMonth) return;
+
                 let maNVStr = String(u.MaNV);
-                // Áp dụng hàm mới để bỏ qua BGD nếu cần
                 let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
                 let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
 
@@ -1460,29 +1510,6 @@
                     if (!processedGroups[displayGroupName].users.find(item => String(item.user.MaNV) === maNVStr)) {
                         processedGroups[displayGroupName].users.push({ user: u, parentMaKhoa: targetParentMk });
                         totalRenderedUsers++;
-                    }
-                }
-            });
-
-            // --- BƯỚC 4: PHỤC HỒI NHỮNG NGƯỜI ĐÃ NGHỈ VIỆC / XÓA KHỎI CSDL ---
-            MOCK_DB.bangChamCong.forEach(b => {
-                if (b.Thang == month && b.Nam == year && b.DuLieu) {
-                    let savedParentMk = getParentKhoaInfo(b.MaKhoa).ma;
-                    if (allowedParentKhoas.includes(savedParentMk)) {
-                        let parentKhoaName = MOCK_DB.khoa.find(k => k.MaKhoa === savedParentMk)?.TenKhoa || savedParentMk;
-                        try {
-                            let parsed = JSON.parse(b.DuLieu);
-                            Object.keys(parsed).forEach(maNV => {
-                                let existsInDB = MOCK_DB.users.some(x => String(x.MaNV) === String(maNV));
-                                if (!existsInDB) { // Chỉ phục hồi người đã biến mất khỏi hệ thống
-                                    if (!processedGroups[parentKhoaName].users.find(item => String(item.user.MaNV) === String(maNV))) {
-                                        let uDeleted = { MaNV: maNV, HoTen: `[Đã xóa] NV_${maNV}`, MaKhoa: savedParentMk, CCHN: '' };
-                                        processedGroups[parentKhoaName].users.push({ user: uDeleted, parentMaKhoa: savedParentMk });
-                                        totalRenderedUsers++;
-                                    }
-                                }
-                            });
-                        } catch(e) {}
                     }
                 }
             });
@@ -1508,7 +1535,6 @@
                     try {
                         let savedObj = JSON.parse(b.DuLieu);
                         // Gom toàn bộ dữ liệu lưu của nhân viên từ TẤT CẢ các bảng chấm công trong tháng
-                        // Điều này giúp Khoa Ngoại tự động hút được công sức 1-10 ngày đầu mà Khoa Nội chấm
                         for (let nv in savedObj) {
                             if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
                             for (let d in savedObj[nv].days) {
@@ -1569,6 +1595,10 @@
                     const u = item.user;
                     const maKhoa = item.parentMaKhoa; 
 
+                    // Lấy mốc thời gian làm việc để chặn việc rải ngày (+) nếu nghỉ giữa chừng
+                    let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
+                    let leaveDate = parseEmployeeDate(u.NgayNghi, true);
+
                     const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
                     const shiftMap = {};
                     
@@ -1579,16 +1609,6 @@
                             shiftMap[d] = s.ChucDanh; 
                         }
                     });
-
-                    // Hiển thị thêm tên phòng con (Tài xế, Bảo vệ...) bên dưới tên để dễ phân biệt trong danh sách gộp
-                    let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
-                    let tenKhoaGoc = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
-                    let parentInfo = getParentKhoaInfo(uKhoaGoc);
-                    let subDeptHtml = '';
-                    
-                    if (uKhoaGoc !== parentInfo.ma) {
-                        subDeptHtml = `<br><span class="text-[9px] text-gray-500 font-normal italic">(${tenKhoaGoc})</span>`;
-                    }
 
                     let rowHtml = `<tr class="data-row" data-id="${u.MaNV}" data-khoa="${maKhoa}">
                         <td>${globalStt++}</td>
@@ -1601,47 +1621,54 @@
                     // Sử dụng dữ liệu đã hợp nhất toàn cục để hiển thị xuyên suốt
                     const nvSavedData = globalSavedData[u.MaNV];
                     
-                    let hasValidSavedData = false;
-                    if (nvSavedData) {
-                        const daysValues = Object.values(nvSavedData.days);
-                        const hasAnySymbol = daysValues.some(val => val && val.trim() !== '');
-                        const hasNote = nvSavedData.note && nvSavedData.note.trim() !== '';
-                        if (hasAnySymbol || hasNote) {
-                            hasValidSavedData = true;
-                        }
-                    }
-
                     for(let day = 1; day <= 31; day++) {
                         if (day > daysInMonth) {
                             rowHtml += `<td class="bg-gray-300"></td>`;
                         } else {
-                            let dateObj = new Date(year, month - 1, day);
+                            let dateObj = new Date(year, month - 1, day, 12, 0, 0); // set 12h trưa để so sánh an toàn
                             let dw = dateObj.getDay(); 
                             let val = '';
                             let cellClass = 'cell-day transition';
                             
-                            if (hasValidSavedData) {
-                                val = nvSavedData.days[day] || '';
+                            // 1. KIỂM TRA XEM NGÀY NÀY CÓ NẰM TRONG THỜI GIAN LÀM VIỆC KHÔNG
+                            if (dateObj >= joinDate && dateObj <= leaveDate) {
+                                
+                                // Cố gắng lấy dữ liệu đã chấm bằng tay (nếu có)
+                                if (nvSavedData && nvSavedData.days[day]) {
+                                    val = nvSavedData.days[day];
+                                }
+
+                                // 2. NẾU Ô BỊ BỎ TRỐNG (Chưa chấm hoặc lỡ tay xóa) -> TỰ ĐỘNG ĐIỀN KHUYẾT
+                                if (!val || val.trim() === '') {
+                                    if (shiftMap[day]) {
+                                        val = 'T24';
+                                    } else if (shiftMap[day - 1]) {
+                                        val = 'Rt';
+                                    } else if (dw === 0 || dw === 6) {
+                                        val = dw === 0 ? 'CN' : 'T7'; 
+                                    } else {
+                                        val = '+';
+                                    }
+                                }
+
+                                // Áp dụng màu nền dựa trên ký hiệu cuối cùng
                                 if (val) {
                                     let primarySymbol = parseShifts(val)[0];
-                                    let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
-                                    if(symObj && symObj.bg) cellClass += ` ${symObj.bg}`;
+                                    let symObj = SYMBOLS_DICT.find(s => s.id.toUpperCase() === (primarySymbol || '').toUpperCase());
+                                    if (symObj && symObj.bg) {
+                                        cellClass += ` ${symObj.bg}`;
+                                    } else if (val === 'T7' || val === 'CN') {
+                                        // Gắn màu mặc định cho T7, CN nếu không có trong Dictionary
+                                        cellClass += ' bg-red-50 text-red-600 font-medium';
+                                    }
                                 }
+
                             } else {
-                                if (shiftMap[day]) {
-                                    val = 'T24';
-                                    cellClass += ' bg-blue-100 text-blue-700 font-bold';
-                                } else if (shiftMap[day - 1]) {
-                                    val = 'Rt';
-                                    cellClass += ' bg-green-100 text-green-700';
-                                } else if (dw === 0 || dw === 6) {
-                                    val = dw === 0 ? 'CN' : 'T7'; 
-                                    cellClass += ' bg-red-50 text-red-600 font-medium';
-                                } else {
-                                    val = '+';
-                                }
+                                // Ngoài thời gian làm việc (Chưa vào làm hoặc Đã nghỉ) -> Khóa ô, tô màu xám
+                                cellClass += ' bg-slate-100';
                             }
 
+                            // Đếm công
                             if (val) {
                                 let parts = parseShifts(val);
                                 parts.forEach(v => {
@@ -1671,7 +1698,8 @@
                         }
                     }
 
-                    let ghiChuVal = hasValidSavedData ? (nvSavedData.note || '') : '';
+                    // Ghi chú
+                    let ghiChuVal = nvSavedData ? (nvSavedData.note || '') : '';
 
                     rowHtml += `
                         <td class="font-bold sum-ngayviec text-blue-800 bg-blue-50/30">${ngayViec > 0 ? ngayViec : ''}</td>
@@ -1728,7 +1756,9 @@
             }
 
             const dStart = new Date(fromDateStr);
+            dStart.setHours(0, 0, 0, 0);
             const dEnd = new Date(toDateStr);
+            dEnd.setHours(23, 59, 59, 999);
 
             if (dStart > dEnd) {
                 showToast("Từ ngày phải nhỏ hơn hoặc bằng Đến ngày", "error");
@@ -1748,7 +1778,7 @@
 
             let allowedParentKhoas = [...new Set(allowedKhoas.map(mk => getParentKhoaInfo(mk).ma))];
             
-            // XÁC ĐỊNH QUYỀN SỞ HỮU (GIỐNG THUẬT TOÁN GENERATE REPORT)
+            // XÁC ĐỊNH QUYỀN SỞ HỮU
             let approvedOwnership = {};
             MOCK_DB.bangChamCong.forEach(b => {
                 if (b.TrangThai === 'Đã duyệt' && b.DuLieu) {
@@ -1765,24 +1795,19 @@
             
             MOCK_DB.users.forEach(u => {
                 if (u.ChucDanh === 'Quản lý') return;
+
+                let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
+                let leaveDate = parseEmployeeDate(u.NgayNghi, true);
+
+                // CHỈ XUẤT NHỮNG NGƯỜI ĐÃ VÀO LÀM VÀ CHƯA NGHỈ TÍNH TRONG KHOẢNG THỜI GIAN XUẤT
+                if (leaveDate < dStart || joinDate > dEnd) return;
+
                 let maNVStr = String(u.MaNV);
-                // Áp dụng hàm mới
                 let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
                 let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
 
-                // Để xuất Excel rộng nhiều tháng, ta cho phép tất cả ai có Khoa hiện tại hoặc từng có Khoa Lịch sử lọt vào danh sách
                 if (allowedParentKhoas.includes(currentParentMk)) {
                     targetUserIds.add(maNVStr);
-                }
-            });
-
-            MOCK_DB.bangChamCong.forEach(b => {
-                let savedMk = getParentKhoaInfo(b.MaKhoa).ma;
-                if (allowedParentKhoas.includes(savedMk) && b.DuLieu) {
-                    try {
-                        let parsed = JSON.parse(b.DuLieu);
-                        Object.keys(parsed).forEach(nv => targetUserIds.add(String(nv)));
-                    } catch(e) {}
                 }
             });
 
@@ -1793,8 +1818,8 @@
 
             let targetUsers = Array.from(targetUserIds).map(maNV => {
                 let u = MOCK_DB.users.find(x => String(x.MaNV) === maNV);
-                return u || { MaNV: maNV, HoTen: `[Đã xóa] NV_${maNV}`, CCHN: '' };
-            });
+                return u;
+            }).filter(u => u !== undefined);
 
             function getReasonName(symbolStr) {
                 if (!symbolStr) return "";
@@ -1830,7 +1855,6 @@
                 let dw = currDate.getDay(); 
                 let monthKey = `${y}-${m}`;
 
-                // Hợp nhất dữ liệu toàn cục để xuất Excel (Kéo từ tất cả khoa)
                 if (!cachedSavedMonths[monthKey]) {
                     cachedSavedMonths[monthKey] = {};
                     MOCK_DB.bangChamCong.forEach(b => {
@@ -1851,35 +1875,42 @@
                 targetUsers.forEach(u => {
                     const maNV = String(u.MaNV);
 
-                    // Kiểm tra Quyền sở hữu trong tháng này (Tránh xuất rác nếu người đó không thuộc khoa đang được Admin xem)
                     let currentParentMk = getParentKhoaInfo(getPrimaryKhoa(u.MaKhoa)).ma;
                     let targetMk = approvedOwnership[`${m}_${y}_${maNV}`] || currentParentMk;
-                    if (!allowedParentKhoas.includes(targetMk)) return; // Bỏ qua nếu tháng này họ không thuộc quyền
+                    if (!allowedParentKhoas.includes(targetMk)) return; 
 
                     let val = '';
+                    let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
+                    let leaveDate = parseEmployeeDate(u.NgayNghi, true);
 
-                    // Lấy dữ liệu ĐÃ LƯU
-                    if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV]) {
-                        val = (cachedSavedMonths[monthKey][maNV].days && cachedSavedMonths[monthKey][maNV].days[d]) ? cachedSavedMonths[monthKey][maNV].days[d] : '';
-                    } 
-                    else {
-                        let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
+                    // CHỈ THAO TÁC NẾU NGÀY NÀY LÀ NGÀY CÒN LÀM VIỆC CỦA HỌ
+                    if (currDate >= joinDate && currDate <= leaveDate) {
                         
-                        let prevD = new Date(currDate);
-                        prevD.setDate(prevD.getDate() - 1);
-                        let py = prevD.getFullYear();
-                        let pm = prevD.getMonth() + 1;
-                        let pd = prevD.getDate();
-                        let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
+                        // 1. Thử lấy dữ liệu đã lưu
+                        if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days[d]) {
+                            val = cachedSavedMonths[monthKey][maNV].days[d];
+                        } 
+                        
+                        // 2. NẾU BỊ TRỐNG -> TỰ ĐỘNG ĐIỀN KHUYẾT CHO FILE EXCEL
+                        if (!val || val.trim() === '') {
+                            let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
+                            
+                            let prevD = new Date(currDate);
+                            prevD.setDate(prevD.getDate() - 1);
+                            let py = prevD.getFullYear();
+                            let pm = prevD.getMonth() + 1;
+                            let pd = prevD.getDate();
+                            let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
 
-                        if (shiftToday) {
-                            val = 'T24';
-                        } else if (shiftYesterday) {
-                            val = 'Rt';
-                        } else if (dw === 0 || dw === 6) {
-                            val = dw === 0 ? 'CN' : 'T7';
-                        } else {
-                            val = '+';
+                            if (shiftToday) {
+                                val = 'T24';
+                            } else if (shiftYesterday) {
+                                val = 'Rt';
+                            } else if (dw === 0 || dw === 6) {
+                                val = dw === 0 ? 'CN' : 'T7';
+                            } else {
+                                val = '+';
+                            }
                         }
                     }
 
@@ -1901,17 +1932,16 @@
                 return;
             }
 
-            // 3. Kết xuất ra Excel
             try {
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "ChamCong");
                 
                 const wscols = [
-                    {wch: 25}, // Tên nhân viên
-                    {wch: 15}, // CCHN
-                    {wch: 18}, // Ngày chấm công
-                    {wch: 35}  // Lý do
+                    {wch: 25}, 
+                    {wch: 15}, 
+                    {wch: 18}, 
+                    {wch: 35}  
                 ];
                 worksheet['!cols'] = wscols;
 
@@ -1958,12 +1988,8 @@
             }
 
             if (user.NgayVaoLam) {
-                let startYear = 0;
-                if (String(user.NgayVaoLam).includes('-')) {
-                    startYear = new Date(user.NgayVaoLam).getFullYear();
-                } else {
-                    startYear = parseInt(user.NgayVaoLam);
-                }
+                let joinDateObj = parseEmployeeDate(user.NgayVaoLam, false);
+                let startYear = joinDateObj.getFullYear();
                 
                 if (startYear > 1900 && startYear <= currentYear) {
                     let yearsWorked = currentYear - startYear;
