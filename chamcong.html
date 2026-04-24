@@ -526,6 +526,27 @@
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
 
+        // Hàm hỗ trợ tách ký hiệu ca sáng/chiều một cách an toàn
+        // Hỗ trợ chuẩn mới (dùng ;) và tương thích ngược với chuẩn cũ (dùng /)
+        function parseShifts(rawVal) {
+            if (!rawVal) return [];
+            if (rawVal.includes(';')) {
+                return rawVal.split(';').map(s => s.trim()).filter(s => s !== '');
+            } else {
+                let parts = rawVal.split('/');
+                let parsed = [];
+                for (let i = 0; i < parts.length; i++) {
+                    let p = parts[i].trim();
+                    if (p === '2' && parsed.length > 0) {
+                        parsed[parsed.length - 1] += '/2';
+                    } else if (p !== '') {
+                        parsed.push(p);
+                    }
+                }
+                return parsed;
+            }
+        }
+
         // --- THUẬT TOÁN NHẬN DIỆN KHOA CHA (CHUẨN HÓA MẠNH MẼ) ---
         function getParentKhoaInfo(maKhoaGoc) {
             if (!maKhoaGoc) return { ma: '', ten: '' };
@@ -620,9 +641,9 @@
             popover.classList.remove('hidden');
 
             const currentVal = tdElement.innerText.trim();
-            const parts = currentVal.split('/');
-            const sangVal = parts[0] ? parts[0].trim() : '';
-            const chieuVal = parts[1] ? parts[1].trim() : '';
+            const parts = parseShifts(currentVal);
+            const sangVal = parts[0] ? parts[0] : '';
+            const chieuVal = parts[1] ? parts[1] : '';
 
             const spSang = document.getElementById('sp-sang');
             const spChieu = document.getElementById('sp-chieu');
@@ -669,7 +690,7 @@
 
             let finalVal = sangVal;
             if (chieuVal && sangVal) {
-                finalVal = `${sangVal}/${chieuVal}`;
+                finalVal = `${sangVal}; ${chieuVal}`; // Sử dụng dấu chấm phẩy
             } else if (chieuVal && !sangVal) {
                 finalVal = chieuVal;
             }
@@ -866,8 +887,8 @@
                                         
                                         let isManual = false;
                                         if (draftVal) {
-                                            let parts = draftVal.split('/');
-                                            isManual = parts.some(p => !autoSymbols.includes(p.trim()));
+                                            let parts = parseShifts(draftVal);
+                                            isManual = parts.some(p => !autoSymbols.includes(p.toUpperCase()));
                                         }
 
                                         if (!isManual) {
@@ -1125,10 +1146,10 @@
                 let rawVal = cell.innerText.trim().toUpperCase();
                 if (!rawVal) return;
 
-                let parts = rawVal.split('/');
+                let parts = parseShifts(rawVal);
 
                 parts.forEach(val => {
-                    val = val.trim();
+                    val = val.toUpperCase();
                     if (!val) return;
 
                     if (val === '+' || val === 'LT') ngayViec += 1;
@@ -1578,7 +1599,7 @@
                             if (hasValidSavedData) {
                                 val = nvSavedData.days[day] || '';
                                 if (val) {
-                                    let primarySymbol = val.split('/')[0].trim();
+                                    let primarySymbol = parseShifts(val)[0];
                                     let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
                                     if(symObj && symObj.bg) cellClass += ` ${symObj.bg}`;
                                 }
@@ -1598,9 +1619,9 @@
                             }
 
                             if (val) {
-                                let parts = val.split('/');
+                                let parts = parseShifts(val);
                                 parts.forEach(v => {
-                                    v = v.trim().toUpperCase();
+                                    v = v.toUpperCase();
                                     if (v === '+' || v === 'LT') ngayViec += 1;
                                     if (v === '-' || v === 'LT/2') ngayViec += 0.5;
 
@@ -1752,11 +1773,11 @@
 
             function getReasonName(symbolStr) {
                 if (!symbolStr) return "";
-                return symbolStr.split('/').map(s => {
+                return parseShifts(symbolStr).map(s => {
                     let sym = s.trim();
-                    let found = SYMBOLS_DICT.find(x => x.id === sym);
+                    let found = SYMBOLS_DICT.find(x => x.id.toUpperCase() === sym.toUpperCase());
                     return found ? found.name.split(' (')[0].trim() : sym;
-                }).join(' / ');
+                }).join(' ; ');
             }
 
             let shiftsCache = {}; 
@@ -1974,9 +1995,9 @@
                             let valStr = userMonthData.days[day];
                             if (!valStr) continue;
                             
-                            let parts = valStr.split('/');
+                            let parts = parseShifts(valStr);
                             parts.forEach(v => {
-                                v = v.trim().toUpperCase();
+                                v = v.toUpperCase();
                                 
                                 if (v === 'P') dbYearlyStats[nv].usedP += 1;
                                 else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
@@ -2052,9 +2073,9 @@
                         const rawVal = cell.innerText.trim().toUpperCase();
                         if (!rawVal) return;
 
-                        let parts = rawVal.split('/');
+                        let parts = parseShifts(rawVal);
                         parts.forEach(v => {
-                            v = v.trim();
+                            v = v.toUpperCase();
                             if (v === 'LT') currentEarnedNb += 1;
                             else if (v === 'LT/2') currentEarnedNb += 0.5;
 
