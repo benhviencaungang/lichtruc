@@ -488,7 +488,7 @@
         let activeInputCell = null; 
         
         let hasUnsavedChanges = false;
-        let currentOverallStatus = 'Nháp'; // Biến global lưu trạng thái hiện tại để khóa thao tác
+        let currentOverallStatus = 'Nháp';
 
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
@@ -525,6 +525,51 @@
             { id: 'LT', name: 'Làm thêm ngày (+Nghỉ bù) (LT)', bg: 'bg-teal-100 text-teal-800 font-bold' },
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
+
+        // --- THUẬT TOÁN NHẬN DIỆN KHOA CHA (CHUẨN HÓA MẠNH MẼ) ---
+        function getParentKhoaInfo(maKhoaGoc) {
+            if (!maKhoaGoc) return { ma: '', ten: '' };
+            let ma = maKhoaGoc.trim();
+            
+            // Tìm đối tượng khoa ban đầu
+            let kObj = MOCK_DB.khoa.find(k => String(k.MaKhoa).toUpperCase() === ma.toUpperCase());
+            let ten = kObj ? kObj.TenKhoa : ma;
+            let cleanTen = ten.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+            let upperMa = ma.toUpperCase();
+
+            // Mặc định lấy chính nó
+            let parentMa = ma;
+            let parentTen = ten;
+
+            // Hàm hỗ trợ tìm Khoa Cha thực tế trong DB để lấy chính xác MaKhoa
+            const findKhoaInDB = (keywords) => {
+                return MOCK_DB.khoa.find(k => {
+                    let c = k.TenKhoa.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+                    return keywords.some(kw => c.includes(kw) || String(k.MaKhoa).toUpperCase() === kw.toUpperCase());
+                });
+            };
+
+            // NHÓM 1: TÀI CHÍNH KẾ TOÁN (Gồm: Tài Vụ)
+            if (cleanTen.includes('taivu') || cleanTen.includes('taichinhketoan') || cleanTen.includes('tckt') || upperMa === 'TAIVU' || upperMa === 'TCKT') {
+                let pObj = findKhoaInDB(['taichinhketoan', 'tckt']);
+                if (pObj) { parentMa = pObj.MaKhoa; parentTen = pObj.TenKhoa; }
+                else { parentMa = 'TCKT'; parentTen = 'TÀI CHÍNH KẾ TOÁN'; }
+            }
+            // NHÓM 2: KẾ HOẠCH TỔNG HỢP (Gồm: CNTT)
+            else if (cleanTen.includes('congnghethongtin') || cleanTen.includes('cntt') || cleanTen.includes('kehoachtonghop') || cleanTen.includes('khth') || upperMa === 'CNTT') {
+                let pObj = findKhoaInDB(['kehoachtonghop', 'khth']);
+                if (pObj) { parentMa = pObj.MaKhoa; parentTen = pObj.TenKhoa; }
+                else { parentMa = 'KHTH'; parentTen = 'KẾ HOẠCH TỔNG HỢP'; }
+            }
+            // NHÓM 3: TỔ CHỨC HÀNH CHÍNH (Gồm: Tài xế, Bảo vệ, Điện nước)
+            else if (cleanTen.includes('taxe') || cleanTen.includes('baove') || cleanTen.includes('diennuoc') || cleanTen.includes('tochuchanh') || cleanTen.includes('tchc') || ['TAIXE', 'BAOVE', 'DN'].includes(upperMa)) {
+                let pObj = findKhoaInDB(['tochuchanhchinh', 'tochuchanhchanh', 'tchc']);
+                if (pObj) { parentMa = pObj.MaKhoa; parentTen = pObj.TenKhoa; }
+                else { parentMa = 'TCHC'; parentTen = 'TỔ CHỨC HÀNH CHÍNH'; }
+            }
+
+            return { ma: parentMa, ten: parentTen };
+        }
 
         function renderShiftOptions(selectEle, allowedTypes) {
             let html = '<option value="">-- Trống --</option>';
@@ -642,27 +687,6 @@
             markUnsaved(); 
         }
 
-        function isGlobalAdmin() {
-            if (!currentUser) return false;
-            
-            if (currentUser.Role === 'Admin_KHTH') return true;
-            
-            if (currentUser.Role === 'Admin_Khoa') {
-                if (currentUser.KhoaList && currentUser.KhoaList.length > 0) {
-                    return currentUser.KhoaList.some(k => {
-                        if (!k) return false;
-                        const upperK = k.toUpperCase();
-                        if (upperK.includes('TỔ CHỨC') || upperK.includes('HÀNH CHÍNH') || upperK.includes('TCHC')) {
-                            return true;
-                        }
-                        const cleanK = upperK.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
-                        return cleanK.includes('TOCHUCHANHCHANH');
-                    });
-                }
-            }
-            return false;
-        }
-
         let confirmActionFn = null;
 
         function showConfirmModal(title, desc, actionFn) {
@@ -713,6 +737,23 @@
                 toast.classList.add('opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
+        }
+
+        function isGlobalAdmin() {
+            if (!currentUser) return false;
+            
+            if (currentUser.Role === 'Admin_KHTH') return true;
+            
+            if (currentUser.Role === 'Admin_Khoa') {
+                if (currentUser.KhoaList && currentUser.KhoaList.length > 0) {
+                    return currentUser.KhoaList.some(k => {
+                        let parentInfo = getParentKhoaInfo(k);
+                        const cleanK = parentInfo.ten.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+                        return cleanK.includes('tochuchanhchinh') || cleanK.includes('tochuchanhchanh') || cleanK.includes('tchc');
+                    });
+                }
+            }
+            return false;
         }
 
         function handleGoHome() {
@@ -785,8 +826,8 @@
                 const nvsWithShifts = new Set(shiftsInMonth.map(s => String(s.MaNV)));
                 const autoSymbols = ['+', 'T24', 'Rt', 'CN', 'T7', ''];
 
-                khoasToReset.forEach(mk => {
-                    const maBang = `BCC_${mk}_${month}_${year}`;
+                khoasToReset.forEach(parentMk => {
+                    const maBang = `BCC_${parentMk}_${month}_${year}`;
                     let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
                     
                     if (bang && bang.DuLieu) {
@@ -1145,7 +1186,7 @@
                     btnDraft.classList.remove('hidden');
                     btnSend.classList.remove('hidden');
                     if (btnResetShifts) btnResetShifts.classList.remove('hidden');
-                    if(btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình TCHC" : "Trình lại TCHC";
+                    if(btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình duyệt" : "Trình lại duyệt";
                 }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
@@ -1183,9 +1224,11 @@
             
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
-                const maKhoa = tr.getAttribute('data-khoa');
+                // Lấy data-khoa trên thẻ TR. 
+                // Do mình đã gán parentMaKhoa vào data-khoa lúc render, nó sẽ gom tất cả phòng con vào phòng cha
+                const parentMaKhoa = tr.getAttribute('data-khoa'); 
                 
-                if(!dataByKhoa[maKhoa]) dataByKhoa[maKhoa] = {};
+                if(!dataByKhoa[parentMaKhoa]) dataByKhoa[parentMaKhoa] = {};
 
                 const cells = tr.querySelectorAll('.cell-day');
                 let userDays = {};
@@ -1195,7 +1238,7 @@
                 });
                 
                 let ghiChu = tr.querySelector('.cell-ghichu').innerText.trim();
-                dataByKhoa[maKhoa][maNV] = { days: userDays, note: ghiChu };
+                dataByKhoa[parentMaKhoa][maNV] = { days: userDays, note: ghiChu };
             });
             return dataByKhoa;
         }
@@ -1204,16 +1247,16 @@
             const month = document.getElementById('sel-month').value;
             const year = document.getElementById('sel-year').value;
             
-            let dataByKhoa = extractGridData();
+            let dataByKhoa = extractGridData(); // Đã tự động nhóm theo Parent Khoa
 
-            for (let maKhoa in dataByKhoa) {
-                const maBang = `BCC_${maKhoa}_${month}_${year}`;
+            for (let parentMk in dataByKhoa) {
+                const maBang = `BCC_${parentMk}_${month}_${year}`;
                 let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
-                let gridJson = JSON.stringify(dataByKhoa[maKhoa]);
+                let gridJson = JSON.stringify(dataByKhoa[parentMk]);
 
                 if (!bang) {
                     bang = { 
-                        MaBang: maBang, MaKhoa: maKhoa, Thang: month, Nam: year, TrangThai: status, 
+                        MaBang: maBang, MaKhoa: parentMk, Thang: month, Nam: year, TrangThai: status, 
                         NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '', 
                         NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '', 
                         DuLieu: gridJson 
@@ -1242,7 +1285,7 @@
         }
 
         function sendApprove() {
-            showConfirmModal("Xác nhận Trình TCHC", "Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa cho đến khi TCHC phê duyệt hoặc từ chối.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
+            showConfirmModal("Xác nhận Trình Duyệt", "Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa cho đến khi được phê duyệt hoặc từ chối.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?", async () => {
                 await updateBangStatus('Chờ duyệt');
                 showToast("Đã trình Bảng chấm công thành công!", "success");
             });
@@ -1276,6 +1319,14 @@
             });
         }
 
+        function getTenString(fullName) {
+            if (!fullName) return { ten: "", hoDem: "" };
+            let parts = fullName.trim().split(" ");
+            let ten = parts.pop(); 
+            let hoDem = parts.join(" "); 
+            return { ten: ten.toLowerCase(), hoDem: hoDem.toLowerCase() };
+        }
+
         function generateReport() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
@@ -1296,86 +1347,44 @@
                 allowedKhoas = [selectedKhoaFilter];
             }
 
-            let processedGroups = {};
-
-            function getMergedName(tenKhoa) {
-                const nameStr = (tenKhoa || '').toLowerCase();
-                if (nameStr.includes('công nghệ thông tin') || nameStr.includes('kế hoạch tổng hợp')) return 'Phòng Kế hoạch tổng hợp';
-                if (nameStr.includes('tài xế') || nameStr.includes('điện nước') || nameStr.includes('bảo vệ') || nameStr.includes('tổ chức hành chính')) return 'Tổ chức hành chính';
-                if (nameStr.includes('tài vụ') || nameStr.includes('tài chính kế toán')) return 'Tài chính kế toán';
-                return tenKhoa;
-            }
+            // Lấy chính xác danh sách các Mã Khoa Cha của người đang xem
+            let allowedParentKhoas = [...new Set(allowedKhoas.map(mk => getParentKhoaInfo(mk).ma))];
 
             let tenCacKhoa = "TOÀN VIỆN";
             if (isAdminAll && selectedKhoaFilter !== 'ALL') {
-                let kObj = MOCK_DB.khoa.find(k => k.MaKhoa === selectedKhoaFilter);
-                if (kObj) {
-                    tenCacKhoa = viewMode === 'gop' ? getMergedName(kObj.TenKhoa) : kObj.TenKhoa;
-                    tenCacKhoa = tenCacKhoa.toUpperCase();
-                }
+                let pInfo = getParentKhoaInfo(selectedKhoaFilter);
+                tenCacKhoa = pInfo.ten.toUpperCase();
             } else if (!isAdminAll) {
-                let names = allowedKhoas.map(mk => {
-                    let f = MOCK_DB.khoa.find(k => k.MaKhoa === mk);
-                    let tenGoc = f ? f.TenKhoa : mk;
-                    return viewMode === 'gop' ? getMergedName(tenGoc) : tenGoc;
-                });
+                let names = allowedParentKhoas.map(mk => MOCK_DB.khoa.find(k => k.MaKhoa === mk)?.TenKhoa || mk);
                 tenCacKhoa = [...new Set(names)].join(', ').toUpperCase();
             }
             document.getElementById('lbl-phong-trai').textContent = tenCacKhoa;
 
-            let allUsers = MOCK_DB.users.filter(u => {
-                if (u.ChucDanh === 'Quản lý') return false;
-                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
-                return uKhoas.some(k => allowedKhoas.includes(k)); 
-            });
-            document.getElementById('lbl-total-nv').textContent = allUsers.length;
-
-            allUsers.forEach(u => {
-                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
-                let matchedKhoaId = uKhoas.find(k => allowedKhoas.includes(k)) || 'KHTH';
-                
-                let originalKhoaObj = MOCK_DB.khoa.find(k => k.MaKhoa === matchedKhoaId);
-                let originalTenKhoa = originalKhoaObj ? originalKhoaObj.TenKhoa : matchedKhoaId;
-
-                let displayGroupName = originalTenKhoa;
-                if (viewMode === 'gop') {
-                    displayGroupName = getMergedName(originalTenKhoa);
-                }
-
-                if (!processedGroups[displayGroupName]) {
-                    processedGroups[displayGroupName] = {
-                        ten: displayGroupName,
-                        users: []
-                    };
-                }
-                processedGroups[displayGroupName].users.push({ user: u, originalMaKhoa: matchedKhoaId });
-            });
-
-            function getTenString(fullName) {
-                if (!fullName) return { ten: "", hoDem: "" };
-                let parts = fullName.trim().split(" ");
-                let ten = parts.pop(); 
-                let hoDem = parts.join(" "); 
-                return { ten: ten.toLowerCase(), hoDem: hoDem.toLowerCase() };
-            }
-
-            for (let groupName in processedGroups) {
-                processedGroups[groupName].users.sort((itemA, itemB) => {
-                    let nameA = getTenString(itemA.user.HoTen);
-                    let nameB = getTenString(itemB.user.HoTen);
-                    
-                    let cmpTen = nameA.ten.localeCompare(nameB.ten, 'vi');
-                    if (cmpTen !== 0) return cmpTen;
-                    return nameA.hoDem.localeCompare(nameB.hoDem, 'vi');
-                });
-            }
-
             let overallStatus = 'Nháp';
             let hasDraft = false, hasPending = false, hasRejected = false, hasApproved = false;
 
-            allowedKhoas.forEach(mk => {
-                const maBang = `BCC_${mk}_${month}_${year}`;
+            let processedGroups = {};
+            let totalRenderedUsers = 0;
+
+            // --- BƯỚC 1: XÁC ĐỊNH QUYỀN SỞ HỮU ĐÃ CHỐT SỔ (LỊCH SỬ KHÓA) ---
+            // Nếu tháng này ĐÃ DUYỆT ở một khoa, nhân viên ĐÓ CỐ ĐỊNH ở khoa ĐÓ, bất chấp CSDL hiện tại.
+            let approvedOwnership = {}; // maNV -> parentMk
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (b.Thang == month && b.Nam == year && b.TrangThai === 'Đã duyệt' && b.DuLieu) {
+                    try {
+                        let parsed = JSON.parse(b.DuLieu);
+                        Object.keys(parsed).forEach(nv => {
+                            approvedOwnership[String(nv)] = getParentKhoaInfo(b.MaKhoa).ma;
+                        });
+                    } catch(e) {}
+                }
+            });
+
+            // --- BƯỚC 2: XÂY DỰNG MẠNG LƯỚI TRẠNG THÁI CHO TỪNG KHOA ---
+            allowedParentKhoas.forEach(parentMk => {
+                const maBang = `BCC_${parentMk}_${month}_${year}`;
                 const b = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
+
                 if(b) {
                     if(b.TrangThai === 'Nháp') hasDraft = true;
                     if(b.TrangThai === 'Chờ duyệt') hasPending = true;
@@ -1384,7 +1393,67 @@
                 } else {
                     hasDraft = true; 
                 }
+
+                let parentKhoaName = MOCK_DB.khoa.find(k => k.MaKhoa === parentMk)?.TenKhoa || parentMk;
+                if (!processedGroups[parentKhoaName]) {
+                    processedGroups[parentKhoaName] = { ten: parentKhoaName, users: [] };
+                }
             });
+
+            // --- BƯỚC 3: PHÂN BỔ NHÂN VIÊN VÀO KHOA (ĐỘT PHÁ) ---
+            MOCK_DB.users.forEach(u => {
+                if (u.ChucDanh === 'Quản lý') return;
+
+                let maNVStr = String(u.MaNV);
+                let uKhoaGoc = u.MaKhoa.split(',')[0].trim();
+                let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
+
+                let targetParentMk = null;
+
+                // LUẬT 1 (Khóa): Nếu đã được chốt duyệt ở tháng này, bắt buộc hiển thị ở khoa đã chốt (Phục vụ coi lịch sử tháng 3)
+                if (approvedOwnership[maNVStr]) {
+                    targetParentMk = approvedOwnership[maNVStr];
+                } 
+                // LUẬT 2 (Trôi nổi): Nếu chưa duyệt (tháng hiện hành), hiển thị ở Khoa theo DB hiện hành (Tiếp nhận luân chuyển)
+                else {
+                    targetParentMk = currentParentMk;
+                }
+
+                // Nếu Khoa đích nằm trong phạm vi quyền xem của Admin, đưa họ vào hiển thị
+                if (allowedParentKhoas.includes(targetParentMk)) {
+                    let displayGroupName = MOCK_DB.khoa.find(k => k.MaKhoa === targetParentMk)?.TenKhoa || targetParentMk;
+                    if (!processedGroups[displayGroupName].users.find(item => String(item.user.MaNV) === maNVStr)) {
+                        processedGroups[displayGroupName].users.push({ user: u, parentMaKhoa: targetParentMk });
+                        totalRenderedUsers++;
+                    }
+                }
+            });
+
+            // --- BƯỚC 4: PHỤC HỒI NHỮNG NGƯỜI ĐÃ NGHỈ VIỆC / XÓA KHỎI CSDL ---
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (b.Thang == month && b.Nam == year && b.DuLieu) {
+                    let savedParentMk = getParentKhoaInfo(b.MaKhoa).ma;
+                    if (allowedParentKhoas.includes(savedParentMk)) {
+                        let parentKhoaName = MOCK_DB.khoa.find(k => k.MaKhoa === savedParentMk)?.TenKhoa || savedParentMk;
+                        try {
+                            let parsed = JSON.parse(b.DuLieu);
+                            Object.keys(parsed).forEach(maNV => {
+                                let existsInDB = MOCK_DB.users.some(x => String(x.MaNV) === String(maNV));
+                                if (!existsInDB) { // Chỉ phục hồi người đã biến mất khỏi hệ thống
+                                    if (!processedGroups[parentKhoaName].users.find(item => String(item.user.MaNV) === String(maNV))) {
+                                        let uDeleted = { MaNV: maNV, HoTen: `[Đã xóa] NV_${maNV}`, MaKhoa: savedParentMk, CCHN: '' };
+                                        processedGroups[parentKhoaName].users.push({ user: uDeleted, parentMaKhoa: savedParentMk });
+                                        totalRenderedUsers++;
+                                    }
+                                }
+                            });
+                        } catch(e) {}
+                    }
+                }
+            });
+
+            // Gán lại số lượng nhân sự
+            document.getElementById('lbl-total-nv').textContent = totalRenderedUsers;
 
             if (hasRejected) overallStatus = 'Trả lại';
             else if (hasDraft) overallStatus = 'Nháp';
@@ -1397,6 +1466,31 @@
             
             hasUnsavedChanges = false;
 
+            // --- THUẬT TOÁN KẾ THỪA DỮ LIỆU ĐA CHIỀU (HÚT DATA CỦA KHOA CŨ) ---
+            let globalSavedData = {};
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (b.Thang == month && b.Nam == year && b.DuLieu) {
+                    try {
+                        let savedObj = JSON.parse(b.DuLieu);
+                        // Gom toàn bộ dữ liệu lưu của nhân viên từ TẤT CẢ các bảng chấm công trong tháng
+                        // Điều này giúp Khoa Ngoại tự động hút được công sức 1-10 ngày đầu mà Khoa Nội chấm
+                        for (let nv in savedObj) {
+                            if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
+                            for (let d in savedObj[nv].days) {
+                                if (savedObj[nv].days[d]) globalSavedData[nv].days[d] = savedObj[nv].days[d];
+                            }
+                            if (savedObj[nv].note) {
+                                if (globalSavedData[nv].note && !globalSavedData[nv].note.includes(savedObj[nv].note)) {
+                                    globalSavedData[nv].note += " " + savedObj[nv].note;
+                                } else {
+                                    globalSavedData[nv].note = savedObj[nv].note;
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                }
+            });
+
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
                 if(!s.NgayTruc) return false;
                 const parts = s.NgayTruc.split('-');
@@ -1406,6 +1500,18 @@
 
             let tbodyHtml = '';
             let globalStt = 1;
+
+            // Sắp xếp Alpha-B
+            for (let groupName in processedGroups) {
+                processedGroups[groupName].users.sort((itemA, itemB) => {
+                    let nameA = getTenString(itemA.user.HoTen);
+                    let nameB = getTenString(itemB.user.HoTen);
+                    
+                    let cmpTen = nameA.ten.localeCompare(nameB.ten, 'vi');
+                    if (cmpTen !== 0) return cmpTen;
+                    return nameA.hoDem.localeCompare(nameB.hoDem, 'vi');
+                });
+            }
 
             for (let groupName in processedGroups) {
                 let group = processedGroups[groupName];
@@ -1426,7 +1532,7 @@
 
                 group.users.forEach(item => {
                     const u = item.user;
-                    const maKhoa = item.originalMaKhoa; 
+                    const maKhoa = item.parentMaKhoa; 
 
                     const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
                     const shiftMap = {};
@@ -1441,9 +1547,24 @@
 
                     let rowHtml = `<tr class="data-row" data-id="${u.MaNV}" data-khoa="${maKhoa}">
                         <td>${globalStt++}</td>
-                        <td class="text-left font-bold pl-2 whitespace-nowrap overflow-hidden max-w-[150px] text-[11px]">${u.HoTen}</td>`;
+                        <td class="text-left font-bold pl-2 whitespace-nowrap overflow-hidden max-w-[150px] text-[11px] leading-tight">
+                            ${u.HoTen}
+                        </td>`;
 
-                    let ngayViec = 0, truc24 = 0, truc12 = 0;
+                    let ngayViec = 0, truc24 = 0, truc12 = 0, p = 0, nb = 0, om = 0, khac = 0;
+
+                    // Sử dụng dữ liệu đã hợp nhất toàn cục để hiển thị xuyên suốt
+                    const nvSavedData = globalSavedData[u.MaNV];
+                    
+                    let hasValidSavedData = false;
+                    if (nvSavedData) {
+                        const daysValues = Object.values(nvSavedData.days);
+                        const hasAnySymbol = daysValues.some(val => val && val.trim() !== '');
+                        const hasNote = nvSavedData.note && nvSavedData.note.trim() !== '';
+                        if (hasAnySymbol || hasNote) {
+                            hasValidSavedData = true;
+                        }
+                    }
 
                     for(let day = 1; day <= 31; day++) {
                         if (day > daysInMonth) {
@@ -1454,12 +1575,16 @@
                             let val = '';
                             let cellClass = 'cell-day transition';
                             
-                            const maBang = `BCC_${maKhoa}_${month}_${year}`;
-                            const daLuu = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
-
-                            if (!daLuu) {
+                            if (hasValidSavedData) {
+                                val = nvSavedData.days[day] || '';
+                                if (val) {
+                                    let primarySymbol = val.split('/')[0].trim();
+                                    let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
+                                    if(symObj && symObj.bg) cellClass += ` ${symObj.bg}`;
+                                }
+                            } else {
                                 if (shiftMap[day]) {
-                                    val = 'T24'; truc24++;
+                                    val = 'T24';
                                     cellClass += ' bg-blue-100 text-blue-700 font-bold';
                                 } else if (shiftMap[day - 1]) {
                                     val = 'Rt';
@@ -1468,8 +1593,32 @@
                                     val = dw === 0 ? 'CN' : 'T7'; 
                                     cellClass += ' bg-red-50 text-red-600 font-medium';
                                 } else {
-                                    val = '+'; ngayViec += 1;
+                                    val = '+';
                                 }
+                            }
+
+                            if (val) {
+                                let parts = val.split('/');
+                                parts.forEach(v => {
+                                    v = v.trim().toUpperCase();
+                                    if (v === '+' || v === 'LT') ngayViec += 1;
+                                    if (v === '-' || v === 'LT/2') ngayViec += 0.5;
+
+                                    if (v === 'T24') truc24 += 1;
+                                    if (v === 'T12D' || v === 'T12N') truc12 += 1;
+
+                                    if (v === 'P') p += 1;
+                                    if (v === 'P/2') p += 0.5;
+
+                                    if (v === 'NB') nb += 1;
+                                    if (v === 'NB/2') nb += 0.5;
+
+                                    if (v === 'Ô' || v === 'O^') om += 1;
+                                    if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
+
+                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(v)) khac += 1;
+                                    if (['H/2', 'CT/2', 'CÔ/2'].includes(v)) khac += 0.5;
+                                });
                             }
 
                             const onClickEvent = isLocked ? '' : `onclick="openShiftPicker(event, this)"`;
@@ -1477,61 +1626,28 @@
                         }
                     }
 
+                    let ghiChuVal = hasValidSavedData ? (nvSavedData.note || '') : '';
+
                     rowHtml += `
                         <td class="font-bold sum-ngayviec text-blue-800 bg-blue-50/30">${ngayViec > 0 ? ngayViec : ''}</td>
                         <td class="font-bold sum-truc24 bg-yellow-50">${truc24 > 0 ? truc24 : ''}</td>
                         <td class="font-bold sum-truc12">${truc12 > 0 ? truc12 : ''}</td>
-                        <td class="sum-p font-bold text-blue-600"></td>
-                        <td class="sum-nb font-bold text-emerald-600"></td>
-                        <td class="sum-om font-bold text-orange-600"></td>
-                        <td class="sum-khac font-bold text-purple-600"></td>
-                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1 text-[10px]"></td>
+                        <td class="sum-p font-bold text-blue-600">${p > 0 ? p : ''}</td>
+                        <td class="sum-nb font-bold text-emerald-600">${nb > 0 ? nb : ''}</td>
+                        <td class="sum-om font-bold text-orange-600">${om > 0 ? om : ''}</td>
+                        <td class="sum-khac font-bold text-purple-600">${khac > 0 ? khac : ''}</td>
+                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1 text-[10px]">${ghiChuVal}</td>
                     </tr>`;
 
                     tbodyHtml += rowHtml;
                 });
             }
 
-            if (allUsers.length === 0) {
+            if (totalRenderedUsers === 0) {
                 tbodyHtml = `<tr><td colspan=\"41\" class=\"py-8 italic text-gray-500 font-sans\">Hệ thống chưa có nhân sự nào trong danh sách quản lý.</td></tr>`;
             }
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
-
-            let globalSavedData = {};
-            MOCK_DB.bangChamCong.forEach(b => {
-                if (b.Thang == month && b.Nam == year && b.DuLieu) {
-                    try {
-                        let savedObj = JSON.parse(b.DuLieu);
-                        for (let nv in savedObj) {
-                            if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
-                            for (let d in savedObj[nv].days) {
-                                if (savedObj[nv].days[d]) globalSavedData[nv].days[d] = savedObj[nv].days[d];
-                            }
-                            if (savedObj[nv].note) globalSavedData[nv].note = savedObj[nv].note;
-                        }
-                    } catch(e) {}
-                }
-            });
-
-            for (let maNV in globalSavedData) {
-                const trs = document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`);
-                trs.forEach(tr => {
-                    const daysData = globalSavedData[maNV].days || {};
-                    const cells = tr.querySelectorAll('.cell-day');
-                    cells.forEach((c, idx) => {
-                        let val = daysData[idx + 1];
-                        if (val) {
-                            c.innerText = val;
-                            let primarySymbol = val.split('/')[0].trim();
-                            let symObj = SYMBOLS_DICT.find(s => s.id === primarySymbol);
-                            if(symObj && symObj.bg) c.className += ` ${symObj.bg}`;
-                        }
-                    });
-                    tr.querySelector('.cell-ghichu').innerText = globalSavedData[maNV].note || '';
-                    recalcRow(cells[0]);
-                });
-            }
         }
 
         // --- CÁC HÀM XỬ LÝ XUẤT EXCEL TÙY CHỌN THỜI GIAN ---
@@ -1577,7 +1693,6 @@
             closeExportExcelModal();
             showToast("Đang thu thập và kết xuất dữ liệu...", "warning");
 
-            // 1. Lọc danh sách nhân viên cần xuất (dựa theo filter Khoa hiện tại)
             const filterKhoaEle = document.getElementById('filter-khoa');
             const selectedKhoaFilter = filterKhoaEle && !filterKhoaEle.classList.contains('hidden') ? filterKhoaEle.value : 'ALL';
             const isAdminAll = isGlobalAdmin();
@@ -1586,18 +1701,55 @@
                 allowedKhoas = [selectedKhoaFilter];
             }
 
-            let targetUsers = MOCK_DB.users.filter(u => {
-                if (u.ChucDanh === 'Quản lý') return false;
-                let uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
-                return uKhoas.some(k => allowedKhoas.includes(k));
+            let allowedParentKhoas = [...new Set(allowedKhoas.map(mk => getParentKhoaInfo(mk).ma))];
+            
+            // XÁC ĐỊNH QUYỀN SỞ HỮU (GIỐNG THUẬT TOÁN GENERATE REPORT)
+            let approvedOwnership = {};
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (b.TrangThai === 'Đã duyệt' && b.DuLieu) {
+                    try {
+                        let parsed = JSON.parse(b.DuLieu);
+                        Object.keys(parsed).forEach(nv => {
+                            approvedOwnership[`${b.Thang}_${b.Nam}_${nv}`] = getParentKhoaInfo(b.MaKhoa).ma;
+                        });
+                    } catch(e) {}
+                }
             });
 
-            if (targetUsers.length === 0) {
+            let targetUserIds = new Set();
+            
+            MOCK_DB.users.forEach(u => {
+                if (u.ChucDanh === 'Quản lý') return;
+                let maNVStr = String(u.MaNV);
+                let uKhoaGoc = u.MaKhoa.split(',')[0].trim();
+                let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
+
+                // Để xuất Excel rộng nhiều tháng, ta cho phép tất cả ai có Khoa hiện tại hoặc từng có Khoa Lịch sử lọt vào danh sách
+                if (allowedParentKhoas.includes(currentParentMk)) {
+                    targetUserIds.add(maNVStr);
+                }
+            });
+
+            MOCK_DB.bangChamCong.forEach(b => {
+                let savedMk = getParentKhoaInfo(b.MaKhoa).ma;
+                if (allowedParentKhoas.includes(savedMk) && b.DuLieu) {
+                    try {
+                        let parsed = JSON.parse(b.DuLieu);
+                        Object.keys(parsed).forEach(nv => targetUserIds.add(String(nv)));
+                    } catch(e) {}
+                }
+            });
+
+            if (targetUserIds.size === 0) {
                 showToast("Không có nhân sự nào trong danh sách lọc để xuất!", "warning");
                 return;
             }
 
-            // Hàm chuyển đổi ký hiệu
+            let targetUsers = Array.from(targetUserIds).map(maNV => {
+                let u = MOCK_DB.users.find(x => String(x.MaNV) === maNV);
+                return u || { MaNV: maNV, HoTen: `[Đã xóa] NV_${maNV}`, CCHN: '' };
+            });
+
             function getReasonName(symbolStr) {
                 if (!symbolStr) return "";
                 return symbolStr.split('/').map(s => {
@@ -1607,7 +1759,6 @@
                 }).join(' / ');
             }
 
-            // Tạo bộ đệm Lịch trực để tra cứu siêu tốc: shiftsCache['YYYY-M-D']['maNV'] = 'ChucDanh'
             let shiftsCache = {}; 
             MOCK_DB.shifts.forEach(s => {
                 if(!s.NgayTruc) return;
@@ -1623,47 +1774,48 @@
             });
 
             let exportData = [];
-
-            // 2. Vòng lặp quét qua TỪNG NGÀY trong khoảng thời gian đã chọn
             let currDate = new Date(dStart);
-            
-            // Tối ưu: Lấy trước các dữ liệu chấm công đã lưu để không phải JSON.parse nhiều lần
-            let cachedSavedMonths = {}; // 'YYYY-M': { maNV: { days: {...} } }
+            let cachedSavedMonths = {}; 
             
             while (currDate <= dEnd) {
                 let y = currDate.getFullYear();
                 let m = currDate.getMonth() + 1;
                 let d = currDate.getDate();
-                let dw = currDate.getDay(); // 0: CN, 6: T7
+                let dw = currDate.getDay(); 
                 let monthKey = `${y}-${m}`;
 
-                // Nạp dữ liệu tháng vào cache nếu chưa nạp
+                // Hợp nhất dữ liệu toàn cục để xuất Excel (Kéo từ tất cả khoa)
                 if (!cachedSavedMonths[monthKey]) {
                     cachedSavedMonths[monthKey] = {};
-                    allowedKhoas.forEach(mk => {
-                        const maBang = `BCC_${mk}_${m}_${y}`;
-                        const b = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
-                        if (b && b.DuLieu) {
+                    MOCK_DB.bangChamCong.forEach(b => {
+                        if (b.Thang == m && b.Nam == y && b.DuLieu) {
                             try {
                                 let parsed = JSON.parse(b.DuLieu);
                                 for (let nv in parsed) {
-                                    cachedSavedMonths[monthKey][nv] = parsed[nv];
+                                    if (!cachedSavedMonths[monthKey][nv]) cachedSavedMonths[monthKey][nv] = { days: {} };
+                                    for (let dayD in parsed[nv].days) {
+                                        if (parsed[nv].days[dayD]) cachedSavedMonths[monthKey][nv].days[dayD] = parsed[nv].days[dayD];
+                                    }
                                 }
                             } catch(e) {}
                         }
                     });
                 }
 
-                // Xét từng nhân viên cho ngày currDate
                 targetUsers.forEach(u => {
                     const maNV = String(u.MaNV);
+
+                    // Kiểm tra Quyền sở hữu trong tháng này (Tránh xuất rác nếu người đó không thuộc khoa đang được Admin xem)
+                    let currentParentMk = getParentKhoaInfo(u.MaKhoa ? u.MaKhoa.split(',')[0].trim() : '').ma;
+                    let targetMk = approvedOwnership[`${m}_${y}_${maNV}`] || currentParentMk;
+                    if (!allowedParentKhoas.includes(targetMk)) return; // Bỏ qua nếu tháng này họ không thuộc quyền
+
                     let val = '';
 
-                    // 2.1: Lấy dữ liệu ĐÃ LƯU (Chấm tay)
-                    if (cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days && cachedSavedMonths[monthKey][maNV].days[d]) {
-                        val = cachedSavedMonths[monthKey][maNV].days[d];
+                    // Lấy dữ liệu ĐÃ LƯU
+                    if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV]) {
+                        val = (cachedSavedMonths[monthKey][maNV].days && cachedSavedMonths[monthKey][maNV].days[d]) ? cachedSavedMonths[monthKey][maNV].days[d] : '';
                     } 
-                    // 2.2: Nếu không có dữ liệu lưu -> Tự động nội suy (Auto Generate) từ Lịch trực gốc
                     else {
                         let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
                         
@@ -1695,7 +1847,6 @@
                     }
                 });
 
-                // Tiến lên 1 ngày
                 currDate.setDate(currDate.getDate() + 1);
             }
 
@@ -1797,47 +1948,54 @@
             for (let m = 1; m <= 12; m++) {
                 if (m === month) continue;
 
+                // Để chống nhân đôi khi luân chuyển, ta phải GỘP (Merge) dữ liệu của tháng m lại trước
+                let mergedMonthData = {};
                 let savedBccs = MOCK_DB.bangChamCong.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
                 
                 if (savedBccs.length > 0) {
                     savedBccs.forEach(b => {
-                        let maKhoaDb = b.MaKhoa;
                         try {
                             let data = JSON.parse(b.DuLieu);
                             for (let nv in data) {
-                                initUserStat(nv);
-                                let userMonthData = data[nv];
-                                
-                                if (userMonthData && userMonthData.days) {
-                                    for (let day in userMonthData.days) {
-                                        let valStr = userMonthData.days[day];
-                                        if (!valStr) continue;
-                                        
-                                        let parts = valStr.split('/');
-                                        parts.forEach(v => {
-                                            v = v.trim().toUpperCase();
-                                            
-                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
-                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
-                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
-                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-                                            
-                                            if (maKhoaDb !== 'HSCC') {
-                                                if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
-                                                else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
-
-                                                const dDate = new Date(year, m - 1, parseInt(day));
-                                                const dw = dDate.getDay();
-                                                if (dw === 5 || dw === 6) {
-                                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') dbYearlyStats[nv].earnedNb += 1;
-                                                }
-                                            }
-                                        });
-                                    }
+                                if (!mergedMonthData[nv]) mergedMonthData[nv] = { days: {}, maKhoaLuu: b.MaKhoa };
+                                for (let d in data[nv].days) {
+                                    if (data[nv].days[d]) mergedMonthData[nv].days[d] = data[nv].days[d];
                                 }
                             }
-                        } catch(e) {}
+                        } catch(e){}
                     });
+
+                    for (let nv in mergedMonthData) {
+                        initUserStat(nv);
+                        let userMonthData = mergedMonthData[nv];
+                        let maKhoaDb = userMonthData.maKhoaLuu;
+                        
+                        for (let day in userMonthData.days) {
+                            let valStr = userMonthData.days[day];
+                            if (!valStr) continue;
+                            
+                            let parts = valStr.split('/');
+                            parts.forEach(v => {
+                                v = v.trim().toUpperCase();
+                                
+                                if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                
+                                if (maKhoaDb !== 'HSCC') {
+                                    if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                    else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                    const dDate = new Date(year, m - 1, parseInt(day));
+                                    const dw = dDate.getDay();
+                                    if (dw === 5 || dw === 6) {
+                                        if (v === 'T24' || v === 'T12N' || v === 'T12D') dbYearlyStats[nv].earnedNb += 1;
+                                    }
+                                }
+                            });
+                        }
+                    }
                 } else {
                     let shiftsInMonth = MOCK_DB.shifts.filter(s => {
                         if(!s.NgayTruc) return false;
@@ -1865,8 +2023,16 @@
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
                 const maKhoa = tr.getAttribute('data-khoa');
-                const hoTen = tr.cells[1].innerText.trim();
-                const tenKhoa = MOCK_DB.khoa.find(k => k.MaKhoa === maKhoa)?.TenKhoa || maKhoa;
+                
+                const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+                const hoTen = hoTenText || tr.cells[1].innerText.trim();
+                
+                let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                let tenKhoaHienThi = maKhoa;
+                if (userObj) {
+                    let uKhoaGoc = userObj.MaKhoa.split(',')[0].trim();
+                    tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                }
 
                 const baseP = getBaseAnnualLeave(maNV, year);
 
@@ -1917,7 +2083,7 @@
                 tbodyHtml += `
                     <tr class="hover:bg-slate-50 transition">
                         <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
-                        <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoa}</td>
+                        <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
                         <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
                         <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
                         <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
