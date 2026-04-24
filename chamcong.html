@@ -547,6 +547,19 @@
             }
         }
 
+        // --- THUẬT TOÁN XÁC ĐỊNH KHOA GỐC (BỎ QUA BGD NẾU CÓ KHOA KÉP) ---
+        function getPrimaryKhoa(maKhoaStr) {
+            if (!maKhoaStr) return '';
+            let khoas = maKhoaStr.split(',').map(s => s.trim()).filter(s => s !== '');
+            if (khoas.length === 0) return '';
+            
+            let firstKhoa = khoas[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
+            if ((firstKhoa === 'BGD' || firstKhoa === 'BANGIAMDOC') && khoas.length > 1) {
+                return khoas[1]; // Lấy khoa thứ 2 (VD: NHI trong "BGD, NHI")
+            }
+            return khoas[0];
+        }
+
         // --- THUẬT TOÁN NHẬN DIỆN KHOA CHA (CHUẨN HÓA MẠNH MẼ) ---
         function getParentKhoaInfo(maKhoaGoc) {
             if (!maKhoaGoc) return { ma: '', ten: '' };
@@ -1426,7 +1439,8 @@
                 if (u.ChucDanh === 'Quản lý') return;
 
                 let maNVStr = String(u.MaNV);
-                let uKhoaGoc = u.MaKhoa.split(',')[0].trim();
+                // Áp dụng hàm mới để bỏ qua BGD nếu cần
+                let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
                 let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
 
                 let targetParentMk = null;
@@ -1565,6 +1579,16 @@
                             shiftMap[d] = s.ChucDanh; 
                         }
                     });
+
+                    // Hiển thị thêm tên phòng con (Tài xế, Bảo vệ...) bên dưới tên để dễ phân biệt trong danh sách gộp
+                    let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
+                    let tenKhoaGoc = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                    let parentInfo = getParentKhoaInfo(uKhoaGoc);
+                    let subDeptHtml = '';
+                    
+                    if (uKhoaGoc !== parentInfo.ma) {
+                        subDeptHtml = `<br><span class="text-[9px] text-gray-500 font-normal italic">(${tenKhoaGoc})</span>`;
+                    }
 
                     let rowHtml = `<tr class="data-row" data-id="${u.MaNV}" data-khoa="${maKhoa}">
                         <td>${globalStt++}</td>
@@ -1742,7 +1766,8 @@
             MOCK_DB.users.forEach(u => {
                 if (u.ChucDanh === 'Quản lý') return;
                 let maNVStr = String(u.MaNV);
-                let uKhoaGoc = u.MaKhoa.split(',')[0].trim();
+                // Áp dụng hàm mới
+                let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
                 let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
 
                 // Để xuất Excel rộng nhiều tháng, ta cho phép tất cả ai có Khoa hiện tại hoặc từng có Khoa Lịch sử lọt vào danh sách
@@ -1827,7 +1852,7 @@
                     const maNV = String(u.MaNV);
 
                     // Kiểm tra Quyền sở hữu trong tháng này (Tránh xuất rác nếu người đó không thuộc khoa đang được Admin xem)
-                    let currentParentMk = getParentKhoaInfo(u.MaKhoa ? u.MaKhoa.split(',')[0].trim() : '').ma;
+                    let currentParentMk = getParentKhoaInfo(getPrimaryKhoa(u.MaKhoa)).ma;
                     let targetMk = approvedOwnership[`${m}_${y}_${maNV}`] || currentParentMk;
                     if (!allowedParentKhoas.includes(targetMk)) return; // Bỏ qua nếu tháng này họ không thuộc quyền
 
@@ -2051,7 +2076,8 @@
                 let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                 let tenKhoaHienThi = maKhoa;
                 if (userObj) {
-                    let uKhoaGoc = userObj.MaKhoa.split(',')[0].trim();
+                    // Áp dụng hàm mới
+                    let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
                     tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
                 }
 
