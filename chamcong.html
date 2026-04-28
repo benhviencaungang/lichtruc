@@ -198,6 +198,7 @@
         </div>
     </div>
 
+    <!-- Cập nhật CSS hiển thị block UI chống lưu nhầm -->
     <div id="loading-screen" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
@@ -227,9 +228,19 @@
                     </select>
             </div>
         </div>
-        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <button type="button" onclick="clearShiftPicker()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition-colors">Xóa trống</button>
-            <button type="button" onclick="applyShiftSelection()" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-colors">Áp dụng</button>
+        <div class="flex justify-between gap-2 pt-2 border-t border-slate-100 items-center">
+            <div class="flex gap-1">
+                <button type="button" onclick="copyShift()" class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm" title="Sao chép (Ctrl+C)">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                </button>
+                <button type="button" onclick="pasteShift()" class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm" title="Dán (Ctrl+V)">
+                    <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="clearShiftPicker()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition-colors">Xóa trống</button>
+                <button type="button" onclick="applyShiftSelection()" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-colors">Áp dụng</button>
+            </div>
         </div>
     </div>
 
@@ -247,18 +258,20 @@
                 <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
                 <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
             </select>
+            
+            <!-- Chỉnh sửa danh sách năm bắt đầu từ 2026 -->
             <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
-                <option value="2024">2024</option><option value="2025">2025</option><option value="2026">2026</option>
+                <!-- Dữ liệu năm sẽ được hệ thống tạo tự động dựa trên năm thực tế -->
             </select>
 
             <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
                 <option value="ALL">-- Toàn viện --</option>
-                </select>
+            </select>
 
             <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium h-[38px]">
-                <option value="chitiet">Chi tiết phòng/khoa</option>
+                <option value="chitiet">Chi tiết phòng/Khoa</option>
                 <option value="khoa">Góc nhìn Khoa (Ẩn H/C)</option>
-                <option value="gop">Gộp Phòng/khoa</option>
+                <option value="gop">Gộp Phòng/Khoa</option>
             </select>
             
             <button id="btn-reset-shifts" onclick="resetToOriginalShifts()" class="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-100 flex items-center shadow-sm transition font-medium whitespace-nowrap shrink-0 h-[38px]" title="Làm mới lịch trực, giữ nguyên các dữ liệu đã chấm tay">
@@ -310,7 +323,7 @@
                 <div class="text-center w-1/3 text-[11pt]">
                     <p class="font-bold">SỞ Y TẾ VĨNH LONG</p>
                     <p class="font-bold">BỆNH VIỆN ĐKKV CẦU NGANG</p>
-                    <p class="mt-2 font-bold uppercase">PHÒNG, KHOA: <span id="lbl-phong-trai">TOÀN VIỆN</span></p>
+                    <p class="mt-2 font-bold uppercase">PHÒNG, Khoa: <span id="lbl-phong-trai">TOÀN VIỆN</span></p>
                 </div>
                 <div class="text-center w-2/3 text-[11pt]">
                     <p class="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
@@ -423,6 +436,7 @@
         </div>
     </div>
 
+    <!-- MODAL QUẢN LÝ PHÉP NĂM -->
     <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-purple-50 px-6 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
@@ -490,10 +504,11 @@
         let hasUnsavedChanges = false;
         let currentOverallStatus = 'Nháp';
 
-        // THÊM: Biến lưu trữ trạng thái Render thực tế trên màn hình để tránh lỗi lưu đè khi chuyển tháng nhanh
+        // BIẾN TOÀN CỤC KHẮC PHỤC LỖI LƯU & COPY
         let currentRenderedMonth = null;
         let currentRenderedYear = null;
         let isSaving = false; // Flag chống Spam nút Lưu
+        let copiedShiftValue = null; // Biến lưu trữ giá trị copy
 
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
@@ -530,6 +545,32 @@
             { id: 'LT', name: 'Làm thêm ngày (+Nghỉ bù) (LT)', bg: 'bg-teal-100 text-teal-800 font-bold' },
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
+
+        // HÀM NHẬN DIỆN NGÀY LỄ VIỆT NAM (Tự động)
+        function isHoliday(day, month, year) {
+            // 1. Lễ Dương Lịch cố định
+            if (day === 1 && month === 1) return true; // Tết Dương Lịch
+            if (day === 30 && month === 4) return true; // Giải phóng Miền Nam
+            if (day === 1 && month === 5) return true; // Quốc tế Lao Động
+            if ((day === 2 || day === 3) && month === 9) return true; // Quốc khánh (2/9 và 1 ngày trước/sau tùy năm)
+
+            // 2. Lễ Âm Lịch (Tết Nguyên Đán & Giỗ tổ Hùng Vương) - Ánh xạ qua Dương lịch
+            // Dữ liệu giả lập cập nhật từ năm 2026 đến 2030
+            const lunarHolidays = {
+                2026: ["14-2","15-2","16-2","17-2","18-2","19-2","20-2","21-2","22-2", "26-4"],
+                2027: ["4-2","5-2","6-2","7-2","8-2","9-2","10-2","11-2","12-2", "16-4"],
+                2028: ["24-1","25-1","26-1","27-1","28-1","29-1","30-1","31-1", "4-4"],
+                2029: ["11-2","12-2","13-2","14-2","15-2","16-2","17-2","18-2", "23-4"],
+                2030: ["1-2","2-2","3-2","4-2","5-2","6-2","7-2","8-2", "11-4"]
+            };
+            
+            let dateKey = `${day}-${month}`;
+            if (lunarHolidays[year] && lunarHolidays[year].includes(dateKey)) {
+                return true;
+            }
+            
+            return false;
+        }
 
         function parseShifts(rawVal) {
             if (!rawVal) return [];
@@ -720,6 +761,12 @@
             popover.style.left = `${left}px`;
         }
 
+        // CHUỘT PHẢI
+        function handleRightClick(event, tdElement) {
+            event.preventDefault(); 
+            openShiftPicker(event, tdElement); 
+        }
+
         function closeShiftPicker(event, forceClose = false) {
             const popover = document.getElementById('shift-picker-popover');
             if (forceClose || !popover.contains(event.target)) {
@@ -742,6 +789,15 @@
             const sangVal = document.getElementById('sp-sang').value;
             const chieuVal = document.getElementById('sp-chieu').value;
 
+            // RÀNG BUỘC: Nhập nửa ngày bắt buộc phải chọn cả 2 buổi
+            const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
+            const isChieuHalf = chieuVal !== ''; 
+            
+            if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
+                showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
+                return; 
+            }
+
             let finalVal = sangVal;
             if (chieuVal && sangVal) {
                 finalVal = `${sangVal}; ${chieuVal}`; 
@@ -761,6 +817,58 @@
             closeShiftPicker(new Event('click'), true);
             markUnsaved(); 
         }
+
+        // HÀM SAO CHÉP (COPY)
+        function copyShift(cell = activeInputCell) {
+            if (!cell) return;
+            copiedShiftValue = cell.innerText.trim();
+            showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
+        }
+
+        // HÀM DÁN (PASTE)
+        function pasteShift(cell = activeInputCell) {
+            if (!cell) return;
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+            if (copiedShiftValue === null) {
+                showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
+                return;
+            }
+
+            // Dán giá trị
+            cell.innerText = copiedShiftValue;
+            
+            // Xóa style cũ và tô màu lại
+            cell.className = cell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
+            
+            let primarySymbolObj = SYMBOLS_DICT.find(s => s.id === (parseShifts(copiedShiftValue)[0] || ''));
+            if (primarySymbolObj && primarySymbolObj.bg) {
+                cell.className += ` ${primarySymbolObj.bg}`;
+            } else if (copiedShiftValue === 'T7' || copiedShiftValue === 'CN' || copiedShiftValue === 'L') {
+                if(copiedShiftValue === 'L') cell.className += ' bg-purple-100 text-purple-700 font-bold';
+                else cell.className += ' bg-red-50 text-red-600 font-medium';
+            }
+
+            recalcRow(cell);
+            closeShiftPicker(new Event('click'), true);
+            markUnsaved(); 
+            showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'}`, 'success');
+        }
+
+        // LẮNG NGHE SỰ KIỆN PHÍM TẮT (CTRL+C / CTRL+V)
+        document.addEventListener('keydown', function(e) {
+            // Bỏ qua nếu đang gõ chữ vào thanh tìm kiếm, input hay ô ghi chú
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+            
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key.toLowerCase() === 'c' && activeInputCell) {
+                    e.preventDefault();
+                    copyShift(activeInputCell);
+                } else if (e.key.toLowerCase() === 'v' && activeInputCell) {
+                    e.preventDefault();
+                    pasteShift(activeInputCell);
+                }
+            }
+        });
 
         let confirmActionFn = null;
 
@@ -844,14 +952,12 @@
             }
         }
 
-        // HÀM XỬ LÝ KHI THAY ĐỔI THÁNG / BỘ LỌC (ĐÃ SỬA LỖI ĐỒNG BỘ)
+        // HÀM XỬ LÝ KHI THAY ĐỔI THÁNG / BỘ LỌC
         async function handleFilterChange() {
             if (hasUnsavedChanges) {
-                // Khi thay đổi bộ lọc/tháng, lưu lại bằng dữ liệu của THÁNG CŨ đang hiển thị
                 await updateBangStatus('Nháp');
                 showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
             }
-            // Sau khi lưu xong (nếu có) mới tiến hành vẽ lại lưới của THÁNG MỚI
             generateReport();
         }
 
@@ -931,6 +1037,8 @@
                                             correctVal = 'T24';
                                         } else if (shiftMap[day - 1]) {
                                             correctVal = 'Rt';
+                                        } else if (isHoliday(day, month, year)) {
+                                            correctVal = 'L'; // Ưu tiên Lễ nếu không trực
                                         } else if (dw === 0 || dw === 6) {
                                             correctVal = dw === 0 ? 'CN' : 'T7'; 
                                         } else {
@@ -1145,11 +1253,28 @@
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
             
+            // TỰ ĐỘNG TẠO DANH SÁCH NĂM (Từ 2026 đến năm hiện tại + 1)
+            const yearSelect = document.getElementById('sel-year');
+            yearSelect.innerHTML = '';
+            const maxYear = Math.max(defaultYear, today.getFullYear()) + 1; // +1 để tiện thao tác khi cuối năm
+            for (let y = 2026; y <= maxYear; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            
+            // Nếu năm hiện tại bé hơn 2026, ép về 2026 vì đã loại bỏ các năm trước
+            if (defaultYear < 2026) {
+                defaultYear = 2026;
+            }
+            
             if(today.getDate() < 5) {
                 defaultMonth -= 1;
                 if(defaultMonth === 0) {
                     defaultMonth = 12;
                     defaultYear -= 1;
+                    if (defaultYear < 2026) defaultYear = 2026;
                 }
             }
 
@@ -1158,7 +1283,14 @@
             document.getElementById('lbl-print-year').textContent = String(defaultYear);
 
             document.getElementById('sel-month').value = defaultMonth;
-            document.getElementById('sel-year').value = defaultYear;
+            
+            // Xử lý set năm an toàn
+            let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
+            if (yearExists) {
+                yearSelect.value = defaultYear;
+            } else {
+                yearSelect.value = "2026"; // Fallback an toàn về năm đầu tiên trong list
+            }
 
             initKhoaFilter();
             buildStaticTableHeaders();
@@ -1316,18 +1448,14 @@
 
         // HÀM LƯU DỮ LIỆU ĐÃ SỬA LỖI ĐỒNG BỘ
         async function updateBangStatus(status) {
-            if (isSaving) return; // Chống bấm lưu liên tục nhiều lần gây nhiễu
+            if (isSaving) return; 
             isSaving = true;
 
-            // BẬT MÀN HÌNH LOADING KHÓA THAO TÁC NGƯỜI DÙNG KHI ĐANG LƯU
             document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
             document.getElementById('retry-btn-container').classList.add('hidden');
             document.getElementById('loading-screen').classList.remove('hidden');
 
             try {
-                // CHÚ Ý: Sử dụng currentRenderedMonth (Tháng đang render trên màn hình)
-                // THAY VÌ lấy document.getElementById('sel-month').value 
-                // Lý do: Nếu hàm lưu tự động được gọi từ onchange, thanh dropdown đã nhảy sang tháng mới rồi!
                 const month = currentRenderedMonth || document.getElementById('sel-month').value;
                 const year = currentRenderedYear || document.getElementById('sel-year').value;
                 
@@ -1363,7 +1491,6 @@
                 await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
 
             } finally {
-                // TẮT MÀN HÌNH LOADING
                 isSaving = false;
                 document.getElementById('loading-screen').classList.add('hidden');
             }
@@ -1643,6 +1770,8 @@
                                         val = 'T24';
                                     } else if (shiftMap[day - 1]) {
                                         val = 'Rt';
+                                    } else if (isHoliday(day, month, year)) {
+                                        val = 'L'; // Tự động điền Lễ nếu không trực
                                     } else if (dw === 0 || dw === 6) {
                                         val = dw === 0 ? 'CN' : 'T7'; 
                                     } else {
@@ -1657,6 +1786,8 @@
                                         cellClass += ` ${symObj.bg}`;
                                     } else if (val === 'T7' || val === 'CN') {
                                         cellClass += ' bg-red-50 text-red-600 font-medium';
+                                    } else if (val === 'L') {
+                                        cellClass += ' bg-purple-100 text-purple-700 font-bold';
                                     }
                                 }
 
@@ -1688,7 +1819,7 @@
                                 });
                             }
 
-                            const onClickEvent = isLocked ? '' : `onclick="openShiftPicker(event, this)"`;
+                            const onClickEvent = isLocked ? '' : `onclick="openShiftPicker(event, this)" oncontextmenu="handleRightClick(event, this)"`;
                             rowHtml += `<td ${onClickEvent} class="${cellClass}">${val}</td>`;
                         }
                     }
@@ -1894,6 +2025,8 @@
                                 val = 'T24';
                             } else if (shiftYesterday) {
                                 val = 'Rt';
+                            } else if (isHoliday(d, m, y)) {
+                                val = 'L'; // Tự động Lễ khi xuất excel
                             } else if (dw === 0 || dw === 6) {
                                 val = dw === 0 ? 'CN' : 'T7';
                             } else {
