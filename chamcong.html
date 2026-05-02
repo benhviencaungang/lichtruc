@@ -30,7 +30,7 @@
                 font-size: 10px !important;
             }
 
-            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal, #leave-stats-modal {
+            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal, #leave-stats-modal, #leave-config-modal {
                 display: none !important;
             }
 
@@ -306,6 +306,11 @@
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Xuất Excel
             </button>
 
+            <!-- Nút Cấu Hình Phép (Chỉ Admin TCHC và KHTH) -->
+            <button id="btn-leave-config" onclick="openLeaveConfigModal()" class="hidden px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center shadow hover:bg-indigo-700 transition font-medium whitespace-nowrap shrink-0" title="Cấu hình danh sách khoa được cộng thêm 2 ngày phép/năm">
+                <i data-lucide="settings-2" class="w-4 h-4 mr-2"></i> Cấu hình Phép
+            </button>
+
             <button id="btn-leave-stats" onclick="openLeaveStatsModal()" class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0" title="Thống kê Phép năm và Nghỉ bù">
                 <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
             </button>
@@ -436,6 +441,33 @@
         </div>
     </div>
 
+    <!-- MODAL CẤU HÌNH KHOA 14 NGÀY PHÉP -->
+    <div id="leave-config-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-bold text-lg text-indigo-800 flex items-center">
+                        <i data-lucide="settings-2" class="w-5 h-5 mr-2"></i> Cấu hình Khoa đặc thù (+2 Ngày phép)
+                    </h3>
+                    <p class="text-sm text-indigo-600 mt-1">Tick chọn những khoa/phòng thuộc diện độc hại. Hệ thống sẽ tự kiểm tra, nếu nhân viên thuộc ít nhất 1 khoa được tích, họ sẽ được cộng thêm 2 ngày phép.</p>
+                </div>
+                <button onclick="closeLeaveConfigModal()" class="text-indigo-400 hover:text-indigo-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex-1 overflow-auto p-4 bg-slate-50" id="leave-config-list">
+                <!-- Checkboxes danh sách khoa sẽ được load bằng JS -->
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-white flex justify-between items-center shrink-0">
+                <span class="text-xs text-slate-500 italic">* Lưu ý: Hệ thống sẽ đồng bộ cấu hình này lên máy chủ.</span>
+                <div class="flex space-x-3">
+                    <button onclick="closeLeaveConfigModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Hủy</button>
+                    <button onclick="saveLeaveConfig()" class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow transition flex items-center">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu cấu hình
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL QUẢN LÝ PHÉP NĂM -->
     <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -456,7 +488,7 @@
                             <tr>
                                 <th class="px-4 py-3 border-b">Họ và Tên</th>
                                 <th class="px-4 py-3 border-b">Khoa</th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột NgayVaoLam và Khoa chuyên môn">Tổng<br>Phép Năm</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột SoPhep + Cấu hình Khoa (+2) + Thâm niên">Tổng<br>Phép Năm</th>
                                 <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Cả năm hiện tại">Phép<br>Đã nghỉ (Năm)</th>
                                 <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong tháng này">NGHỈ BÙ<br>TÍCH LŨY (THÁNG NÀY)</th>
                                 <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong cả năm">NGHỈ BÙ<br>TÍCH LŨY (CẢ NĂM)</th>
@@ -496,8 +528,8 @@
         }
         // ------------------------------------------------
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyAavB0oEd8Wiel25NEz_vJZmvSwWaJ99JlXDYJyutyTZArYV7VotaDInC1Ro5QQoND/exec";
-        let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [] };
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw7F-9ZfEl4lg8e1VZtcVHKz-1kNQ8uUThdy4z_6n3cH19uoRE3MSf9GEnv1hm7h45D/exec";
+        let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [], cauHinhPhep: null };
         let currentUser = null;
         let activeInputCell = null; 
         
@@ -507,8 +539,8 @@
         // BIẾN TOÀN CỤC KHẮC PHỤC LỖI LƯU & COPY
         let currentRenderedMonth = null;
         let currentRenderedYear = null;
-        let isSaving = false; // Flag chống Spam nút Lưu
-        let copiedShiftValue = null; // Biến lưu trữ giá trị copy
+        let isSaving = false; 
+        let copiedShiftValue = null; 
 
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
@@ -546,16 +578,13 @@
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
 
-        // HÀM NHẬN DIỆN NGÀY LỄ VIỆT NAM (Tự động)
+        // HÀM NHẬN DIỆN NGÀY LỄ VIỆT NAM
         function isHoliday(day, month, year) {
-            // 1. Lễ Dương Lịch cố định
-            if (day === 1 && month === 1) return true; // Tết Dương Lịch
-            if (day === 30 && month === 4) return true; // Giải phóng Miền Nam
-            if (day === 1 && month === 5) return true; // Quốc tế Lao Động
-            if ((day === 2 || day === 3) && month === 9) return true; // Quốc khánh (2/9 và 1 ngày trước/sau tùy năm)
+            if (day === 1 && month === 1) return true; 
+            if (day === 30 && month === 4) return true; 
+            if (day === 1 && month === 5) return true; 
+            if ((day === 2 || day === 3) && month === 9) return true; 
 
-            // 2. Lễ Âm Lịch (Tết Nguyên Đán & Giỗ tổ Hùng Vương) - Ánh xạ qua Dương lịch
-            // Dữ liệu giả lập cập nhật từ năm 2026 đến 2030
             const lunarHolidays = {
                 2026: ["14-2","15-2","16-2","17-2","18-2","19-2","20-2","21-2","22-2", "26-4"],
                 2027: ["4-2","5-2","6-2","7-2","8-2","9-2","10-2","11-2","12-2", "16-4"],
@@ -568,7 +597,6 @@
             if (lunarHolidays[year] && lunarHolidays[year].includes(dateKey)) {
                 return true;
             }
-            
             return false;
         }
 
@@ -761,7 +789,6 @@
             popover.style.left = `${left}px`;
         }
 
-        // CHUỘT PHẢI
         function handleRightClick(event, tdElement) {
             event.preventDefault(); 
             openShiftPicker(event, tdElement); 
@@ -789,13 +816,15 @@
             const sangVal = document.getElementById('sp-sang').value;
             const chieuVal = document.getElementById('sp-chieu').value;
 
-            // RÀNG BUỘC: Nhập nửa ngày bắt buộc phải chọn cả 2 buổi
             const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
             const isChieuHalf = chieuVal !== ''; 
             
             if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
-                showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
-                return; 
+                // Ngoại lệ: Chỉ cho phép ký hiệu LT/2 được để trống nửa ngày còn lại
+                if (sangVal !== 'LT/2' && chieuVal !== 'LT/2') {
+                    showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
+                    return; 
+                }
             }
 
             let finalVal = sangVal;
@@ -818,14 +847,12 @@
             markUnsaved(); 
         }
 
-        // HÀM SAO CHÉP (COPY)
         function copyShift(cell = activeInputCell) {
             if (!cell) return;
             copiedShiftValue = cell.innerText.trim();
             showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
         }
 
-        // HÀM DÁN (PASTE)
         function pasteShift(cell = activeInputCell) {
             if (!cell) return;
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
@@ -834,10 +861,8 @@
                 return;
             }
 
-            // Dán giá trị
             cell.innerText = copiedShiftValue;
             
-            // Xóa style cũ và tô màu lại
             cell.className = cell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
             
             let primarySymbolObj = SYMBOLS_DICT.find(s => s.id === (parseShifts(copiedShiftValue)[0] || ''));
@@ -854,9 +879,7 @@
             showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'}`, 'success');
         }
 
-        // LẮNG NGHE SỰ KIỆN PHÍM TẮT (CTRL+C / CTRL+V)
         document.addEventListener('keydown', function(e) {
-            // Bỏ qua nếu đang gõ chữ vào thanh tìm kiếm, input hay ô ghi chú
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
             
             if (e.ctrlKey || e.metaKey) {
@@ -952,7 +975,6 @@
             }
         }
 
-        // HÀM XỬ LÝ KHI THAY ĐỔI THÁNG / BỘ LỌC
         async function handleFilterChange() {
             if (hasUnsavedChanges) {
                 await updateBangStatus('Nháp');
@@ -1038,7 +1060,7 @@
                                         } else if (shiftMap[day - 1]) {
                                             correctVal = 'Rt';
                                         } else if (isHoliday(day, month, year)) {
-                                            correctVal = 'L'; // Ưu tiên Lễ nếu không trực
+                                            correctVal = 'L';
                                         } else if (dw === 0 || dw === 6) {
                                             correctVal = dw === 0 ? 'CN' : 'T7'; 
                                         } else {
@@ -1071,7 +1093,7 @@
                 generateReport();
                 await updateBangStatus('Nháp');
 
-                showToast("Thành công! Đã làm mới lịch trực (Giữ nguyên dữ liệu chấm tay)!", "success");
+                showToast("Thành công! Đã làm mới lịch trực!", "success");
             });
         }
 
@@ -1079,6 +1101,7 @@
             const filterKhoa = document.getElementById('filter-khoa');
             const btnLeaveStats = document.getElementById('btn-leave-stats');
             const btnExportExcel = document.getElementById('btn-export-excel');
+            const btnLeaveConfig = document.getElementById('btn-leave-config');
             const isAdminAll = isGlobalAdmin();
 
             if (currentUser && (currentUser.Role === 'Admin_KHTH' || currentUser.Role === 'Admin_Khoa')) {
@@ -1095,6 +1118,8 @@
 
             if (isAdminAll) {
                 filterKhoa.classList.remove('hidden');
+                if (btnLeaveConfig) btnLeaveConfig.classList.remove('hidden');
+                
                 let optionsHtml = '<option value="ALL">-- Toàn viện (Tất cả) --</option>';
                 let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
                 sortedKhoa.forEach(k => {
@@ -1103,6 +1128,7 @@
                 filterKhoa.innerHTML = optionsHtml;
             } else {
                 filterKhoa.classList.add('hidden');
+                if (btnLeaveConfig) btnLeaveConfig.classList.add('hidden');
             }
         }
 
@@ -1199,13 +1225,18 @@
             hasUnsavedChanges = false;
             
             try {
-                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "BangChamCong"];
+                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "BangChamCong", "CauHinhPhep"];
                 const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
                 const results = await Promise.all(promises);
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
                 if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
                 if (results[3] && results[3].status === "success") MOCK_DB.bangChamCong = results[3].data || [];
+                
+                // Lấy cấu hình phép từ Server
+                if (results[4] && results[4].status === "success") {
+                    MOCK_DB.cauHinhPhep = results[4].data || [];
+                }
                 
                 if (results[2] && results[2].status === "success") {
                     MOCK_DB.shifts = (results[2].data || []).map(s => {
@@ -1253,10 +1284,9 @@
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
             
-            // TỰ ĐỘNG TẠO DANH SÁCH NĂM (Từ 2026 đến năm hiện tại + 1)
             const yearSelect = document.getElementById('sel-year');
             yearSelect.innerHTML = '';
-            const maxYear = Math.max(defaultYear, today.getFullYear()) + 1; // +1 để tiện thao tác khi cuối năm
+            const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
             for (let y = 2026; y <= maxYear; y++) {
                 const opt = document.createElement('option');
                 opt.value = y;
@@ -1264,7 +1294,6 @@
                 yearSelect.appendChild(opt);
             }
             
-            // Nếu năm hiện tại bé hơn 2026, ép về 2026 vì đã loại bỏ các năm trước
             if (defaultYear < 2026) {
                 defaultYear = 2026;
             }
@@ -1284,12 +1313,11 @@
 
             document.getElementById('sel-month').value = defaultMonth;
             
-            // Xử lý set năm an toàn
             let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
             if (yearExists) {
                 yearSelect.value = defaultYear;
             } else {
-                yearSelect.value = "2026"; // Fallback an toàn về năm đầu tiên trong list
+                yearSelect.value = "2026"; 
             }
 
             initKhoaFilter();
@@ -1446,7 +1474,6 @@
             return dataByKhoa;
         }
 
-        // HÀM LƯU DỮ LIỆU ĐÃ SỬA LỖI ĐỒNG BỘ
         async function updateBangStatus(status) {
             if (isSaving) return; 
             isSaving = true;
@@ -1548,7 +1575,6 @@
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
             
-            // CẬP NHẬT BIẾN TOÀN CỤC: Khóa trạng thái màn hình hiện tại đang hiển thị tháng/năm nào
             currentRenderedMonth = month;
             currentRenderedYear = year;
             
@@ -1771,7 +1797,7 @@
                                     } else if (shiftMap[day - 1]) {
                                         val = 'Rt';
                                     } else if (isHoliday(day, month, year)) {
-                                        val = 'L'; // Tự động điền Lễ nếu không trực
+                                        val = 'L'; 
                                     } else if (dw === 0 || dw === 6) {
                                         val = dw === 0 ? 'CN' : 'T7'; 
                                     } else {
@@ -1848,7 +1874,6 @@
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
         }
 
-        // --- CÁC HÀM XỬ LÝ XUẤT EXCEL TÙY CHỌN THỜI GIAN ---
         function openExportExcelModal() {
             if (!currentUser || currentUser.Role !== 'Admin_KHTH') {
                 showToast("Tính năng này chỉ dành cho tài khoản Admin KHTH", "error");
@@ -2026,7 +2051,7 @@
                             } else if (shiftYesterday) {
                                 val = 'Rt';
                             } else if (isHoliday(d, m, y)) {
-                                val = 'L'; // Tự động Lễ khi xuất excel
+                                val = 'L'; 
                             } else if (dw === 0 || dw === 6) {
                                 val = dw === 0 ? 'CN' : 'T7';
                             } else {
@@ -2079,35 +2104,142 @@
             }
         }
 
+        // --- HÀM LẤY VÀ LƯU CẤU HÌNH NGÀY PHÉP ĐẶC THÙ ---
+        function getDefault14DaysKhoa() {
+            // Ưu tiên 1: Lấy từ máy chủ Database (Đồng bộ mọi máy tính)
+            if (MOCK_DB.cauHinhPhep !== null) {
+                return Array.isArray(MOCK_DB.cauHinhPhep) ? MOCK_DB.cauHinhPhep.map(String).map(s => s.trim().toUpperCase()) : [];
+            }
+
+            // Ưu tiên 2: LocalStorage (Dự phòng nếu load từ server thất bại)
+            const saved = localStorage.getItem('leave_14_khoa_list');
+            if (saved) {
+                try {
+                    return JSON.parse(saved).map(String).map(s => s.trim().toUpperCase());
+                } catch(e) {}
+            }
+            
+            // Trả về mảng rỗng nếu chưa từng cấu hình (Mọi khoa đều là 12 ngày)
+            return [];
+        }
+
+        function openLeaveConfigModal() {
+            const listContainer = document.getElementById('leave-config-list');
+            const current14DaysList = getDefault14DaysKhoa();
+            
+            let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
+            let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
+            
+            sortedKhoa.forEach(k => {
+                const khoaId = String(k.MaKhoa).trim().toUpperCase();
+                const isChecked = current14DaysList.includes(khoaId) ? 'checked' : '';
+                html += `
+                    <label class="flex items-center p-3 border rounded-lg hover:bg-indigo-50 cursor-pointer transition ${isChecked ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200'}">
+                        <input type="checkbox" class="leave-config-checkbox w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" value="${khoaId}" ${isChecked}>
+                        <span class="ml-3 text-sm font-medium text-slate-700">${k.TenKhoa}</span>
+                    </label>
+                `;
+            });
+            html += '</div>';
+            
+            listContainer.innerHTML = html;
+            
+            const checkboxes = listContainer.querySelectorAll('.leave-config-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const label = this.closest('label');
+                    if(this.checked) {
+                        label.classList.add('border-indigo-500', 'bg-indigo-50/50');
+                        label.classList.remove('border-slate-200');
+                    } else {
+                        label.classList.remove('border-indigo-500', 'bg-indigo-50/50');
+                        label.classList.add('border-slate-200');
+                    }
+                });
+            });
+
+            document.getElementById('leave-config-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeLeaveConfigModal() {
+            document.getElementById('leave-config-modal').classList.add('hidden');
+        }
+
+        async function saveLeaveConfig() {
+            const checkboxes = document.querySelectorAll('.leave-config-checkbox:checked');
+            const selectedKhoa = Array.from(checkboxes).map(cb => String(cb.value).trim().toUpperCase());
+            
+            // Lưu local dự phòng
+            localStorage.setItem('leave_14_khoa_list', JSON.stringify(selectedKhoa));
+            
+            // Khóa nút, hiện chữ Loading
+            const btnSave = document.querySelector('#leave-config-modal button.bg-indigo-600');
+            const originalHtml = btnSave.innerHTML;
+            btnSave.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang đồng bộ...`;
+            btnSave.disabled = true;
+
+            try {
+                // Đẩy lên Google Apps Script
+                await syncWithGAS('sync_CauHinhPhep', selectedKhoa);
+                
+                // Cập nhật Database nội bộ hiện tại
+                MOCK_DB.cauHinhPhep = selectedKhoa;
+                
+                closeLeaveConfigModal();
+                showToast("Đã lưu cấu hình lên máy chủ thành công!", "success");
+                
+                // Cập nhật ngay nếu modal Thống kê phép đang mở
+                if (!document.getElementById('leave-stats-modal').classList.contains('hidden')) {
+                    openLeaveStatsModal(); 
+                }
+            } catch (e) {
+                showToast("Lỗi mạng, hệ thống hiện đang lưu tạm trên máy này.", "warning");
+                closeLeaveConfigModal();
+            } finally {
+                btnSave.innerHTML = originalHtml;
+                btnSave.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
         function getBaseAnnualLeave(maNV, currentYear) {
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
             if (!user) return 12;
 
             let baseP = 12; 
-
-            let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
-            let belongsToSpecialty = false;
-
-            const dsTuKhoa14Ngay = [
-                "khám bệnh", "nội", "ngoại", "sản", "nhi", 
-                "gây mê", "hồi sức", "y học cổ truyền", "yhct", 
-                "hscc", "gmhs", "phẫu thuật"
-            ];
-
-            for (let mk of userKhoaIds) {
-                let khoaObj = MOCK_DB.khoa.find(k => k.MaKhoa === mk);
-                let tenKhoa = khoaObj ? khoaObj.TenKhoa.toLowerCase() : mk.toLowerCase();
-                
-                if (dsTuKhoa14Ngay.some(tuKhoa => tenKhoa.includes(tuKhoa))) {
-                    belongsToSpecialty = true;
-                    break;
+            
+            // 1. Kiểm tra ưu tiên lấy cột SoPhep trong database NhanVien
+            if (user.SoPhep !== undefined && user.SoPhep !== null && String(user.SoPhep).trim() !== '') {
+                let dbPhep = parseInt(user.SoPhep);
+                if (!isNaN(dbPhep) && dbPhep > 0) {
+                    baseP = dbPhep;
                 }
             }
 
-            if (belongsToSpecialty) {
-                baseP = 14;
+            // 2. DUYỆT QUA TẤT CẢ CÁC KHOA (Dù nhân viên có 1, 2, hay 3 khoa)
+            let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
+            let isToxicDept = false; // Cờ đánh dấu có thuộc Khoa Đặc thù không
+            const config14Days = getDefault14DaysKhoa(); // Trả về mảng IN HOA
+
+            for (let mk of userKhoaIds) {
+                let parentMa = getParentKhoaInfo(mk).ma; 
+                let currentMkUpper = String(mk).trim().toUpperCase();
+                let parentMkUpper = String(parentMa).trim().toUpperCase();
+
+                // Chỉ cần 1 trong các khoa của NV trùng với cấu hình là đạt chuẩn
+                if (config14Days.includes(currentMkUpper) || config14Days.includes(parentMkUpper)) {
+                    isToxicDept = true;
+                    break; // Thoát vòng lặp sớm
+                }
             }
 
+            // Nếu thuộc khoa độc hại/đặc thù -> CỘNG THÊM 2 NGÀY (như yêu cầu)
+            if (isToxicDept) {
+                baseP += 2;
+            }
+
+            // 3. Tính thâm niên (mỗi 5 năm làm việc + 1 ngày phép)
             if (user.NgayVaoLam) {
                 let joinDateObj = parseEmployeeDate(user.NgayVaoLam, false);
                 let startYear = joinDateObj.getFullYear();
