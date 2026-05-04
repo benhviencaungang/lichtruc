@@ -393,6 +393,7 @@
                             <p>H/2: Đi học 1/2 ngày</p>
                             <p>P/2: Nghỉ phép 1/2 ngày</p>
                             <p>Cô/2: Nghỉ con ốm 1/2 ngày</p>
+                            <p>L/2: Nghỉ lễ 1/2 ngày</p>
                         </div>
                     </div>
                 </div>
@@ -549,7 +550,8 @@
             }
         });
 
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2'];
+        // BỔ SUNG L/2 VÀO DANH SÁCH CA NỬA NGÀY
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -570,6 +572,8 @@
             { id: 'CT', name: 'Công tác (CT)', bg: '' },
             { id: 'CT/2', name: 'Công tác 1/2 ngày (CT/2)', bg: '' },
             { id: 'L', name: 'Nghỉ lễ, tết (L)', bg: 'bg-purple-100 text-purple-700 font-bold' },
+            // BỔ SUNG L/2 VÀO TỪ ĐIỂN
+            { id: 'L/2', name: 'Nghỉ lễ 1/2 ngày (L/2)', bg: 'bg-purple-100 text-purple-700' },
             { id: 'HS', name: 'Nghỉ hộ sản (HS)', bg: 'bg-pink-100 text-pink-700' },
             { id: 'Ô/2', name: 'Nghỉ ốm 1/2 ngày (Ô/2)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'H/2', name: 'Đi học 1/2 ngày (H/2)', bg: '' },
@@ -868,8 +872,8 @@
             let primarySymbolObj = SYMBOLS_DICT.find(s => s.id === (parseShifts(copiedShiftValue)[0] || ''));
             if (primarySymbolObj && primarySymbolObj.bg) {
                 cell.className += ` ${primarySymbolObj.bg}`;
-            } else if (copiedShiftValue === 'T7' || copiedShiftValue === 'CN' || copiedShiftValue === 'L') {
-                if(copiedShiftValue === 'L') cell.className += ' bg-purple-100 text-purple-700 font-bold';
+            } else if (copiedShiftValue === 'T7' || copiedShiftValue === 'CN' || copiedShiftValue === 'L' || copiedShiftValue === 'L/2') {
+                if(copiedShiftValue === 'L' || copiedShiftValue === 'L/2') cell.className += ' bg-purple-100 text-purple-700 font-bold';
                 else cell.className += ' bg-red-50 text-red-600 font-medium';
             }
 
@@ -1380,7 +1384,8 @@
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
                     if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2'].includes(val)) khac += 0.5;
+                    // BỔ SUNG L/2 VÀO CỘT KHÁC CỘNG 0.5
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(val)) khac += 0.5;
                 });
             });
 
@@ -1812,7 +1817,7 @@
                                         cellClass += ` ${symObj.bg}`;
                                     } else if (val === 'T7' || val === 'CN') {
                                         cellClass += ' bg-red-50 text-red-600 font-medium';
-                                    } else if (val === 'L') {
+                                    } else if (val === 'L' || val === 'L/2') { // CẬP NHẬT STYLING DỰ PHÒNG CHO L/2
                                         cellClass += ' bg-purple-100 text-purple-700 font-bold';
                                     }
                                 }
@@ -1841,7 +1846,8 @@
                                     if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
 
                                     if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(v)) khac += 1;
-                                    if (['H/2', 'CT/2', 'CÔ/2'].includes(v)) khac += 0.5;
+                                    // BỔ SUNG L/2 VÀO CỘT KHÁC CỘNG 0.5
+                                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(v)) khac += 0.5;
                                 });
                             }
 
