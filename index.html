@@ -1730,11 +1730,15 @@
             const diff = today.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(today.setDate(diff));
         }
+        
+        // CẬP NHẬT MỚI: Khởi tạo mặc định cho tất cả các field chọn ngày ngay khi nạp trang
         const currentMondayStr = normalizeDateStr(getMondayOfCurrentWeek());
-
         document.getElementById('tuan-bat-dau').value = currentMondayStr;
         document.getElementById('admin-tuan-bat-dau').value = currentMondayStr;
         document.getElementById('dash-tuan-bat-dau').value = currentMondayStr;
+        document.getElementById('user-master-tuan').value = currentMondayStr;
+        document.getElementById('xem-tuan-bat-dau').value = currentMondayStr;
+        document.getElementById('contacts-tuan-bat-dau').value = currentMondayStr;
 
         function checkAutoLogin() {
             const savedUser = localStorage.getItem('currentUser');
@@ -2100,6 +2104,7 @@
             }
         }
 
+        // CẬP NHẬT MỚI: Tự động reset về tuần hiện tại khi mở các màn hình
         function switchView(viewId) {
             if (window.innerWidth < 768) {
                 const sidebar = document.getElementById('sidebar');
@@ -2117,8 +2122,17 @@
             const titles = { 'view-dashboard': 'Bảng Điều Khiển Tổng Hợp', 'view-khoa-schedule': 'Quản lý Lịch trực Khoa', 'view-admin-review': 'Phê duyệt Lịch trực', 'view-admin-users': currentUser && currentUser.Role === 'Admin_Khoa' ? 'Quản lý Nhân sự Khoa' : 'Quản lý Hệ thống Nhân sự', 'view-admin-departments': 'Quản lý Danh mục Khoa / Phòng', 'view-admin-thongbao': 'Quản lý Thông báo Hệ thống', 'view-master-print': 'Lịch Trực Toàn Viện', 'view-xem-lich-khoa': 'Tra Cứu Lịch Trực', 'view-user-master-schedule': 'Tra Cứu Lịch Toàn Viện', 'view-contacts': 'Danh Bạ Nhân Sự Trực', 'view-admin-audit': 'Nhật ký Hệ thống', 'view-user-profile': 'Hồ sơ cá nhân & Cài đặt bảo mật' };
             document.getElementById('page-title').textContent = titles[viewId] || '';
 
-            if (viewId === 'view-dashboard') { setTimeout(() => updateDashboardStats(), 50); }
-            else if (viewId === 'view-khoa-schedule') { checkWeeklyStatus(); }
+            // Tính toán lại tuần hiện tại chính xác mỗi khi chuyển màn hình
+            const realCurrentMonday = normalizeDateStr(getMondayOfCurrentWeek());
+
+            if (viewId === 'view-dashboard') { 
+                document.getElementById('dash-tuan-bat-dau').value = realCurrentMonday;
+                setTimeout(() => updateDashboardStats(), 50); 
+            }
+            else if (viewId === 'view-khoa-schedule') { 
+                document.getElementById('tuan-bat-dau').value = realCurrentMonday;
+                checkWeeklyStatus(); 
+            }
             else if (viewId === 'view-admin-users') {
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
                 if (currentUser.Role === 'Admin_KHTH') {
@@ -2140,11 +2154,23 @@
                 renderAdminUsersTable();
             }
             else if (viewId === 'view-admin-departments') { renderAdminDepartmentsTable(); }
-            else if (viewId === 'view-admin-review') { renderAdminApprovalTable(); }
+            else if (viewId === 'view-admin-review') { 
+                document.getElementById('admin-tuan-bat-dau').value = realCurrentMonday;
+                renderAdminApprovalTable(); 
+            }
             else if (viewId === 'view-master-print') { renderMasterTable(); }
-            else if (viewId === 'view-xem-lich-khoa') { document.getElementById('xem-tuan-bat-dau').value = document.getElementById('tuan-bat-dau').value; renderXemLichKhoaTable(); }
-            else if (viewId === 'view-user-master-schedule') { document.getElementById('user-master-tuan').value = document.getElementById('tuan-bat-dau').value; renderUserMasterTable(); }
-            else if (viewId === 'view-contacts') { document.getElementById('contacts-tuan-bat-dau').value = document.getElementById('tuan-bat-dau').value; renderContactsTable(); }
+            else if (viewId === 'view-xem-lich-khoa') { 
+                document.getElementById('xem-tuan-bat-dau').value = realCurrentMonday;
+                renderXemLichKhoaTable(); 
+            }
+            else if (viewId === 'view-user-master-schedule') { 
+                document.getElementById('user-master-tuan').value = realCurrentMonday;
+                renderUserMasterTable(); 
+            }
+            else if (viewId === 'view-contacts') { 
+                document.getElementById('contacts-tuan-bat-dau').value = realCurrentMonday;
+                renderContactsTable(); 
+            }
             else if (viewId === 'view-admin-thongbao') {
                 document.getElementById('zalo-link-input').value = ZALO_TARGET_URL;
                 renderAdminThongBaoTable();
