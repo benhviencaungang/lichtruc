@@ -305,10 +305,6 @@
             <select id="sel-khoa" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0 font-medium bg-emerald-50 text-emerald-900 border-emerald-200">
                 <!-- Tự động điền qua JS -->
             </select>
-
-            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
-                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Tải lại DB
-            </button>
         </div>
 
         <!-- Nhóm phê duyệt & in bên phải -->
@@ -412,7 +408,7 @@
                 <tbody id="report-tbody">
                     <!-- JS render dữ liệu -->
                     <tr>
-                        <td colspan="8" class="py-8 italic text-gray-500 font-sans text-center">Bấm "Tải dữ liệu" để lấy danh sách công trực.</td>
+                        <td colspan="8" class="py-8 italic text-gray-500 font-sans text-center">Đang tải danh sách công trực...</td>
                     </tr>
                 </tbody>
                 <tfoot>
@@ -536,7 +532,7 @@
             let ngan = Math.floor(so / 1000); let dong = so % 1000;
             if (ty > 0) chuoi = docBlock(ty, false) + " tỷ";
             if (trieu > 0) chuoi += docBlock(trieu, ty > 0) + " triệu";
-            if (ngan > 0) chuoi += docBlock(ngan, ty > 0 || trieu > 0) + " nghìn";
+            if (ngan > 0) chuoi += docBlock(ngan, ty > 0 || trieu > 0 || ngan > 0) + " nghìn";
             if (dong > 0) chuoi += docBlock(dong, ty > 0 || trieu > 0 || ngan > 0);
             chuoi = chuoi.trim();
             if (chuoi.length > 0) chuoi = chuoi.charAt(0).toUpperCase() + chuoi.slice(1);
