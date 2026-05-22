@@ -354,7 +354,7 @@
             <div id="view-user-profile" class="hidden fade-in space-y-6 max-w-4xl mx-auto w-full">
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 shrink-0">
                     <h3 class="font-bold text-lg text-slate-800">Hồ sơ cá nhân & Bảo mật</h3>
-                    <p class="text-sm text-slate-500 mt-1">Cập nhật thông hiện hệ và thay đổi mật khẩu đăng nhập.
+                    <p class="text-sm text-slate-500 mt-1">Cập nhật thông tin liên hệ và thay đổi mật khẩu đăng nhập.
                     </p>
                 </div>
 
@@ -424,7 +424,7 @@
                         </div>
                         <div class="p-6 space-y-4">
                             <p class="text-xs text-slate-500 mb-4 bg-slate-50 p-2 rounded border border-slate-100">Để
-                                trống các ô bên dưới nếu bạn chỉ muốn cập nhật thông hiện mà không đổi mật khẩu.</p>
+                                trống các ô bên dưới nếu bạn chỉ muốn cập nhật thông tin mà không đổi mật khẩu.</p>
                             <div>
                                 <label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu cũ <span
                                         class="text-red-500">*</span></label>
@@ -1557,9 +1557,30 @@
             }, 3000);
         }
 
+        // FIX VÀ CẬP NHẬT: Hàm chuẩn hóa ngày tháng chống lỗi format từ Google Sheets
         function normalizeDateStr(val) {
             if (!val) return "";
-            if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+            let strVal = String(val).trim();
+
+            // Nếu đã là chuẩn YYYY-MM-DD thì giữ nguyên
+            if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) return strVal;
+
+            // Xử lý định dạng DD/MM/YYYY hoặc MM/DD/YYYY từ Google Sheets trả về
+            if (strVal.includes('/')) {
+                let datePart = strVal.split(/[T\s]/)[0]; // Bỏ phần giờ nếu có
+                let parts = datePart.split('/');
+                if (parts.length === 3) {
+                    // Nếu là DD/MM/YYYY (Năm đứng cuối)
+                    if (parts[2].length === 4) {
+                        return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                    }
+                    // Nếu là YYYY/MM/DD (Năm đứng đầu)
+                    else if (parts[0].length === 4) {
+                        return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                    }
+                }
+            }
+
             try {
                 let d = new Date(val);
                 if (!isNaN(d.getTime())) {
@@ -1569,7 +1590,8 @@
                     return `${year}-${month}-${day}`;
                 }
             } catch (e) { }
-            return String(val).substring(0, 10);
+
+            return strVal.substring(0, 10);
         }
 
         function forceMonday(inputId) {
