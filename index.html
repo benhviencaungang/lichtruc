@@ -200,8 +200,11 @@
 <body class="bg-slate-50 text-slate-800 font-sans h-screen overflow-hidden flex relative">
 
     <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
-
+    <div id="global-loading" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in no-print">
+        <i data-lucide="loader-2" class="w-12 h-12 text-medical-500 animate-spin mb-4"></i>
+        <p class="text-white font-bold text-lg">Đang xử lý dữ liệu lên máy chủ...</p>
+        <p class="text-yellow-400 text-sm mt-1">Vui lòng KHÔNG đóng trình duyệt lúc này!</p>
+    </div>
     <!-- CUSTOM CONFIRM MODAL -->
     <div id="custom-confirm-modal"
         class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
@@ -1485,7 +1488,12 @@
 
         let confirmActionFn = null;
         let hasUnsavedChanges = false; // CỜ KIỂM SOÁT DỮ LIỆU CHƯA LƯU
-
+        function showGlobalLoading() {
+            document.getElementById('global-loading').classList.remove('hidden');
+        }
+        function hideGlobalLoading() {
+            document.getElementById('global-loading').classList.add('hidden');
+        }
         // Hàm thay đổi trạng thái nút Nháp khi có thay đổi chưa lưu
         function markUnsaved() {
             hasUnsavedChanges = true;
@@ -3354,15 +3362,23 @@
             if (!tuan) return;
 
             showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
-                let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
-                if (phieu) { phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; } else { MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); }
-                const weekDates = getDatesInWeek(tuan);
-                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); MOCK_DB.shifts.push(...localShifts);
-                await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-                await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`); 
-                showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success"); 
-                clearUnsaved();
-                checkWeeklyStatus();
+                showGlobalLoading(); // Bật màn hình chờ
+                try {
+                    let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
+                    if (phieu) { phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; } else { MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); }
+                    const weekDates = getDatesInWeek(tuan);
+                    MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); MOCK_DB.shifts.push(...localShifts);
+                    
+                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); 
+                    await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
+                    await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`); 
+                    
+                    showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success"); 
+                    clearUnsaved();
+                    checkWeeklyStatus();
+                } finally {
+                    hideGlobalLoading(); // Tắt màn hình chờ khi xong (hoặc có lỗi)
+                }
             });
         }
 
@@ -3553,9 +3569,17 @@
             if (actionStr === 'Duyệt') {
                 const phieu = MOCK_DB.phieu.find(p => p.MaPhieu === maPhieu);
                 if (phieu) {
-                    phieu.TrangThai = "Đã duyệt"; phieu.NguoiDuyet = currentUser.MaNV; phieu.NgayDuyet = new Date().toISOString().split('T')[0];
-                    await logActivity("Phê duyệt lịch", `Khoa: ${phieu.MaKhoa}`);
-                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); showToast("Đã duyệt lịch thành công.", "success"); renderAdminApprovalTable(); updateDashboardStats();
+                    showGlobalLoading(); // Bật màn hình chờ
+                    try {
+                        phieu.TrangThai = "Đã duyệt"; phieu.NguoiDuyet = currentUser.MaNV; phieu.NgayDuyet = new Date().toISOString().split('T')[0];
+                        await logActivity("Phê duyệt lịch", `Khoa: ${phieu.MaKhoa}`);
+                        await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); 
+                        showToast("Đã duyệt lịch thành công.", "success"); 
+                        renderAdminApprovalTable(); 
+                        updateDashboardStats();
+                    } finally {
+                        hideGlobalLoading(); // Tắt màn hình chờ
+                    }
                 }
             } else if (actionStr === 'Mở Trả') {
                 const phieu = MOCK_DB.phieu.find(p => p.MaPhieu === maPhieu);
