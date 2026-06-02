@@ -121,7 +121,7 @@
             text-align: center;
             font-size: 11px;
             line-height: 1.2;
-            user-select: none; /* Tránh bôi đen text khi kéo thả chọn ô */
+            user-select: none;
         }
 
         .cell-day:hover {
@@ -129,7 +129,6 @@
             cursor: pointer;
         }
         
-        /* CSS cho các ô đang được bôi đen (Multi-select) */
         .cell-selected {
             box-shadow: inset 0 0 0 2px #2563eb !important;
             background-color: #dbeafe !important;
@@ -157,7 +156,6 @@
         
         .shift-select option { font-family: sans-serif; }
         
-        /* Chỉnh style ô input số cho gọn gàng */
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { 
             opacity: 1;
@@ -213,7 +211,6 @@
         </div>
     </div>
 
-    <!-- Cập nhật CSS hiển thị block UI chống lưu nhầm -->
     <div id="loading-screen" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
@@ -275,10 +272,9 @@
             </select>
             
             <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
-                <!-- Dữ liệu năm sẽ được hệ thống tạo tự động dựa trên năm thực tế -->
             </select>
 
-            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]" title="Chọn khoa phòng để xem hoặc duyệt riêng biệt">
+            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]">
                 <option value="ALL">-- Toàn viện --</option>
             </select>
 
@@ -288,8 +284,13 @@
                 <option value="gop">Gộp Phòng/Khoa</option>
             </select>
 
-            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Tải dữ liệu mới nhất từ máy chủ Google Sheets">
-                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Làm mới
+            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Tải lại toàn bộ dữ liệu (cẩn thận mất dữ liệu chưa lưu)">
+                <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Tải lại
+            </button>
+
+            <!-- NÚT ĐỒNG BỘ LỊCH TRỰC MỚI -->
+            <button onclick="syncShiftsManual()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Đồng bộ lịch trực (Chỉ cập nhật cho nhân viên có lịch, giữ nguyên người khác)">
+                <i data-lucide="calendar-sync" class="w-4 h-4 mr-2"></i> Đồng bộ Lịch trực
             </button>
         </div>
 
@@ -311,12 +312,10 @@
                 </button>
             </div>
 
-            <!-- Nút xuất Excel (Chỉ Admin_KHTH mới thấy) -->
             <button id="btn-export-excel" onclick="openExportExcelModal()" class="hidden px-4 py-2 bg-green-600 text-white rounded-lg flex items-center shadow hover:bg-green-700 transition font-medium whitespace-nowrap shrink-0" title="Xuất dữ liệu chấm công ra file Excel">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Xuất Excel
             </button>
 
-            <!-- Nút Cấu Hình Phép (Chỉ Admin TCHC và KHTH) -->
             <button id="btn-leave-config" onclick="openLeaveConfigModal()" class="hidden px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center shadow hover:bg-indigo-700 transition font-medium whitespace-nowrap shrink-0" title="Cấu hình số ngày phép được cộng thêm">
                 <i data-lucide="settings-2" class="w-4 h-4 mr-2"></i> Cấu hình Phép
             </button>
@@ -459,10 +458,9 @@
         </div>
     </div>
 
-    <!-- MODAL CẤU HÌNH PHÉP TỔNG HỢP (KHOA + CÁ NHÂN) -->
+    <!-- MODAL CẤU HÌNH PHÉP -->
     <div id="leave-config-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
-            <!-- Header Modal -->
             <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center shrink-0">
                 <div>
                     <h3 class="font-bold text-lg text-indigo-800 flex items-center">
@@ -473,7 +471,6 @@
                 <button onclick="closeLeaveConfigModal()" class="text-indigo-400 hover:text-indigo-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             
-            <!-- Tabs -->
             <div class="flex border-b border-slate-200 shrink-0 bg-white px-4">
                 <button onclick="switchLeaveConfigTab('khoa')" id="tab-btn-khoa" class="px-6 py-3 font-medium text-sm border-b-2 border-indigo-600 text-indigo-600 transition-colors">
                     <i data-lucide="building-2" class="w-4 h-4 inline mr-1.5"></i> Cấu hình theo Khoa (+2 Ngày)
@@ -483,17 +480,14 @@
                 </button>
             </div>
 
-            <!-- TAB 1: CẤU HÌNH THEO KHOA -->
             <div id="tab-content-khoa" class="flex-1 overflow-auto p-4 bg-slate-50">
                 <div class="mb-4 text-sm text-slate-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
                     <i data-lucide="info" class="w-4 h-4 inline text-blue-500 mr-1"></i> Tick chọn những khoa/phòng thuộc diện độc hại. Nhân viên thuộc khoa được tích sẽ <b>tự động được cộng thêm 2 ngày phép</b>.
                 </div>
                 <div id="leave-config-list-khoa">
-                    <!-- Checkboxes danh sách khoa sẽ được load bằng JS -->
                 </div>
             </div>
 
-            <!-- TAB 2: CẤU HÌNH CÁ NHÂN -->
             <div id="tab-content-canhan" class="flex-1 flex flex-col hidden min-h-0 bg-slate-50 relative">
                 <div class="p-4 bg-white border-b border-slate-200 shrink-0 flex items-center gap-4">
                     <label class="text-sm font-medium text-slate-700 whitespace-nowrap">Lọc theo Khoa/Phòng:</label>
@@ -511,13 +505,11 @@
                             </tr>
                         </thead>
                         <tbody id="modal-users-container" class="divide-y divide-slate-200">
-                            <!-- Danh sách nhân viên sẽ được render bằng JS -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Footer Modal -->
             <div class="p-4 border-t border-slate-200 bg-white flex justify-between items-center shrink-0">
                 <span class="text-xs text-slate-500 italic">* Các điều chỉnh sẽ được cộng dồn (Khoa + Cá nhân) khi tính phép.</span>
                 <div class="flex space-x-3">
@@ -604,6 +596,9 @@
         let copiedShiftValue = null; 
         let isDraggingSelection = false;
 
+        // Biến lưu trữ trạng thái dữ liệu gốc để xử lý Concurrency (Nhiều người dùng chỉnh sửa)
+        let originalGridData = {};
+
         window.addEventListener('beforeunload', function (e) {
             if (hasUnsavedChanges) {
                 e.preventDefault();
@@ -641,7 +636,6 @@
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
         ];
 
-        // HÀM NHẬN DIỆN NGÀY LỄ VIỆT NAM
         function isHoliday(day, month, year) {
             if (day === 1 && month === 1) return true; 
             if (day === 30 && month === 4) return true; 
@@ -813,7 +807,6 @@
             }
         }
 
-        // KÍCH HOẠT SỰ KIỆN KÉO THẢ, CHỌN NHIỀU Ô
         function clearSelection() {
             document.querySelectorAll('.cell-selected').forEach(c => c.classList.remove('cell-selected'));
         }
@@ -822,7 +815,6 @@
             const table = document.querySelector('.table-custom');
             const popover = document.getElementById('shift-picker-popover');
             
-            // Xóa bôi đen nếu click ra ngoài vùng bảng và menu popover
             if (table && !table.contains(e.target) && popover && !popover.contains(e.target)) {
                 clearSelection();
             }
@@ -832,7 +824,6 @@
             isDraggingSelection = false;
         });
 
-        // Hàm hỗ trợ cập nhật màu sắc sau khi Paste/Áp dụng
         function updateCellStyles(cell, val) {
             cell.className = cell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
             
@@ -858,19 +849,18 @@
                 const cell = e.target.closest('.cell-day');
                 if (!cell) return;
 
-                if (e.button === 2) { // Click chuột phải
+                if (e.button === 2) { 
                     if (!cell.classList.contains('cell-selected')) {
                         clearSelection();
                         cell.classList.add('cell-selected');
                         activeInputCell = cell;
                     }
-                    return; // Nhường sự kiện contextmenu
+                    return; 
                 }
 
                 isDraggingSelection = true;
                 activeInputCell = cell;
 
-                // Chọn rời rạc khi giữ Ctrl
                 if (e.ctrlKey || e.metaKey) {
                     cell.classList.toggle('cell-selected');
                 } else {
@@ -939,7 +929,6 @@
             if (forceClose || !popover.contains(event.target)) {
                 if (!popover.classList.contains('hidden')) {
                     popover.classList.add('hidden');
-                    // Không tự động clearSelection ở đây để người dùng dễ nhìn xem họ đã thay đổi vùng nào
                 }
             }
         }
@@ -1072,9 +1061,9 @@
             const container = document.getElementById('toast-container');
             if(!container) return;
             const toast = document.createElement('div');
-            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : 'bg-emerald-600');
+            const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : (type === 'info' ? 'bg-blue-600' : 'bg-emerald-600'));
             toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
-            toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : 'check-circle'}" class="w-5 h-5 mr-2"></i><span class="font-sans">${message}</span>`;
+            toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : (type === 'info' ? 'info' : 'check-circle')}" class="w-5 h-5 mr-2"></i><span class="font-sans">${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
             
@@ -1103,7 +1092,7 @@
             if (hasUnsavedChanges) {
                 showConfirmModal(
                     "Cảnh báo: Dữ liệu chưa lưu!", 
-                    "Bạn đã thay đổi Bảng chấm công nhưng chưa lưu.\nHệ thống bắt buộc phải LƯU LẠI thay đổi trước khi thoát để tránh mất dữ liệu.\n\nNhấn 'Đồng ý' để tự động lưu và thoát.", 
+                    "Bạn đã thay đổi Bảng chấm công nhưng chưa lưu.\nHệ thống bắt buộc phải LƯU LẠI thay đổi trước khi thoát để tránh mất dữ liệu.\n\nNhấn 'Đồng ý' để tự tự động lưu và thoát.", 
                     async () => {
                         await saveDraftData();
                         window.location.href = 'index.html';
@@ -1272,26 +1261,37 @@
                 if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
                 if (results[3] && results[3].status === "success") MOCK_DB.bangChamCong = results[3].data || [];
                 
-                // Lấy cấu hình phép từ Server
                 if (results[4] && results[4].status === "success") {
                     MOCK_DB.cauHinhPhep = results[4].data || null;
                 }
                 
                 if (results[2] && results[2].status === "success") {
                     MOCK_DB.shifts = (results[2].data || []).map(s => {
-                        let parsedDate = s.NgayTruc;
-                        if (parsedDate && parsedDate.includes('T')) {
-                            const utcMs = new Date(parsedDate).getTime();
-                            if (!isNaN(utcMs)) {
-                                const vnMs = utcMs + (7 * 60 * 60 * 1000);
-                                const vnDate = new Date(vnMs);
-                                const y = vnDate.getUTCFullYear();
-                                const m = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
-                                const day = String(vnDate.getUTCDate()).padStart(2, '0');
-                                parsedDate = `${y}-${m}-${day}`;
+                        let parsedDate = String(s.NgayTruc || "").trim();
+                        if (parsedDate) {
+                            if (parsedDate.includes('T')) {
+                                const utcMs = new Date(parsedDate).getTime();
+                                if (!isNaN(utcMs)) {
+                                    const vnMs = utcMs + (7 * 60 * 60 * 1000);
+                                    const vnDate = new Date(vnMs);
+                                    const y = vnDate.getUTCFullYear();
+                                    const m = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
+                                    const day = String(vnDate.getUTCDate()).padStart(2, '0');
+                                    parsedDate = `${y}-${m}-${day}`;
+                                }
+                            } else {
+                                let tempStr = parsedDate.split(' ')[0].replace(/\//g, '-');
+                                let parts = tempStr.split('-');
+                                if (parts.length === 3) {
+                                    if (parts[0].length === 4) { 
+                                        parsedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                                    } else { 
+                                        parsedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                    }
+                                } else {
+                                    parsedDate = tempStr;
+                                }
                             }
-                        } else if (parsedDate) {
-                            parsedDate = parsedDate.substring(0, 10);
                         }
                         
                         return {
@@ -1320,6 +1320,12 @@
 
         function initUI() {
             const today = getVNTime();
+            
+            // 1. Cài đặt ngày ký in luôn luôn là ngày thực tế hiện tại
+            document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
+            document.getElementById('lbl-print-month').textContent = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('lbl-print-year').textContent = String(today.getFullYear());
+
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
             
@@ -1337,6 +1343,7 @@
                 defaultYear = 2026;
             }
             
+            // Logic lùi tháng hiển thị bảng chấm công nếu là những ngày đầu tháng
             if(today.getDate() < 5) {
                 defaultMonth -= 1;
                 if(defaultMonth === 0) {
@@ -1345,10 +1352,6 @@
                     if (defaultYear < 2026) defaultYear = 2026;
                 }
             }
-
-            document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
-            document.getElementById('lbl-print-month').textContent = String(defaultMonth).padStart(2, '0');
-            document.getElementById('lbl-print-year').textContent = String(defaultYear);
 
             document.getElementById('sel-month').value = defaultMonth;
             
@@ -1519,27 +1522,74 @@
             document.getElementById('loading-screen').classList.remove('hidden');
 
             try {
-                const month = currentRenderedMonth || document.getElementById('sel-month').value;
-                const year = currentRenderedYear || document.getElementById('sel-year').value;
+                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
                 
-                let dataByKhoa = extractGridData(); 
+                // Lấy dữ liệu mới nhất từ server để gộp (Concurrency Merge)
+                let latestServerDB = [];
+                try {
+                    const res = await fetch(GAS_URL + "?action=BangChamCong").then(r => r.json());
+                    if (res && res.status === "success") latestServerDB = res.data;
+                } catch(e) {
+                    console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                    latestServerDB = MOCK_DB.bangChamCong;
+                }
 
-                for (let parentMk in dataByKhoa) {
+                let uiDataByKhoa = extractGridData(); 
+                let hasMerged = false;
+
+                for (let parentMk in uiDataByKhoa) {
                     const maBang = `BCC_${parentMk}_${month}_${year}`;
+                    
+                    let uiGrid = uiDataByKhoa[parentMk];
+                    let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+                    
+                    if (latestBang && latestBang.DuLieu) {
+                        try {
+                            let serverGrid = JSON.parse(latestBang.DuLieu);
+                            // Thực hiện Gộp Dữ Liệu
+                            for(let nv in uiGrid) {
+                                if(serverGrid[nv]) {
+                                    for(let d = 1; d <= 31; d++) {
+                                        let uiVal = uiGrid[nv].days[d] || '';
+                                        let serverVal = serverGrid[nv].days[d] || '';
+                                        let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+                                        
+                                        // Nếu UI của mình không đổi so với lúc tải, nhưng Server lại có thay đổi mới -> Lấy của Server
+                                        if (uiVal === origVal && serverVal !== origVal) {
+                                            uiGrid[nv].days[d] = serverVal;
+                                            hasMerged = true;
+                                        }
+                                    }
+                                    
+                                    // Gộp cả Ghi chú
+                                    let uiNote = uiGrid[nv].note || '';
+                                    let serverNote = serverGrid[nv].note || '';
+                                    let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                    if (uiNote === origNote && serverNote !== origNote) {
+                                        uiGrid[nv].note = serverNote;
+                                        hasMerged = true;
+                                    }
+                                }
+                            }
+                        } catch(e) {}
+                    }
+
+                    // Cập nhật lại MOCK_DB
                     let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
-                    let gridJson = JSON.stringify(dataByKhoa[parentMk]);
+                    let finalGridJson = JSON.stringify(uiGrid);
 
                     if (!bang) {
                         bang = { 
                             MaBang: maBang, MaKhoa: parentMk, Thang: month, Nam: year, TrangThai: status, 
                             NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '', 
                             NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '', 
-                            DuLieu: gridJson 
+                            DuLieu: finalGridJson 
                         };
                         MOCK_DB.bangChamCong.push(bang);
                     } else {
                         bang.TrangThai = status;
-                        bang.DuLieu = gridJson;
+                        bang.DuLieu = finalGridJson;
                         if(status === 'Đã duyệt') {
                             bang.NguoiDuyet = currentUser.MaNV;
                             bang.NgayDuyet = getVNFormatYYYYMMDD();
@@ -1552,6 +1602,14 @@
                 updateApprovalUI(status);
                 
                 await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
+
+                // Cập nhật lại dữ liệu gốc
+                originalGridData = extractGridData();
+
+                if (hasMerged) {
+                    showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                    generateReport(); // Refresh UI to show merged data
+                }
 
             } finally {
                 isSaving = false;
@@ -1607,6 +1665,111 @@
             return { ten: ten.toLowerCase(), hoDem: hoDem.toLowerCase() };
         }
 
+        // HÀM ĐỒNG BỘ LỊCH TRỰC THỦ CÔNG MỚI
+        async function syncShiftsManual() {
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') {
+                showToast("Bảng đã khóa, không thể đồng bộ!", "error");
+                return;
+            }
+            
+            showToast("Đang tải dữ liệu lịch trực mới nhất...", "info");
+            
+            try {
+                // Kéo data lịch trực mới nếu có thay đổi
+                const res = await fetch(GAS_URL + "?action=ChiTietLichTruc").then(r => r.json());
+                if (res && res.status === "success") {
+                    MOCK_DB.shifts = (res.data || []).map(s => {
+                        let parsedDate = String(s.NgayTruc || "").trim();
+                        if (parsedDate) {
+                            if (parsedDate.includes('T')) {
+                                const utcMs = new Date(parsedDate).getTime();
+                                if (!isNaN(utcMs)) {
+                                    const vnMs = utcMs + (7 * 60 * 60 * 1000);
+                                    const vnDate = new Date(vnMs);
+                                    parsedDate = `${vnDate.getUTCFullYear()}-${String(vnDate.getUTCMonth() + 1).padStart(2, '0')}-${String(vnDate.getUTCDate()).padStart(2, '0')}`;
+                                }
+                            } else {
+                                let tempStr = parsedDate.split(' ')[0].replace(/\//g, '-');
+                                let parts = tempStr.split('-');
+                                if (parts.length === 3) {
+                                    if (parts[0].length === 4) { 
+                                        parsedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                                    } else { 
+                                        parsedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                    }
+                                } else { parsedDate = tempStr; }
+                            }
+                        }
+                        return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
+                    });
+                }
+            } catch(e) {
+                console.warn("Không tải được lịch trực mới, dùng dữ liệu hiện tại.");
+            }
+
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+            const daysInMonth = new Date(year, month, 0).getDate();
+
+            // Chỉ lọc lịch trực của tháng này
+            const shiftsInMonth = MOCK_DB.shifts.filter(s => {
+                if(!s.NgayTruc) return false;
+                const parts = s.NgayTruc.split('-');
+                return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
+            });
+
+            let changedCount = 0;
+            const rows = document.querySelectorAll('#report-tbody tr.data-row');
+            
+            rows.forEach(tr => {
+                const maNV = String(tr.getAttribute('data-id'));
+                const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === maNV);
+                
+                // Chỉ ĐỒNG BỘ cho nhân viên CÓ LỊCH TRỰC
+                if (nvShifts.length > 0) {
+                    const shiftMap = {};
+                    nvShifts.forEach(s => {
+                        const parts = s.NgayTruc.split('-');
+                        if(parts.length === 3) {
+                            let d = parseInt(parts[2]);
+                            shiftMap[d] = s.ChucDanh || 'T24'; 
+                        }
+                    });
+
+                    const cells = tr.querySelectorAll('.cell-day');
+                    cells.forEach((cell, idx) => {
+                        const day = idx + 1;
+                        if (day > daysInMonth) return;
+
+                        let newVal = null;
+                        if (shiftMap[day]) {
+                            newVal = shiftMap[day]; // T24, T12N...
+                        } else if (shiftMap[day - 1]) {
+                            newVal = 'Rt'; // Ra trực
+                        }
+
+                        // Nếu là ngày có trực hoặc ra trực, ghi đè.
+                        if (newVal) {
+                            const currentVal = cell.innerText.trim();
+                            if (currentVal !== newVal) {
+                                cell.innerText = newVal;
+                                updateCellStyles(cell, newVal);
+                                changedCount++;
+                            }
+                        }
+                    });
+                    recalcRow(tr);
+                }
+            });
+
+            if (changedCount > 0) {
+                showToast(`Đã đồng bộ cập nhật lịch trực cho các nhân viên có ca (${changedCount} ô thay đổi)!`, "success");
+                markUnsaved();
+            } else {
+                showToast("Lịch trực đã khớp, không có dữ liệu thay đổi.", "info");
+            }
+        }
+
         function generateReport() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
@@ -1653,7 +1816,7 @@
 
             let approvedOwnership = {}; 
             MOCK_DB.bangChamCong.forEach(b => {
-                if (b.Thang == month && b.Nam == year && b.TrangThai === 'Đã duyệt' && b.DuLieu) {
+                if (parseInt(b.Thang) === month && parseInt(b.Nam) === year && b.TrangThai === 'Đã duyệt' && b.DuLieu) {
                     try {
                         let parsed = JSON.parse(b.DuLieu);
                         Object.keys(parsed).forEach(nv => {
@@ -1726,19 +1889,20 @@
 
             let globalSavedData = {};
             MOCK_DB.bangChamCong.forEach(b => {
-                if (b.Thang == month && b.Nam == year && b.DuLieu) {
+                if (parseInt(b.Thang) === month && parseInt(b.Nam) === year && b.DuLieu) {
                     try {
                         let savedObj = JSON.parse(b.DuLieu);
                         for (let nv in savedObj) {
-                            if (!globalSavedData[nv]) globalSavedData[nv] = { days: {}, note: "" };
+                            let strNv = String(nv);
+                            if (!globalSavedData[strNv]) globalSavedData[strNv] = { days: {}, note: "" };
                             for (let d in savedObj[nv].days) {
-                                if (savedObj[nv].days[d]) globalSavedData[nv].days[d] = savedObj[nv].days[d];
+                                if (savedObj[nv].days[d]) globalSavedData[strNv].days[d] = savedObj[nv].days[d];
                             }
                             if (savedObj[nv].note) {
-                                if (globalSavedData[nv].note && !globalSavedData[nv].note.includes(savedObj[nv].note)) {
-                                    globalSavedData[nv].note += " " + savedObj[nv].note;
+                                if (globalSavedData[strNv].note && !globalSavedData[strNv].note.includes(savedObj[nv].note)) {
+                                    globalSavedData[strNv].note += " " + savedObj[nv].note;
                                 } else {
-                                    globalSavedData[nv].note = savedObj[nv].note;
+                                    globalSavedData[strNv].note = savedObj[nv].note;
                                 }
                             }
                         }
@@ -1787,6 +1951,8 @@
                 group.users.forEach(item => {
                     const u = item.user;
                     const maKhoa = item.parentMaKhoa; 
+                    
+                    let isBoardSaved = MOCK_DB.bangChamCong.some(b => b.MaKhoa === maKhoa && parseInt(b.Thang) === month && parseInt(b.Nam) === year);
 
                     let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
                     let leaveDate = parseEmployeeDate(u.NgayNghi, true);
@@ -1810,7 +1976,8 @@
 
                     let ngayViec = 0, truc24 = 0, truc12 = 0, p = 0, nb = 0, om = 0, khac = 0;
 
-                    const nvSavedData = globalSavedData[u.MaNV];
+                    const strMaNV = String(u.MaNV);
+                    const nvSavedData = globalSavedData[strMaNV];
                     
                     for(let day = 1; day <= 31; day++) {
                         if (day > daysInMonth) {
@@ -1823,7 +1990,6 @@
                             
                             if (dateObj >= joinDate && dateObj < leaveDate) {
                                 
-                                // Tự động tính toán lại lịch chuẩn để đồng bộ
                                 let correctVal = '';
                                 if (shiftMap[day]) {
                                     correctVal = 'T24';
@@ -1837,18 +2003,11 @@
                                     correctVal = '+';
                                 }
 
-                                if (nvSavedData && nvSavedData.days[day]) {
-                                    let savedVal = nvSavedData.days[day];
-                                    let parts = parseShifts(savedVal);
-                                    
-                                    // Kiểm tra xem dữ liệu đã lưu có phải là người dùng tự chấm bằng tay hay không
-                                    const autoSymbols = ['+', 'T24', 'RT', 'CN', 'T7', 'L', ''];
-                                    let isManual = parts.some(p => !autoSymbols.includes(p.toUpperCase()));
-
-                                    if (isManual) {
-                                        val = savedVal;
+                                if (isBoardSaved && nvSavedData) {
+                                    if (nvSavedData.days[day] !== undefined) {
+                                        val = nvSavedData.days[day];
                                     } else {
-                                        val = correctVal;
+                                        val = ''; 
                                     }
                                 } else {
                                     val = correctVal;
@@ -1922,7 +2081,9 @@
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
             
-            // Kích hoạt sự kiện kéo thả cho các ô vừa render
+            // Lưu lại snapshot dữ liệu để thực hiện Merge khi Lưu
+            originalGridData = extractGridData();
+
             if (!isLocked) {
                 initDragSelection();
             }
@@ -2104,7 +2265,7 @@
                 if (!cachedSavedMonths[monthKey]) {
                     cachedSavedMonths[monthKey] = {};
                     MOCK_DB.bangChamCong.forEach(b => {
-                        if (b.Thang == m && b.Nam == y && b.DuLieu) {
+                        if (parseInt(b.Thang) === m && parseInt(b.Nam) === y && b.DuLieu) {
                             try {
                                 let parsed = JSON.parse(b.DuLieu);
                                 for (let nv in parsed) {
@@ -2206,24 +2367,19 @@
             }
         }
 
-        // --- HÀM LẤY VÀ LƯU CẤU HÌNH TỔNG HỢP (KHOA + CÁ NHÂN) ---
-        let tempLeaveConfig = { khoa: [], caNhan: {} }; // Biến tạm
+        let tempLeaveConfig = { khoa: [], caNhan: {} };
 
-        // Hàm hỗ trợ parse/migrate từ định dạng cũ sang mới
         function parseLeaveConfig(raw) {
             let config = { khoa: [], caNhan: {} };
             if (!raw) return config;
 
             if (Array.isArray(raw)) {
-                // Khả năng là định dạng cấu hình Khoa cũ (Mảng Array)
                 config.khoa = raw.map(String).map(s => s.trim().toUpperCase());
             } else if (typeof raw === 'object') {
                 if (raw.khoa !== undefined || raw.caNhan !== undefined) {
-                    // Đúng định dạng chuẩn mới nhất
                     config.khoa = Array.isArray(raw.khoa) ? raw.khoa : [];
                     config.caNhan = raw.caNhan || {};
                 } else {
-                    // Khả năng là định dạng chỉ có cá nhân ở code version trước đó
                     config.caNhan = raw;
                 }
             }
@@ -2244,7 +2400,6 @@
         function openLeaveConfigModal() {
             tempLeaveConfig = JSON.parse(JSON.stringify(getCurrentLeaveConfig())); 
             
-            // --- 1. RENDER TAB KHOA ---
             const listKhoaContainer = document.getElementById('leave-config-list-khoa');
             let htmlKhoa = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
             let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
@@ -2262,7 +2417,6 @@
             htmlKhoa += '</div>';
             listKhoaContainer.innerHTML = htmlKhoa;
 
-            // --- 2. RENDER TAB CÁ NHÂN ---
             const filterKhoa = document.getElementById('modal-khoa-filter');
             let optionsHtml = '<option value="ALL">-- Tất cả khoa phòng --</option>';
             sortedKhoa.forEach(k => {
@@ -2271,14 +2425,12 @@
             filterKhoa.innerHTML = optionsHtml;
             renderLeaveConfigUsers();
 
-            // Mặc định mở Tab Khoa đầu tiên
             switchLeaveConfigTab('khoa');
 
             document.getElementById('leave-config-modal').classList.remove('hidden');
             lucide.createIcons();
         }
 
-        // Chuyển đổi qua lại giữa 2 Tab
         function switchLeaveConfigTab(tabName) {
             const btnKhoa = document.getElementById('tab-btn-khoa');
             const btnCaNhan = document.getElementById('tab-btn-canhan');
@@ -2318,7 +2470,6 @@
             
             let users = MOCK_DB.users.filter(u => u.ChucDanh !== 'Quản lý');
             
-            // Lọc theo Khoa
             if (khoaId !== 'ALL') {
                 users = users.filter(u => {
                     let primary = getPrimaryKhoa(u.MaKhoa);
@@ -2326,7 +2477,6 @@
                 });
             }
 
-            // Sắp xếp Alphabet
             users.sort((a, b) => {
                 let nameA = getTenString(a.HoTen);
                 let nameB = getTenString(b.HoTen);
@@ -2373,26 +2523,21 @@
         }
 
         async function saveLeaveConfig() {
-            // Lưu local dự phòng
             localStorage.setItem('leave_combined_config', JSON.stringify(tempLeaveConfig));
             
-            // Khóa nút, hiện chữ Loading
             const btnSave = document.querySelector('#leave-config-modal button.bg-indigo-600');
             const originalHtml = btnSave.innerHTML;
             btnSave.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang đồng bộ...`;
             btnSave.disabled = true;
 
             try {
-                // Đẩy object cấu hình lên Google Apps Script
                 await syncWithGAS('sync_CauHinhPhep', tempLeaveConfig);
                 
-                // Cập nhật Database nội bộ hiện tại
                 MOCK_DB.cauHinhPhep = JSON.parse(JSON.stringify(tempLeaveConfig));
                 
                 closeLeaveConfigModal();
                 showToast("Đã lưu cấu hình lên máy chủ thành công!", "success");
                 
-                // Cập nhật ngay nếu modal Thống kê phép đang mở
                 if (!document.getElementById('leave-stats-modal').classList.contains('hidden')) {
                     openLeaveStatsModal(); 
                 }
@@ -2412,7 +2557,6 @@
 
             let baseP = 12; 
             
-            // 1. Kiểm tra ưu tiên lấy cột SoPhep trong database NhanVien
             if (user.SoPhep !== undefined && user.SoPhep !== null && String(user.SoPhep).trim() !== '') {
                 let dbPhep = parseInt(user.SoPhep);
                 if (!isNaN(dbPhep) && dbPhep > 0) {
@@ -2420,10 +2564,8 @@
                 }
             }
 
-            // 2. Tính số lượng phép được điều chỉnh từ Cấu hình TỔNG HỢP
             const currentLeaveConfig = getCurrentLeaveConfig();
             
-            // 2.1 Cấu hình Khoa (+2)
             let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
             let isToxicDept = false; 
             const configKhoa = currentLeaveConfig.khoa || [];
@@ -2440,10 +2582,9 @@
             }
 
             if (isToxicDept) {
-                baseP += 2; // Được hưởng thêm 2 ngày phép độc hại
+                baseP += 2;
             }
 
-            // 2.2 Cấu hình Cá nhân (Cộng/Trừ)
             if (currentLeaveConfig.caNhan && currentLeaveConfig.caNhan[maNV] !== undefined) {
                 let adjPhep = parseFloat(currentLeaveConfig.caNhan[maNV]);
                 if (!isNaN(adjPhep)) {
@@ -2451,7 +2592,6 @@
                 }
             }
 
-            // 3. Tính thâm niên (mỗi 5 năm làm việc + 1 ngày phép)
             if (user.NgayVaoLam) {
                 let joinDateObj = parseEmployeeDate(user.NgayVaoLam, false);
                 let startYear = joinDateObj.getFullYear();
@@ -2638,30 +2778,6 @@
         function closeLeaveStatsModal() {
             document.getElementById('leave-stats-modal').classList.add('hidden');
         }
-
-        async function silentRefreshData() {
-            if (document.hidden || hasUnsavedChanges || isSaving) return;
-
-            try {
-                const res = await fetch(GAS_URL + "?action=BangChamCong").then(r => r.json());
-                if (res && res.status === "success") {
-                    const newData = res.data || [];
-                    
-                    if (JSON.stringify(newData) !== JSON.stringify(MOCK_DB.bangChamCong)) {
-                        MOCK_DB.bangChamCong = newData;
-                        
-                        if (!hasUnsavedChanges && !isSaving) {
-                            generateReport();
-                            showToast("Dữ liệu vừa được cập nhật từ máy chủ.", "info");
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn("Auto refresh failed", e);
-            }
-        }
-
-        setInterval(silentRefreshData, 15000);
 
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
