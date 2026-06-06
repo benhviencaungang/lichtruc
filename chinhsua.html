@@ -44,11 +44,13 @@
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
+    <!-- GLOBAL LOADING -->
     <div id="global-loading" class="fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in hidden no-print">
         <i data-lucide="loader-2" class="w-12 h-12 text-medical-500 animate-spin mb-4"></i>
         <p class="text-white font-bold text-lg" id="loading-text">Đang tải dữ liệu...</p>
     </div>
 
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
     <div id="login-screen" class="fixed inset-0 bg-medical-900 z-[100] flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto relative">
             <div class="text-center mb-8">
@@ -68,6 +70,7 @@
         </div>
     </div>
 
+    <!-- MODAL QUẢN LÝ CHỮ KÝ (CAMERA & UPLOAD) -->
     <div id="camera-modal" class="fixed inset-0 bg-slate-900/90 z-[9999] flex items-center justify-center fade-in hidden no-print p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
@@ -77,19 +80,23 @@
             <div class="p-4 flex flex-col items-center space-y-4 bg-slate-100">
                 <p class="text-xs text-slate-500 text-center">Bạn có thể chụp trực tiếp hoặc tải lên ảnh chữ ký có sẵn. Hệ thống sẽ tự động xóa nền trắng.</p>
                 
+                <!-- Vùng Camera -->
                 <div id="video-container" class="relative w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden shadow-inner border-2 border-slate-300">
                     <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
                     <div class="absolute inset-0 border-2 border-dashed border-white/50 m-4 rounded pointer-events-none z-10"></div>
                 </div>
 
+                <!-- Vùng hiển thị kết quả tách nền -->
                 <div id="result-container" class="hidden relative w-full max-w-[320px] bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAADFJREFUOE9jZCASMDKgAnv37v3PwsLCQJJk165d/yH4yJJoDBlNgHE0DTANjKMpYDQBRwAA4sITM18T43wAAAAASUVORK5CYII=')] rounded-lg overflow-hidden shadow-inner border-2 border-medical-300 p-2 flex justify-center items-center">
                     <canvas id="canvas-result" class="w-full h-auto object-contain"></canvas>
                 </div>
 
+                <!-- Nút điều khiển -->
                 <div class="flex flex-wrap gap-2 w-full justify-center">
                     <button id="btn-capture" onclick="captureAndProcess()" class="bg-medical-600 text-white px-4 py-2 rounded-full shadow hover:bg-medical-700 flex items-center transition font-bold text-sm">
                         <i data-lucide="camera" class="w-4 h-4 mr-2"></i> Chụp ảnh
                     </button>
+                    <!-- Input ẩn và Nút Upload ảnh -->
                     <input type="file" id="file-upload-sig" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
                     <button id="btn-upload" onclick="document.getElementById('file-upload-sig').click()" class="bg-blue-600 text-white px-4 py-2 rounded-full shadow hover:bg-blue-700 flex items-center transition font-bold text-sm">
                         <i data-lucide="upload" class="w-4 h-4 mr-2"></i> Tải ảnh lên
@@ -107,9 +114,11 @@
                 </div>
             </div>
         </div>
+        <!-- Canvas ẩn dùng để lấy frame gốc -->
         <canvas id="canvas-hidden" class="hidden"></canvas>
     </div>
 
+    <!-- MAIN APP -->
     <div id="main-content" class="hidden h-screen flex flex-col">
         <header class="bg-white border-b shadow-sm p-4 flex justify-between items-center z-10 shrink-0 no-print">
             <div class="flex items-center">
@@ -125,6 +134,7 @@
         </header>
 
         <div class="flex-1 overflow-hidden relative">
+            <!-- VIEW 1: DANH SÁCH -->
             <div id="list-view" class="h-full p-4 md:p-6 overflow-y-auto fade-in">
                 <div class="max-w-6xl mx-auto space-y-4">
                     <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -156,6 +166,7 @@
                 </div>
             </div>
 
+            <!-- VIEW 2: CHI TIẾT & IN -->
             <div id="detail-view" class="h-full bg-slate-200 overflow-y-auto fade-in hidden pb-10">
                 <div class="sticky top-0 bg-white border-b shadow-sm p-4 flex justify-between items-center z-50 no-print">
                     <button onclick="closeTicketDetail()" class="flex items-center text-slate-600 hover:text-medical-600 transition font-medium px-3 py-1.5 bg-slate-100 rounded-lg"><i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Quay lại danh sách</button>
@@ -219,6 +230,7 @@
                             </div>
                         </div>
 
+                        <!-- CHỮ KÝ CĂN CHỈNH LẠI -->
                         <div class="flex justify-between mt-12 text-center text-sm items-start page-break-avoid h-36">
                             <div class="w-1/3 flex flex-col h-full relative px-1">
                                 <p class="font-bold w-full text-center shrink-0">Xác nhận phòng Kế Toán</p>
@@ -242,8 +254,9 @@
         </div>
     </div>
 
+    <!-- SCRIPT -->
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ3fExZDJZfl0xMhCzDGeUNAHUVRyei1Ldl3s2SuFFU4snJUdt5JMv4xCMvV6yqGOo/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
         
         const DEPT_KETOAN = ["TAICHINHKETOAN", "TAIVU", "KHTH"]; 
         const DEPT_CNTT = ["CNTT", "KHTH"]; 
@@ -383,7 +396,9 @@
                 else if(t.TrangThai === "Hoàn thành") sttColor = "bg-emerald-100 text-emerald-800";
 
                 let dShow = t.NgayYeuCau;
-                if(dShow && dShow.includes('-')) dShow = dShow.split('T')[0].split('-').reverse().join('/');
+                if(dShow && dShow.includes('-')) {
+                    dShow = dShow.split('T')[0].split('-').reverse().join('/');
+                }
 
                 return `
                     <tr class="border-b hover:bg-medical-50 transition cursor-pointer" onclick="openTicketDetail('${t.SoPhieu}')">
@@ -441,7 +456,6 @@
             document.getElementById('search-nguoi-2').value = displayName;
             document.getElementById('dropdown-nguoi-2').classList.add('hidden');
             
-            // Cập nhật thẻ hiển thị tên người 2 ngay lúc chọn
             const uInfo = getUserInfo(maNV);
             renderSignatureBox('box-ky-nguoi-yeu-cau-2', uInfo, "Chờ ký");
         }
@@ -551,7 +565,7 @@
             renderActionButtons(selectedTicket);
         }
 
-        // CĂN CHỈNH LAYOUT CHỮ KÝ
+        // CĂN CHỈNH LAYOUT CHỮ KÝ CHUẨN
         function renderSignatureBox(containerId, userObj, fallbackText = null, overrideName = null) {
             const box = document.getElementById(containerId);
             if (!box) return;
@@ -677,7 +691,7 @@
         }
 
         // =========================================================================
-        // CAMERA & UPLOAD CHỮ KÝ (BACKGROUND REMOVAL)
+        // CAMERA & UPLOAD CHỮ KÝ BẰNG HÌNH ẢNH (TÁCH NỀN TỰ ĐỘNG)
         // =========================================================================
         let videoStream = null;
 
@@ -753,7 +767,6 @@
             processImageDataAndDisplay(imgData, cropW, cropH);
         }
 
-        // TÍNH NĂNG MỚI: XỬ LÝ ẢNH UPLOAD LÊN
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -764,16 +777,11 @@
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 600;
-                    let width = img.width;
-                    let height = img.height;
+                    let width = img.width; let height = img.height;
 
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     
-                    canvas.width = width;
-                    canvas.height = height;
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
@@ -792,16 +800,12 @@
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i]; const g = data[i + 1]; const b = data[i + 2];
                 const v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                if (v >= threshold) {
-                    data[i + 3] = 0; 
-                } else {
-                    data[i] = 0; data[i + 1] = 20; data[i + 2] = 120; data[i + 3] = 255; 
-                }
+                if (v >= threshold) { data[i + 3] = 0; } 
+                else { data[i] = 0; data[i + 1] = 20; data[i + 2] = 120; data[i + 3] = 255; }
             }
 
             const resultCanvas = document.getElementById('canvas-result');
-            resultCanvas.width = width;
-            resultCanvas.height = height;
+            resultCanvas.width = width; resultCanvas.height = height;
             resultCanvas.getContext('2d').putImageData(imgData, 0, 0);
 
             document.getElementById('video-container').classList.add('hidden');
