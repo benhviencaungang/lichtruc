@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Phiếu Yêu Cầu Hỗ Trợ</title>
+    <link rel="icon" type="image/x-icon" href="logo.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { medical: { 50: '#f0fdfa', 100: '#ccfbf1', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 900: '#134e4a' } }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* CSS Dành riêng cho khi in (Khổ A5 Ngang) */
+        @page { size: A5 landscape; margin: 10mm; }
+        @media print {
+            body { background-color: white !important; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .print-paper { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+            .print-input { border: none !important; background: transparent !important; resize: none !important; padding: 0 !important; overflow: visible !important; }
+            .print-input::placeholder { color: transparent !important; }
+            select.print-input { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+            #list-view { display: none !important; }
+            #detail-view { display: block !important; }
+        }
+        textarea { overflow: hidden; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .signature-img { max-height: 60px; object-fit: contain; margin: 0 auto; display: block; mix-blend-mode: multiply; }
+        video { transform: scaleX(-1); } /* Lật gương camera cho dễ nhìn */
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <div id="global-loading" class="fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in hidden no-print">
+        <i data-lucide="loader-2" class="w-12 h-12 text-medical-500 animate-spin mb-4"></i>
+        <p class="text-white font-bold text-lg" id="loading-text">Đang tải dữ liệu...</p>
+    </div>
+
+    <div id="login-screen" class="fixed inset-0 bg-medical-900 z-[100] flex items-center justify-center fade-in hidden no-print">
+        <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto relative">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-medical-100 text-medical-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="file-pen" class="w-8 h-8"></i></div>
+                <h1 class="text-2xl font-bold text-slate-800">Đăng nhập Hệ thống</h1>
+                <p class="text-slate-500 text-sm mt-1">Quản lý Phiếu Yêu Cầu Hỗ Trợ</p>
+                <div id="initial-loading" class="hidden text-medical-600 text-xs font-medium mt-4 flex items-center justify-center">
+                    <i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang tải dữ liệu từ máy chủ...
+                </div>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4"><label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label><input type="text" id="username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none" required></div>
+                <div class="mb-6"><label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label><input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-medical-500 outline-none" required></div>
+                <button type="submit" class="w-full bg-medical-600 text-white py-2 rounded-lg hover:bg-medical-700 transition font-medium flex justify-center items-center"><i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Đăng nhập</button>
+            </form>
+            <button onclick="window.location.href='index.html'" class="w-full mt-4 text-slate-500 hover:text-medical-600 text-sm flex items-center justify-center transition"><i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Quay lại trang chủ</button>
+        </div>
+    </div>
+
+    <div id="camera-modal" class="fixed inset-0 bg-slate-900/90 z-[9999] flex items-center justify-center fade-in hidden no-print p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-800 text-lg">Chụp & Tách nền Chữ ký</h3>
+                <button onclick="closeCamera()" class="text-slate-500 hover:text-red-500"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-4 flex flex-col items-center space-y-4 bg-slate-100">
+                <p class="text-xs text-slate-500 text-center">Mẹo: Ký bút mực đậm lên giấy trắng sáng. Đưa sát camera để rõ nét nhất.</p>
+                
+                <div id="video-container" class="relative w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden shadow-inner border-2 border-slate-300">
+                    <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <div class="absolute inset-0 border-2 border-dashed border-white/50 m-4 rounded pointer-events-none"></div>
+                </div>
+
+                <div id="result-container" class="hidden relative w-full max-w-[320px] aspect-video bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAADFJREFUOE9jZCASMDKgAnv37v3PwsLCQJJk165d/yH4yJJoDBlNgHE0DTANjKMpYDQBRwAA4sITM18T43wAAAAASUVORK5CYII=')] rounded-lg overflow-hidden shadow-inner border-2 border-medical-300">
+                    <canvas id="canvas-result" class="w-full h-full object-contain"></canvas>
+                </div>
+
+                <div class="flex space-x-3 w-full justify-center">
+                    <button id="btn-capture" onclick="captureAndProcess()" class="bg-medical-600 text-white px-6 py-2 rounded-full shadow hover:bg-medical-700 flex items-center transition font-bold">
+                        <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Chụp ảnh
+                    </button>
+                    <button id="btn-retake" onclick="resetCamera()" class="hidden bg-slate-200 text-slate-700 px-4 py-2 rounded-full shadow hover:bg-slate-300 flex items-center transition font-bold">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Chụp lại
+                    </button>
+                    <button id="btn-save-sig" onclick="uploadSignature()" class="hidden bg-emerald-600 text-white px-6 py-2 rounded-full shadow hover:bg-emerald-700 flex items-center transition font-bold">
+                        <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Lưu chữ ký
+                    </button>
+                </div>
+            </div>
+        </div>
+        <canvas id="canvas-hidden" class="hidden"></canvas>
+    </div>
+
+    <div id="main-content" class="hidden h-screen flex flex-col">
+        <header class="bg-white border-b shadow-sm p-4 flex justify-between items-center z-10 shrink-0 no-print">
+            <div class="flex items-center">
+                <button onclick="window.location.href='index.html'" class="p-2 text-slate-500 hover:text-medical-600 hover:bg-slate-100 rounded-lg transition mr-2"><i data-lucide="home" class="w-5 h-5"></i></button>
+                <h1 class="font-bold text-lg text-slate-800 border-l pl-4 border-slate-300">Quản lý Yêu Cầu Hỗ Trợ</h1>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="openCameraModal()" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 rounded-lg text-xs font-bold flex items-center shadow-sm transition">
+                    <i data-lucide="pen-tool" class="w-4 h-4 mr-1"></i> Tạo Chữ ký số
+                </button>
+                <span id="user-info-badge" class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 flex items-center"></span>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-hidden relative">
+            <div id="list-view" class="h-full p-4 md:p-6 overflow-y-auto fade-in">
+                <div class="max-w-6xl mx-auto space-y-4">
+                    <div class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div>
+                            <h2 class="font-bold text-lg text-slate-800">Danh sách Phiếu</h2>
+                            <p class="text-sm text-slate-500">Quy trình duyệt: Người Yêu Cầu ➔ Kế toán ➔ CNTT</p>
+                        </div>
+                        <button onclick="openNewTicket()" class="bg-medical-600 text-white px-4 py-2 rounded-lg shadow hover:bg-medical-700 flex items-center transition font-medium">
+                            <i data-lucide="plus" class="w-5 h-5 mr-2"></i> Tạo Phiếu Mới
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-slate-600 bg-slate-50 uppercase border-b">
+                                <tr>
+                                    <th class="px-4 py-3">Số Phiếu</th>
+                                    <th class="px-4 py-3">Ngày gửi</th>
+                                    <th class="px-4 py-3">Người Y/C</th>
+                                    <th class="px-4 py-3">Khoa liên đới</th>
+                                    <th class="px-4 py-3">Nội dung</th>
+                                    <th class="px-4 py-3">Trạng thái</th>
+                                    <th class="px-4 py-3 text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticket-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="detail-view" class="h-full bg-slate-200 overflow-y-auto fade-in hidden pb-10">
+                <div class="sticky top-0 bg-white border-b shadow-sm p-4 flex justify-between items-center z-50 no-print">
+                    <button onclick="closeTicketDetail()" class="flex items-center text-slate-600 hover:text-medical-600 transition font-medium px-3 py-1.5 bg-slate-100 rounded-lg"><i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Quay lại danh sách</button>
+                    <div class="flex space-x-2" id="action-buttons-container"></div>
+                </div>
+
+                <div class="max-w-[210mm] mx-auto mt-8 bg-white p-8 md:p-10 shadow-lg rounded-xl print-paper border border-slate-200 relative">
+                    <div id="ticket-watermark" class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none hidden no-print z-0"><span class="text-6xl font-black uppercase text-red-600 transform -rotate-45" id="watermark-text"></span></div>
+
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="text-center w-1/2">
+                                <p class="font-bold text-sm">SỞ Y TẾ TỈNH VĨNH LONG</p>
+                                <p class="font-bold text-sm">BVĐKKV CẦU NGANG</p>
+                                <p class="text-xs mt-1 font-medium" id="lbl-sophieu">Số: ....../PYC-HT</p>
+                            </div>
+                            <div class="text-center w-1/2">
+                                <p class="font-bold text-sm">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                                <p class="font-bold text-sm border-b border-slate-800 inline-block pb-1">Độc lập - Tự do - Hạnh phúc</p>
+                            </div>
+                        </div>
+
+                        <div class="text-center mb-8 mt-4">
+                            <h1 class="text-2xl font-bold uppercase tracking-wide">Phiếu Yêu Cầu Hỗ Trợ</h1>
+                            <p class="text-sm italic mt-1">(V/v: Chỉnh sửa dữ liệu hệ thống / Lịch trực)</p>
+                        </div>
+
+                        <div class="space-y-4 text-sm leading-relaxed">
+                            <div class="flex items-center">
+                                <span class="font-bold w-40 flex-shrink-0">Người tạo phiếu:</span>
+                                <input type="text" id="inp-nguoi-yeu-cau" class="w-full border-b border-dotted border-slate-400 outline-none print-input font-bold text-medical-700" readonly>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="font-bold w-40 flex-shrink-0">Khoa / Phòng:</span>
+                                <select id="inp-khoa" class="w-full border-b border-dotted border-slate-400 outline-none print-input bg-transparent cursor-pointer py-1 font-bold text-slate-800"></select>
+                            </div>
+
+                            <div class="flex items-center no-print" id="wrap-nguoi2-toggle">
+                                <label class="flex items-center space-x-2 cursor-pointer text-medical-600 font-bold">
+                                    <input type="checkbox" id="cb-has-nguoi2" onchange="toggleNguoi2()" class="w-4 h-4 rounded text-medical-600 focus:ring-medical-500">
+                                    <span>Cần thêm 1 Khoa liên đới cùng xác nhận</span>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center hidden" id="wrap-nguoi-2">
+                                <span class="font-bold w-40 flex-shrink-0 text-medical-700">Đại diện Khoa liên đới:</span>
+                                <div class="relative w-full">
+                                    <input type="text" id="search-nguoi-2" class="w-full border-b border-dotted border-slate-400 outline-none print-input bg-transparent cursor-pointer py-1 font-bold text-medical-700" placeholder="-- Gõ tên nhân sự để tìm kiếm --" autocomplete="off" onfocus="showDropdownNguoi2()" oninput="filterDropdownNguoi2()">
+                                    <input type="hidden" id="inp-nguoi-2">
+                                    <div id="dropdown-nguoi-2" class="absolute z-[100] left-0 top-full mt-1 w-full bg-white border border-slate-200 shadow-xl rounded-lg max-h-56 overflow-y-auto hidden no-print"></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <span class="font-bold block mb-2">Nội dung cần hỗ trợ / chỉnh sửa:</span>
+                                <textarea id="inp-noidung" rows="3" oninput="autoResize(this)" placeholder="Nhập chi tiết dữ liệu cần chỉnh sửa..." class="w-full border border-slate-300 rounded p-2 outline-none print-input focus:border-medical-500 bg-slate-50"></textarea>
+                            </div>
+                            <div class="mt-4">
+                                <span class="font-bold block mb-2">Lý do:</span>
+                                <textarea id="inp-lydo" rows="2" oninput="autoResize(this)" placeholder="Nhập lý do cần chỉnh sửa (sai sót, đổi ca đột xuất, ...)" class="w-full border border-slate-300 rounded p-2 outline-none print-input focus:border-medical-500 bg-slate-50"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between mt-12 text-center text-sm items-end page-break-avoid">
+                            <div class="w-1/3 flex flex-col items-center justify-end h-32 relative">
+                                <p class="font-bold absolute top-0 w-full text-center">Xác nhận phòng Kế Toán</p>
+                                <div id="box-ky-ketoan" class="flex flex-col items-center justify-end w-full pb-2 z-10"></div>
+                            </div>
+                            <div class="w-1/3 flex flex-col items-center justify-end h-32 relative">
+                                <p class="font-bold absolute top-0 w-full text-center">Xác nhận Tổ CNTT</p>
+                                <div id="box-ky-cntt" class="flex flex-col items-center justify-end w-full pb-2 z-10"></div>
+                            </div>
+                            <div class="w-1/3 flex flex-col h-32 relative">
+                                <p class="font-bold absolute top-0 w-full text-center">Người yêu cầu</p>
+                                <div class="flex flex-col w-full h-full justify-end">
+                                    <div id="box-ky-nguoi-yeu-cau" class="flex flex-col items-center justify-end pb-2 z-10 w-full"></div>
+                                    <div id="box-ky-nguoi-yeu-cau-2" class="flex flex-col items-center justify-end pb-2 z-10 w-full hidden border-t border-dashed border-slate-300 pt-2 mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzuUzAZY90ojvxPCiExOqDB8TRsU5Udb59xK5f59MY6bypeA7zecgvCgD8DUG23iUpz/exec";
+        
+        const DEPT_KETOAN = ["KETOAN", "TCKT", "KHTH"]; 
+        const DEPT_CNTT = ["CNTT", "KHTH"]; 
+
+        let DB = { NhanVien: [], LuuSoPhieu: [], TrangThaiChinh: [] };
+        let currentUser = null;
+        let currentTicketMode = 'view';
+        let selectedTicket = null;
+
+        lucide.createIcons();
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+        function showLoading(text = "Đang xử lý...") {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('global-loading').classList.remove('hidden');
+        }
+        function hideLoading() { document.getElementById('global-loading').classList.add('hidden'); }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const userStr = localStorage.getItem('currentUser');
+            if (userStr) {
+                currentUser = JSON.parse(userStr);
+                document.getElementById('user-info-badge').innerHTML = `<i data-lucide="user" class="w-4 h-4 mr-2"></i> <span class="font-bold">${currentUser.HoTen}</span> <span class="ml-1 opacity-70">(${currentUser.MaKhoa})</span>`;
+                lucide.createIcons();
+                document.getElementById('main-content').classList.remove('hidden');
+                loadDashboardData();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                fetchUsersForLogin();
+            }
+        });
+
+        async function fetchUsersForLogin() {
+            document.getElementById('initial-loading').classList.remove('hidden');
+            try {
+                const res = await fetch(GAS_URL + "?action=NhanVien");
+                const result = await res.json();
+                if (result.status === "success") DB.NhanVien = result.data || [];
+            } catch (e) {
+                alert("Lỗi tải dữ liệu đăng nhập!");
+            } finally {
+                document.getElementById('initial-loading').classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            if(DB.NhanVien.length === 0) return alert("Đang tải dữ liệu, vui lòng đợi...");
+            const u = document.getElementById('username').value.toLowerCase().trim();
+            const p = document.getElementById('password').value.trim();
+            const user = DB.NhanVien.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+            
+            if (user) {
+                if (user.NgayNghi) return alert("Tài khoản đã nghỉ việc!");
+                user.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
+                user.ActiveKhoa = user.KhoaList[0] || 'KHTH';
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                currentUser = user;
+                
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-content').classList.remove('hidden');
+                document.getElementById('user-info-badge').innerHTML = `<i data-lucide="user" class="w-4 h-4 mr-2"></i> <span class="font-bold">${currentUser.HoTen}</span> <span class="ml-1 opacity-70">(${currentUser.MaKhoa})</span>`;
+                lucide.createIcons();
+                loadDashboardData();
+            } else { alert("Sai tài khoản hoặc mật khẩu!"); }
+        }
+
+        async function loadDashboardData() {
+            showLoading("Đang tải dữ liệu phiếu...");
+            try {
+                const [resNV, resLSP, resTTC] = await Promise.all([
+                    fetch(GAS_URL + "?action=NhanVien").then(r => r.json()),
+                    fetch(GAS_URL + "?action=LuuSoPhieu").then(r => r.json()),
+                    fetch(GAS_URL + "?action=TrangThaiChinh").then(r => r.json())
+                ]);
+                if (resNV.status === "success") DB.NhanVien = resNV.data;
+                if (resLSP.status === "success") DB.LuuSoPhieu = resLSP.data;
+                if (resTTC.status === "success") DB.TrangThaiChinh = resTTC.data;
+
+                // Cập nhật lại chuKy nếu có trên DB (trường hợp user tạo chữ ký ở máy khác)
+                const me = DB.NhanVien.find(u => String(u.MaNV) === String(currentUser.MaNV));
+                if(me) {
+                    currentUser.ChuKy = me.ChuKy;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                }
+
+                renderTicketList();
+            } catch (error) { alert("Lỗi tải dữ liệu. Vui lòng F5 lại trang."); } finally { hideLoading(); }
+        }
+
+        function getUserInfo(maNV) {
+            if (!maNV) return null;
+            return DB.NhanVien.find(u => String(u.MaNV).trim() === String(maNV).trim());
+        }
+
+        function checkRoles() {
+            const khoas = currentUser.KhoaList || [];
+            return {
+                isKeToan: khoas.some(k => DEPT_KETOAN.includes(k)),
+                isCNTT: khoas.some(k => DEPT_CNTT.includes(k))
+            };
+        }
+
+        function renderTicketList() {
+            const tbody = document.getElementById('ticket-table-body');
+            const { isKeToan, isCNTT } = checkRoles();
+
+            const tickets = DB.LuuSoPhieu.map(p => {
+                const tt = DB.TrangThaiChinh.find(t => t.SoPhieu === p.SoPhieu) || {};
+                return { ...p, TrangThai: tt.TrangThai || "Chưa gửi", NguoiDuyetLog: tt.NguoiDuyet || "" };
+            }).sort((a,b) => a.SoPhieu < b.SoPhieu ? 1 : -1);
+
+            const filteredTickets = tickets.filter(t => {
+                const isCreator = String(t.NguoiYeuCau).trim() === String(currentUser.MaNV).trim() || (t.NguoiYeuCau2 && String(t.NguoiYeuCau2).trim() === String(currentUser.MaNV).trim());
+                if (isCreator) return true;
+                if (isKeToan && (t.TrangThai === "Chờ Kế Toán duyệt" || t.NguoiDuyetLog.includes(`KeToan:`))) return true;
+                if (isCNTT && (t.TrangThai === "Chờ CNTT duyệt" || t.TrangThai === "Hoàn thành")) return true;
+                return false;
+            });
+
+            if(filteredTickets.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-500 italic">Không có phiếu yêu cầu nào.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredTickets.map(t => {
+                const creator = getUserInfo(t.NguoiYeuCau);
+                const tenNguoiYc = creator ? (creator.TenHienThi || creator.HoTen) : t.NguoiYeuCau;
+                const creator2 = t.NguoiYeuCau2 ? getUserInfo(t.NguoiYeuCau2) : null;
+                const tenKhoaLienDoi = creator2 ? creator2.MaKhoa : "Không có";
+
+                let sttColor = "bg-slate-100 text-slate-600";
+                if(t.TrangThai === "Chờ Đồng ký") sttColor = "bg-orange-100 text-orange-800";
+                else if(t.TrangThai === "Chờ Kế Toán duyệt") sttColor = "bg-yellow-100 text-yellow-800";
+                else if(t.TrangThai === "Chờ CNTT duyệt") sttColor = "bg-blue-100 text-blue-800";
+                else if(t.TrangThai === "Hoàn thành") sttColor = "bg-emerald-100 text-emerald-800";
+
+                // Format ngày hiển thị ngoài List
+                let dShow = t.NgayYeuCau;
+                if(dShow && dShow.includes('-')) {
+                    dShow = dShow.split('T')[0].split('-').reverse().join('/');
+                }
+
+                return `
+                    <tr class="border-b hover:bg-medical-50 transition cursor-pointer" onclick="openTicketDetail('${t.SoPhieu}')">
+                        <td class="px-4 py-3 font-bold text-medical-700">${t.SoPhieu}</td>
+                        <td class="px-4 py-3 text-slate-600">${dShow}</td>
+                        <td class="px-4 py-3 font-medium">${tenNguoiYc}</td>
+                        <td class="px-4 py-3 text-slate-600 text-xs">${tenKhoaLienDoi}</td>
+                        <td class="px-4 py-3 text-xs max-w-xs truncate text-slate-500">${t.NoiDung}</td>
+                        <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-bold ${sttColor}">${t.TrangThai}</span></td>
+                        <td class="px-4 py-3 text-center"><button class="text-medical-600 hover:text-medical-800 text-xs font-bold uppercase border border-medical-200 px-2 py-1 rounded bg-white">Xem</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function toggleNguoi2() {
+            const isChecked = document.getElementById('cb-has-nguoi2').checked;
+            const wrap = document.getElementById('wrap-nguoi-2');
+            const box2 = document.getElementById('box-ky-nguoi-yeu-cau-2');
+            
+            if (isChecked) {
+                wrap.classList.remove('hidden'); box2.classList.remove('hidden');
+                box2.innerHTML = `<div class="italic text-slate-400 text-xs mb-2">[ Chờ ký ]</div>`;
+            } else {
+                wrap.classList.add('hidden'); box2.classList.add('hidden');
+                document.getElementById('search-nguoi-2').value = '';
+                document.getElementById('inp-nguoi-2').value = '';
+            }
+        }
+
+        function populateUsersDropdown() {
+            const list = document.getElementById('dropdown-nguoi-2');
+            const filteredUsers = DB.NhanVien.filter(u => String(u.MaNV).trim() !== String(currentUser.MaNV).trim() && !u.NgayNghi);
+            list.innerHTML = filteredUsers.map(u => {
+                const safeName = (u.HoTen || '').replace(/'/g, "\\'");
+                const safeKhoa = (u.MaKhoa || '').replace(/'/g, "\\'");
+                const searchStr = `${(u.HoTen || '').toLowerCase()} ${String(u.MaNV || '').toLowerCase()}`;
+                return `<div class="px-4 py-2 hover:bg-medical-50 cursor-pointer text-sm border-b border-slate-100 dropdown-item" data-name="${searchStr}" onclick="selectNguoi2('${String(u.MaNV).trim()}', '${safeName} (${safeKhoa})')"><div class="font-bold text-slate-800">${u.HoTen}</div><div class="text-xs text-slate-500">${u.MaKhoa} - ${u.ChucDanh}</div></div>`;
+            }).join('');
+        }
+
+        function showDropdownNguoi2() {
+            if (currentTicketMode === 'view') return;
+            document.getElementById('dropdown-nguoi-2').classList.remove('hidden'); filterDropdownNguoi2();
+        }
+
+        function filterDropdownNguoi2() {
+            const keyword = document.getElementById('search-nguoi-2').value.toLowerCase().trim();
+            const items = document.querySelectorAll('#dropdown-nguoi-2 .dropdown-item');
+            items.forEach(item => { item.classList.toggle('hidden', !item.getAttribute('data-name').includes(keyword)); });
+        }
+
+        function selectNguoi2(maNV, displayName) {
+            document.getElementById('inp-nguoi-2').value = maNV;
+            document.getElementById('search-nguoi-2').value = displayName;
+            document.getElementById('dropdown-nguoi-2').classList.add('hidden');
+        }
+
+        document.addEventListener('click', function(event) {
+            const wrap = document.getElementById('wrap-nguoi-2');
+            const dropdown = document.getElementById('dropdown-nguoi-2');
+            if (wrap && !wrap.contains(event.target)) { if(dropdown) dropdown.classList.add('hidden'); }
+        });
+
+        function openNewTicket() {
+            currentTicketMode = 'new'; selectedTicket = null;
+            document.getElementById('list-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.remove('hidden');
+            document.getElementById('lbl-sophieu').innerText = "Số: (Hệ thống tự cấp)/PYC-HT";
+            
+            const fullName = currentUser.HoTen || currentUser.TenHienThi || currentUser.MaNV;
+            document.getElementById('inp-nguoi-yeu-cau').value = fullName;
+
+            const khoaSelect = document.getElementById('inp-khoa');
+            const khoaList = currentUser.KhoaList || [];
+            if (khoaList.length > 0) {
+                khoaSelect.innerHTML = khoaList.map(k => `<option value="${k}">${k}</option>`).join('');
+                if (currentUser.ActiveKhoa && khoaList.includes(currentUser.ActiveKhoa)) khoaSelect.value = currentUser.ActiveKhoa;
+            } else { khoaSelect.innerHTML = `<option value="${currentUser.MaKhoa}">${currentUser.MaKhoa}</option>`; }
+
+            document.getElementById('wrap-nguoi2-toggle').classList.remove('hidden');
+            document.getElementById('cb-has-nguoi2').checked = false;
+            document.getElementById('wrap-nguoi-2').classList.add('hidden');
+            document.getElementById('search-nguoi-2').value = ''; document.getElementById('search-nguoi-2').readOnly = false;
+            document.getElementById('inp-nguoi-2').value = ''; populateUsersDropdown();
+
+            document.getElementById('inp-noidung').value = ""; document.getElementById('inp-lydo').value = "";
+            document.getElementById('inp-noidung').readOnly = false; document.getElementById('inp-lydo').readOnly = false;
+            document.getElementById('inp-noidung').classList.remove('bg-transparent'); document.getElementById('inp-lydo').classList.remove('bg-transparent');
+
+            document.getElementById('box-ky-nguoi-yeu-cau-2').innerHTML = "";
+            document.getElementById('box-ky-ketoan').innerHTML = "";
+            document.getElementById('box-ky-cntt').innerHTML = "";
+            
+            renderSignatureBox('box-ky-nguoi-yeu-cau', currentUser, "Ký nháp");
+            document.getElementById('box-ky-nguoi-yeu-cau-2').classList.add('hidden');
+            document.getElementById('ticket-watermark').classList.add('hidden');
+
+            document.getElementById('action-buttons-container').innerHTML = `<button onclick="submitNewTicket()" class="bg-medical-600 text-white px-4 py-2 rounded-lg shadow hover:bg-medical-700 flex items-center transition font-medium"><i data-lucide="send" class="w-4 h-4 mr-2"></i> Gửi Yêu Cầu</button>`;
+            lucide.createIcons();
+        }
+
+        function openTicketDetail(soPhieu) {
+            currentTicketMode = 'view';
+            const ticket = DB.LuuSoPhieu.find(p => p.SoPhieu === soPhieu);
+            const tt = DB.TrangThaiChinh.find(t => t.SoPhieu === soPhieu) || {};
+            selectedTicket = { ...ticket, TrangThai: tt.TrangThai, NguoiDuyetLog: tt.NguoiDuyet || "" };
+
+            document.getElementById('list-view').classList.add('hidden'); document.getElementById('detail-view').classList.remove('hidden');
+            document.getElementById('lbl-sophieu').innerText = `Số: ${selectedTicket.SoPhieu}`;
+            
+            const creator = getUserInfo(selectedTicket.NguoiYeuCau);
+            document.getElementById('inp-nguoi-yeu-cau').value = creator ? (creator.TenHienThi || creator.HoTen) : selectedTicket.NguoiYeuCau;
+            document.getElementById('inp-khoa').innerHTML = `<option value="${selectedTicket.MaKhoa}">${selectedTicket.MaKhoa}</option>`;
+            
+            document.getElementById('wrap-nguoi2-toggle').classList.add('hidden');
+            document.getElementById('box-ky-nguoi-yeu-cau').innerHTML = ""; document.getElementById('box-ky-nguoi-yeu-cau-2').innerHTML = "";
+            document.getElementById('box-ky-ketoan').innerHTML = ""; document.getElementById('box-ky-cntt').innerHTML = "";
+
+            if (selectedTicket.NguoiYeuCau2) {
+                const creator2 = getUserInfo(selectedTicket.NguoiYeuCau2);
+                document.getElementById('wrap-nguoi-2').classList.remove('hidden');
+                document.getElementById('inp-nguoi-2').value = selectedTicket.NguoiYeuCau2;
+                document.getElementById('search-nguoi-2').value = creator2 ? `${creator2.HoTen} (${creator2.MaKhoa})` : selectedTicket.NguoiYeuCau2;
+                document.getElementById('search-nguoi-2').readOnly = true;
+                document.getElementById('box-ky-nguoi-yeu-cau-2').classList.remove('hidden');
+            } else {
+                document.getElementById('wrap-nguoi-2').classList.add('hidden');
+                document.getElementById('box-ky-nguoi-yeu-cau-2').classList.add('hidden');
+            }
+
+            const txtNoidung = document.getElementById('inp-noidung'); const txtLydo = document.getElementById('inp-lydo');
+            txtNoidung.value = selectedTicket.NoiDung; txtLydo.value = selectedTicket.LyDo;
+            txtNoidung.readOnly = true; txtLydo.readOnly = true;
+            txtNoidung.classList.add('bg-transparent'); txtLydo.classList.add('bg-transparent');
+            autoResize(txtNoidung); autoResize(txtLydo);
+
+            const wm = document.getElementById('ticket-watermark'); const wmText = document.getElementById('watermark-text');
+            if (selectedTicket.TrangThai === "Hoàn thành") {
+                wm.classList.remove('hidden'); wmText.innerText = "HOÀN THÀNH"; wmText.className = "text-6xl font-black uppercase text-emerald-600 transform -rotate-45 opacity-20";
+            } else { wm.classList.add('hidden'); }
+
+            let signedCreator1 = false; let signedCreator2 = false;
+            const logs = selectedTicket.NguoiDuyetLog.split('|');
+            logs.forEach(l => {
+                const parts = l.split(':');
+                if(parts.length === 2) {
+                    const approver = getUserInfo(parts[1]);
+                    if(parts[0] === 'Creator') { renderSignatureBox('box-ky-nguoi-yeu-cau', approver, "Đã ký"); signedCreator1 = true; }
+                    if(parts[0] === 'Nguoi2') { renderSignatureBox('box-ky-nguoi-yeu-cau-2', approver, "Đã ký"); signedCreator2 = true; }
+                    if(parts[0] === 'KeToan') renderSignatureBox('box-ky-ketoan', approver, "Đã duyệt");
+                    if(parts[0] === 'CNTT') renderSignatureBox('box-ky-cntt', approver, "Đã duyệt");
+                }
+            });
+
+            if (!signedCreator1) renderSignatureBox('box-ky-nguoi-yeu-cau', creator, "Đã ký");
+            if (selectedTicket.NguoiYeuCau2 && !signedCreator2) {
+                const creator2 = getUserInfo(selectedTicket.NguoiYeuCau2);
+                renderSignatureBox('box-ky-nguoi-yeu-cau-2', creator2, "Chờ ký");
+            }
+            renderActionButtons(selectedTicket);
+        }
+
+        function renderSignatureBox(containerId, userObj, fallbackText = null) {
+            const box = document.getElementById(containerId);
+            if (!userObj) return;
+            let html = "";
+            if (userObj.ChuKy && userObj.ChuKy.trim() !== "") {
+                html = `<img src="${userObj.ChuKy}" class="signature-img" onerror="this.style.display='none'">`;
+            } else {
+                const displayText = fallbackText ? fallbackText : "Đã ký";
+                html = `<div class="italic text-slate-500 font-bold mb-2 text-xs">[ ${displayText} ]</div>`;
+            }
+            html += `<span class="font-bold text-medical-800 text-[11px] md:text-sm whitespace-nowrap">${userObj.HoTen || userObj.MaNV}</span>`;
+            box.innerHTML = html;
+        }
+
+        function closeTicketDetail() {
+            document.getElementById('detail-view').classList.add('hidden');
+            document.getElementById('list-view').classList.remove('hidden');
+        }
+
+        async function submitNewTicket() {
+            const noiDung = document.getElementById('inp-noidung').value.trim();
+            const lyDo = document.getElementById('inp-lydo').value.trim();
+            if(!noiDung) return alert("Vui lòng nhập nội dung cần chỉnh sửa!");
+
+            const isChecked = document.getElementById('cb-has-nguoi2').checked;
+            const nguoi2Val = document.getElementById('inp-nguoi-2').value;
+            if(isChecked && !nguoi2Val) return alert("Vui lòng chọn người đại diện Khoa liên đới để đồng xác nhận!");
+
+            // Format ngày để lưu DB (dùng dạng Date ISO đơn giản)
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            const payload = {
+                NguoiYeuCau: String(currentUser.MaNV).trim(),
+                NguoiYeuCau2: isChecked ? String(nguoi2Val).trim() : "",
+                NgayYeuCau: todayStr,
+                MaKhoa: document.getElementById('inp-khoa').value,
+                NoiDung: noiDung,
+                LyDo: lyDo
+            };
+
+            showLoading("Đang gửi yêu cầu...");
+            try {
+                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "submit_phieu_hotro", data: payload }) });
+                const result = await res.json();
+                if(result.status === "success") {
+                    alert(`Gửi phiếu thành công! Số phiếu của bạn là: ${result.soPhieu}`);
+                    await loadDashboardData(); closeTicketDetail();
+                } else { alert("Lỗi server: " + result.message); }
+            } catch(e) { alert("Lỗi kết nối mạng!"); } finally { hideLoading(); }
+        }
+
+        function renderActionButtons(ticket) {
+            const container = document.getElementById('action-buttons-container');
+            const { isKeToan, isCNTT } = checkRoles();
+            const isCreator1 = String(ticket.NguoiYeuCau).trim() === String(currentUser.MaNV).trim();
+            const isCreator2 = ticket.NguoiYeuCau2 ? String(ticket.NguoiYeuCau2).trim() === String(currentUser.MaNV).trim() : false;
+
+            let btnsHtml = "";
+
+            if (isCreator2 && ticket.TrangThai === "Chờ Đồng ký") {
+                btnsHtml += `<button onclick="approveTicket('NGUOI2')" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow hover:bg-orange-700 flex items-center transition font-medium"><i data-lucide="pen-tool" class="w-4 h-4 mr-2"></i> Ký Đồng Ý</button>`;
+            }
+            if (isKeToan && ticket.TrangThai === "Chờ Kế Toán duyệt") {
+                btnsHtml += `<button onclick="approveTicket('KETOAN')" class="bg-emerald-600 text-white px-4 py-2 rounded-lg shadow hover:bg-emerald-700 flex items-center transition font-medium"><i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> Kế Toán Duyệt</button>`;
+            }
+            if (isCNTT && ticket.TrangThai === "Chờ CNTT duyệt") {
+                btnsHtml += `<button onclick="approveTicket('CNTT')" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 flex items-center transition font-medium"><i data-lucide="check-circle" class="w-4 h-4 mr-2"></i> CNTT Hoàn Thành</button>`;
+            }
+
+            let canPrint = false;
+            if (isCreator1 || isCreator2 || isCNTT) { canPrint = true; } 
+            else if (isKeToan && ticket.TrangThai === "Hoàn thành") { canPrint = true; }
+
+            if (ticket.TrangThai === "Hoàn thành" && ticket.Link && ticket.Link.trim() !== "") {
+                btnsHtml += `<a href="${ticket.Link}" target="_blank" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 flex items-center transition font-medium ml-2"><i data-lucide="download" class="w-4 h-4 mr-2"></i> Tải PDF Gốc</a>`;
+            }
+
+            if (canPrint) {
+                btnsHtml += `<button onclick="window.print()" class="bg-slate-700 text-white px-4 py-2 rounded-lg shadow hover:bg-slate-800 flex items-center transition font-medium ml-2"><i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Phiếu (Web)</button>`;
+            } else if (isKeToan && ticket.TrangThai !== "Hoàn thành") {
+                btnsHtml += `<div class="bg-orange-50 text-orange-700 px-3 py-2 rounded-lg border border-orange-200 text-xs flex items-center ml-2"><i data-lucide="lock" class="w-3 h-3 mr-1"></i> Khóa in (Chờ CNTT)</div>`;
+            }
+            container.innerHTML = btnsHtml; lucide.createIcons();
+        }
+
+        async function approveTicket(step) {
+            if(!currentUser.ChuKy) {
+                alert("Bạn chưa có Chữ ký số! Vui lòng bấm 'Tạo Chữ ký số' ở góc trên bên phải trước khi duyệt/ký.");
+                return;
+            }
+
+            if(!confirm("Bạn có chắc chắn muốn ký xác nhận phiếu này?")) return;
+
+            let newTrangThai = ""; let logPrefix = "";
+            if (step === 'NGUOI2') { newTrangThai = "Chờ Kế Toán duyệt"; logPrefix = "Nguoi2"; } 
+            else if (step === 'KETOAN') { newTrangThai = "Chờ CNTT duyệt"; logPrefix = "KeToan"; } 
+            else if (step === 'CNTT') { newTrangThai = "Hoàn thành"; logPrefix = "CNTT"; }
+
+            let newLog = selectedTicket.NguoiDuyetLog ? `${selectedTicket.NguoiDuyetLog}|${logPrefix}:${currentUser.MaNV}` : `${logPrefix}:${currentUser.MaNV}`;
+
+            if(step === 'CNTT') showLoading("Đang xuất file PDF lưu trữ, vui lòng KHÔNG ĐÓNG TRANG (mất khoảng 5-10 giây)...");
+            else showLoading("Đang xử lý chữ ký...");
+            
+            try {
+                const payload = { keyColumn: "SoPhieu", keyValue: selectedTicket.SoPhieu, updateData: { TrangThai: newTrangThai, NguoiDuyet: newLog } };
+                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "update_TrangThaiChinh", data: payload }) });
+                const result = await res.json();
+                
+                if (result.status === "success") {
+                    alert("Đã ký xác nhận thành công!");
+                    await loadDashboardData(); openTicketDetail(selectedTicket.SoPhieu); 
+                } else { alert("Lỗi: " + result.message); }
+            } catch (e) {
+                alert("Hoàn thành! (Nếu có độ trễ do mạng khi lưu PDF, hệ thống sẽ tự tải lại để lấy link PDF mới nhất).");
+                await loadDashboardData(); closeTicketDetail();
+            } finally { hideLoading(); }
+        }
+
+        // =========================================================================
+        // CAMERA & XỬ LÝ TÁCH NỀN CHỮ KÝ (BACKGROUND REMOVAL)
+        // =========================================================================
+        let videoStream = null;
+
+        function openCameraModal() {
+            document.getElementById('camera-modal').classList.remove('hidden');
+            document.getElementById('video-container').classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-retake').classList.add('hidden');
+            document.getElementById('btn-save-sig').classList.add('hidden');
+
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+                .then(stream => {
+                    videoStream = stream;
+                    const video = document.getElementById('camera-stream');
+                    video.srcObject = stream;
+                })
+                .catch(err => {
+                    alert("Không thể truy cập camera. Vui lòng cấp quyền trong cài đặt trình duyệt!");
+                    closeCamera();
+                });
+        }
+
+        function closeCamera() {
+            document.getElementById('camera-modal').classList.add('hidden');
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+        }
+
+        function resetCamera() {
+            document.getElementById('video-container').classList.remove('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-retake').classList.add('hidden');
+            document.getElementById('btn-save-sig').classList.add('hidden');
+        }
+
+        function captureAndProcess() {
+            const video = document.getElementById('camera-stream');
+            const hiddenCanvas = document.getElementById('canvas-hidden');
+            const resultCanvas = document.getElementById('canvas-result');
+            
+            // Set size
+            hiddenCanvas.width = video.videoWidth;
+            hiddenCanvas.height = video.videoHeight;
+            resultCanvas.width = video.videoWidth;
+            resultCanvas.height = video.videoHeight;
+
+            const ctxHidden = hiddenCanvas.getContext('2d');
+            
+            // Vẽ frame (có lật lại để khớp với hình preview bị lật)
+            ctxHidden.translate(hiddenCanvas.width, 0);
+            ctxHidden.scale(-1, 1);
+            ctxHidden.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+
+            // TÁCH NỀN BẰNG NGƯỠNG (THRESHOLDING)
+            const imgData = ctxHidden.getImageData(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+            const data = imgData.data;
+            const threshold = 130; // Ngưỡng sáng (0-255). Càng cao càng xóa nhiều nền.
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i]; const g = data[i + 1]; const b = data[i + 2];
+                // Tính độ sáng (Grayscale)
+                const v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+                
+                if (v >= threshold) {
+                    // Nếu là nền sáng -> Trong suốt
+                    data[i + 3] = 0; 
+                } else {
+                    // Nếu là nét mực -> Chuyển thành màu xanh đen đậm cho chuyên nghiệp
+                    data[i] = 0;     // R
+                    data[i + 1] = 20;  // G
+                    data[i + 2] = 120; // B
+                    data[i + 3] = 255; // Alpha
+                }
+            }
+
+            const ctxResult = resultCanvas.getContext('2d');
+            ctxResult.putImageData(imgData, 0, 0);
+
+            // Chuyển UI
+            document.getElementById('video-container').classList.add('hidden');
+            document.getElementById('result-container').classList.remove('hidden');
+            document.getElementById('btn-capture').classList.add('hidden');
+            document.getElementById('btn-retake').classList.remove('hidden');
+            document.getElementById('btn-save-sig').classList.remove('hidden');
+        }
+
+        async function uploadSignature() {
+            const canvas = document.getElementById('canvas-result');
+            const base64Data = canvas.toDataURL('image/png'); // Lấy hình dạng PNG (có nền trong suốt)
+            
+            showLoading("Đang lưu chữ ký lên hệ thống...");
+            try {
+                const payload = { maNV: currentUser.MaNV, base64: base64Data };
+                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "upload_signature", data: payload }) });
+                const result = await res.json();
+                
+                if (result.status === "success") {
+                    alert("Lưu chữ ký thành công! Kể từ bây giờ bạn có thể ký số.");
+                    currentUser.ChuKy = result.url;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    closeCamera();
+                } else { alert("Lỗi lưu file: " + result.message); }
+            } catch(e) {
+                alert("Lỗi kết nối khi tải file lên Drive.");
+            } finally { hideLoading(); }
+        }
+    </script>
+</body>
+</html>
