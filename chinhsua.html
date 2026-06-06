@@ -18,16 +18,50 @@
     </script>
     <style>
         @page { size: A5 landscape; margin: 10mm; }
+        
+        /* FIX LỖI IN NHƯ CHỤP MÀN HÌNH */
         @media print {
-            body { background-color: white !important; -webkit-print-color-adjust: exact; }
-            .no-print { display: none !important; }
-            .print-paper { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
-            .print-input { border: none !important; background: transparent !important; resize: none !important; padding: 0 !important; overflow: visible !important; }
+            /* 1. Ghi đè toàn bộ các class h-screen, overflow-hidden của Tailwind */
+            html, body, #main-content, .flex-1, #detail-view {
+                height: auto !important;
+                min-height: auto !important;
+                overflow: visible !important;
+                position: static !important;
+                display: block !important; /* Xóa flex để in trôi chảy */
+                background-color: white !important;
+            }
+
+            /* 2. Ẩn tất cả những thành phần không cần thiết */
+            #login-screen, header, #list-view, #camera-modal, .no-print, #global-loading {
+                display: none !important;
+            }
+
+            /* 3. Tách riêng khung giấy in đặt lên góc trên cùng bên trái */
+            .print-paper {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: none !important;
+                background-color: white !important;
+            }
+
+            /* 4. Format lại các ô nhập liệu cho tự nhiên như chữ viết */
+            .print-input { 
+                border: none !important; 
+                background: transparent !important; 
+                resize: none !important; 
+                padding: 0 !important; 
+                overflow: visible !important; 
+            }
             .print-input::placeholder { color: transparent !important; }
             select.print-input { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
-            #list-view { display: none !important; }
-            #detail-view { display: block !important; }
         }
+
         textarea { overflow: hidden; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -226,9 +260,9 @@
                             </div>
                             <div class="w-1/3 flex flex-col h-32 relative">
                                 <p class="font-bold absolute top-0 w-full text-center">Người yêu cầu</p>
-                                <div class="flex flex-col w-full h-full justify-end">
-                                    <div id="box-ky-nguoi-yeu-cau" class="flex flex-col items-center justify-end pb-2 z-10 w-full"></div>
-                                    <div id="box-ky-nguoi-yeu-cau-2" class="flex flex-col items-center justify-end pb-2 z-10 w-full hidden border-t border-dashed border-slate-300 pt-2 mt-2"></div>
+                                <div class="flex w-full h-full justify-center gap-2">
+                                    <div id="box-ky-nguoi-yeu-cau" class="flex-1 flex flex-col items-center justify-end pb-2 z-10 w-full"></div>
+                                    <div id="box-ky-nguoi-yeu-cau-2" class="flex-1 flex flex-col items-center justify-end pb-2 z-10 w-full hidden border-l border-dashed border-slate-300 pl-2 ml-2"></div>
                                 </div>
                             </div>
                         </div>
@@ -240,7 +274,7 @@
 
     <!-- SCRIPT -->
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ3fExZDJZfl0xMhCzDGeUNAHUVRyei1Ldl3s2SuFFU4snJUdt5JMv4xCMvV6yqGOo/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbykCEYXE9uobHy5MODld-cJlTSq8jyMAjuI6-wUTMYysB5QZEQsBc_J0FxymxO753ES/exec";
         
         const DEPT_KETOAN = ["KETOAN", "TCKT", "KHTH"]; 
         const DEPT_CNTT = ["CNTT", "KHTH"]; 
