@@ -1732,7 +1732,7 @@
         // KHỐI 2: DỮ LIỆU & KẾT NỐI MÁY CHỦ (API SYNC)
         // ---------------------------------------------------------------------------------------
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ3fExZDJZfl0xMhCzDGeUNAHUVRyei1Ldl3s2SuFFU4snJUdt5JMv4xCMvV6yqGOo/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzuUzAZY90ojvxPCiExOqDB8TRsU5Udb59xK5f59MY6bypeA7zecgvCgD8DUG23iUpz/exec";
 
         let isPushingData = false; // Cờ khóa đồng bộ ngầm khi đang đẩy dữ liệu
 
@@ -2100,7 +2100,8 @@
                     <li><button onclick="switchView('view-contacts')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="contact" class="w-4 h-4 mr-3"></i> Danh bạ Liên hệ</button></li>
                     <li><button onclick="window.location.href='congtruc.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="file-spreadsheet" class="w-4 h-4 mr-3"></i> Phiếu bồi dưỡng trực</button></li>
                     <li><button onclick="window.location.href='chamcong.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="calendar-days" class="w-4 h-4 mr-3"></i> Bảng chấm công</button></li>
-                    
+                    <li><button onclick="window.location.href='chinhsua.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="file-pen" class="w-4 h-4 mr-3"></i> Phiếu hỗ trợ chỉnh sửa</button></li>
+
                     <li class="mt-4"><div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2 ml-2">Cấu hình Hệ thống</div></li>
                     <li><button onclick="switchView('view-admin-thongbao')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="bell-ring" class="w-4 h-4 mr-3"></i> Quản lý Thông báo</button></li>
                     <li><button onclick="switchView('view-admin-departments')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="building-2" class="w-4 h-4 mr-3"></i> Quản lý Khoa/Phòng</button></li>
@@ -2112,6 +2113,7 @@
                     <li><button onclick="switchView('view-xem-lich-khoa')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="calendar-clock" class="w-4 h-4 mr-3"></i> Xem Lịch Cũ</button></li>
                     <li><button onclick="switchView('view-user-master-schedule')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="globe" class="w-4 h-4 mr-3"></i> Lịch Toàn Viện</button></li>
                     <li><button onclick="switchView('view-contacts')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="contact" class="w-4 h-4 mr-3"></i> Danh bạ Liên hệ</button></li>
+                    <li><button onclick="window.location.href='chinhsua.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="file-pen" class="w-4 h-4 mr-3"></i> Phiếu hỗ trợ chỉnh sửa</button></li>
                 `);
 
                 if (currentUser.Role === 'Admin_Khoa') {
@@ -2120,6 +2122,7 @@
                     <li><button onclick="switchView('view-admin-users')" class="w-full flex items-center p-2 rounded-lg text-slate-700 hover:bg-medical-50 transition"><i data-lucide="users-cog" class="w-4 h-4 mr-3"></i> Quản lý Nhân sự</button></li>
                     <li><button onclick="window.location.href='congtruc.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="file-spreadsheet" class="w-4 h-4 mr-3"></i> Phiếu bồi dưỡng trực</button></li>
                     <li><button onclick="window.location.href='chamcong.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="calendar-days" class="w-4 h-4 mr-3"></i> Bảng chấm công</button></li>
+                    <li><button onclick="window.location.href='chinhsua.html'" class="w-full flex items-center p-2 rounded-lg text-emerald-700 hover:bg-emerald-50 transition font-medium"><i data-lucide="file-pen" class="w-4 h-4 mr-3"></i> Phiếu hỗ trợ chỉnh sửa</button></li>
                     `);
                 }
             }
