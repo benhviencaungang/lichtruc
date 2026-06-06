@@ -17,7 +17,6 @@
         }
     </script>
     <style>
-        /* CSS Dành riêng cho khi in (Khổ A5 Ngang) */
         @page { size: A5 landscape; margin: 10mm; }
         @media print {
             body { background-color: white !important; -webkit-print-color-adjust: exact; }
@@ -33,16 +32,17 @@
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .signature-img { max-height: 60px; object-fit: contain; margin: 0 auto; display: block; mix-blend-mode: multiply; }
-        /* Đã gỡ bỏ video { transform: scaleX(-1); } để camera không bị ngược chữ */
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
+    <!-- GLOBAL LOADING -->
     <div id="global-loading" class="fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in hidden no-print">
         <i data-lucide="loader-2" class="w-12 h-12 text-medical-500 animate-spin mb-4"></i>
         <p class="text-white font-bold text-lg" id="loading-text">Đang tải dữ liệu...</p>
     </div>
 
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
     <div id="login-screen" class="fixed inset-0 bg-medical-900 z-[100] flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto relative">
             <div class="text-center mb-8">
@@ -62,6 +62,7 @@
         </div>
     </div>
 
+    <!-- MODAL CAMERA TẠO CHỮ KÝ -->
     <div id="camera-modal" class="fixed inset-0 bg-slate-900/90 z-[9999] flex items-center justify-center fade-in hidden no-print p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
             <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
@@ -71,21 +72,29 @@
             <div class="p-4 flex flex-col items-center space-y-4 bg-slate-100">
                 <p class="text-xs text-slate-500 text-center">Mẹo: Đưa phần chữ ký trên giấy lọt vào giữa khung nét đứt để hệ thống cắt chuẩn nhất.</p>
                 
+                <!-- Vùng Camera -->
                 <div id="video-container" class="relative w-full max-w-[320px] aspect-video bg-black rounded-lg overflow-hidden shadow-inner border-2 border-slate-300">
                     <video id="camera-stream" autoplay playsinline class="w-full h-full object-cover"></video>
+                    <!-- Khung lấy nét đứt (margin 16px) -->
                     <div class="absolute inset-0 border-2 border-dashed border-white/50 m-4 rounded pointer-events-none z-10"></div>
                 </div>
 
-                <div id="result-container" class="hidden relative w-full max-w-[320px] bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAADFJREFUOE9jZCASMDKgAnv37v3PwsLCQJJk165d/yH4yJJoDBlNgHE0DTANjKMpYDQBRwAA4sITM18T43wAAAAASUVORK5CYII=')] rounded-lg overflow-hidden shadow-inner border-2 border-medical-300 p-2">
+                <!-- Vùng hiển thị kết quả tách nền -->
+                <div id="result-container" class="hidden relative w-full max-w-[320px] bg-[url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAADFJREFUOE9jZCASMDKgAnv37v3PwsLCQJJk165d/yH4yJJoDBlNgHE0DTANjKMpYDQBRwAA4sITM18T43wAAAAASUVORK5CYII=')] rounded-lg overflow-hidden shadow-inner border-2 border-medical-300 p-2 flex justify-center items-center">
                     <canvas id="canvas-result" class="w-full h-auto object-contain"></canvas>
                 </div>
 
-                <div class="flex space-x-3 w-full justify-center">
+                <!-- Nút điều khiển -->
+                <div class="flex flex-wrap gap-3 w-full justify-center">
                     <button id="btn-capture" onclick="captureAndProcess()" class="bg-medical-600 text-white px-6 py-2 rounded-full shadow hover:bg-medical-700 flex items-center transition font-bold">
                         <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Chụp ảnh
                     </button>
-                    <button id="btn-retake" onclick="resetCamera()" class="hidden bg-slate-200 text-slate-700 px-4 py-2 rounded-full shadow hover:bg-slate-300 flex items-center transition font-bold">
-                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Chụp lại
+                    <!-- Nút lật ảnh cho trường hợp camera điện thoại tự động lật ngược -->
+                    <button id="btn-flip" onclick="flipSignature()" class="hidden bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full shadow hover:bg-indigo-200 flex items-center transition font-bold text-sm">
+                        <i data-lucide="flip-horizontal" class="w-4 h-4 mr-1"></i> Lật ảnh
+                    </button>
+                    <button id="btn-retake" onclick="resetCamera()" class="hidden bg-slate-200 text-slate-700 px-4 py-2 rounded-full shadow hover:bg-slate-300 flex items-center transition font-bold text-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-1"></i> Chụp lại
                     </button>
                     <button id="btn-save-sig" onclick="uploadSignature()" class="hidden bg-emerald-600 text-white px-6 py-2 rounded-full shadow hover:bg-emerald-700 flex items-center transition font-bold">
                         <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Lưu chữ ký
@@ -93,9 +102,9 @@
                 </div>
             </div>
         </div>
-        <canvas id="canvas-hidden" class="hidden"></canvas>
     </div>
 
+    <!-- MAIN APP -->
     <div id="main-content" class="hidden h-screen flex flex-col">
         <header class="bg-white border-b shadow-sm p-4 flex justify-between items-center z-10 shrink-0 no-print">
             <div class="flex items-center">
@@ -205,6 +214,7 @@
                             </div>
                         </div>
 
+                        <!-- CHỮ KÝ THEO ĐÚNG THỨ TỰ YÊU CẦU -->
                         <div class="flex justify-between mt-12 text-center text-sm items-end page-break-avoid">
                             <div class="w-1/3 flex flex-col items-center justify-end h-32 relative">
                                 <p class="font-bold absolute top-0 w-full text-center">Xác nhận phòng Kế Toán</p>
@@ -228,6 +238,7 @@
         </div>
     </div>
 
+    <!-- SCRIPT -->
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ3fExZDJZfl0xMhCzDGeUNAHUVRyei1Ldl3s2SuFFU4snJUdt5JMv4xCMvV6yqGOo/exec";
         
@@ -564,13 +575,15 @@
 
             const isChecked = document.getElementById('cb-has-nguoi2').checked;
             const nguoi2Val = document.getElementById('inp-nguoi-2').value;
-
             if(isChecked && !nguoi2Val) return alert("Vui lòng chọn người đại diện Khoa liên đới để đồng xác nhận!");
+
+            // Format ngày để lưu DB (dùng dạng Date ISO đơn giản)
+            const todayStr = new Date().toISOString().split('T')[0];
 
             const payload = {
                 NguoiYeuCau: String(currentUser.MaNV).trim(),
                 NguoiYeuCau2: isChecked ? String(nguoi2Val).trim() : "",
-                NgayYeuCau: new Date().toISOString().split('T')[0],
+                NgayYeuCau: todayStr,
                 MaKhoa: document.getElementById('inp-khoa').value,
                 NoiDung: noiDung,
                 LyDo: lyDo
@@ -655,7 +668,7 @@
         }
 
         // =========================================================================
-        // CAMERA & XỬ LÝ TÁCH NỀN CHỮ KÝ (BACKGROUND REMOVAL) - FIX LỖI CROP VÀ GƯƠNG
+        // CAMERA & XỬ LÝ TÁCH NỀN CHỮ KÝ - FIX CROP VÀ LẬT ẢNH
         // =========================================================================
         let videoStream = null;
 
@@ -664,14 +677,14 @@
             document.getElementById('video-container').classList.remove('hidden');
             document.getElementById('result-container').classList.add('hidden');
             document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-flip').classList.add('hidden');
             document.getElementById('btn-retake').classList.add('hidden');
             document.getElementById('btn-save-sig').classList.add('hidden');
 
             navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
                 .then(stream => {
                     videoStream = stream;
-                    const video = document.getElementById('camera-stream');
-                    video.srcObject = stream;
+                    document.getElementById('camera-stream').srcObject = stream;
                 })
                 .catch(err => {
                     alert("Không thể truy cập camera. Vui lòng cấp quyền trong cài đặt trình duyệt!");
@@ -691,6 +704,7 @@
             document.getElementById('video-container').classList.remove('hidden');
             document.getElementById('result-container').classList.add('hidden');
             document.getElementById('btn-capture').classList.remove('hidden');
+            document.getElementById('btn-flip').classList.add('hidden');
             document.getElementById('btn-retake').classList.add('hidden');
             document.getElementById('btn-save-sig').classList.add('hidden');
         }
@@ -701,65 +715,53 @@
             const hiddenCanvas = document.getElementById('canvas-hidden');
             const resultCanvas = document.getElementById('canvas-result');
             
-            // Lấy kích thước thực tế của vùng chứa video và video gốc
+            // 1. Tạo một canvas ảo có kích thước đúng bằng kích thước hiển thị của ô chứa Video trên web
             const cw = container.clientWidth;
             const ch = container.clientHeight;
             const vw = video.videoWidth;
             const vh = video.videoHeight;
 
-            // Tính toán tỷ lệ scale do thuộc tính object-fit: cover của CSS
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = cw;
+            tempCanvas.height = ch;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // 2. Mô phỏng hàm CSS object-fit: cover để vẽ chuẩn xác tỷ lệ lên tempCanvas
             const scale = Math.max(cw / vw, ch / vh);
-            const displayW = vw * scale;
-            const displayH = vh * scale;
+            const drawW = vw * scale;
+            const drawH = vh * scale;
+            const drawX = (cw - drawW) / 2;
+            const drawY = (ch - drawH) / 2;
 
-            // Tính độ lệch của video hiển thị so với thẻ div container (bị đẩy ra ngoài do cover)
-            const offsetX = (cw - displayW) / 2;
-            const offsetY = (ch - displayH) / 2;
+            // Đảm bảo không áp dụng hiệu ứng lật gương lúc vẽ
+            tempCtx.setTransform(1, 0, 0, 1, 0, 0); 
+            tempCtx.drawImage(video, drawX, drawY, drawW, drawH);
 
-            // Xác định vùng cắt (crop box) lấy theo margin 16px (m-4 của tailwind)
+            // 3. Tiến hành crop (cắt) lấy chính xác phần nằm lọt thỏm trong khung đứt nét (Margin 1rem = 16px)
             const margin = 16;
             const cropX = margin;
             const cropY = margin;
             const cropW = cw - margin * 2;
             const cropH = ch - margin * 2;
 
-            // Quy đổi tọa độ từ UI về tọa độ pixel thật trên video
-            const sourceX = (cropX - offsetX) / scale;
-            const sourceY = (cropY - offsetY) / scale;
-            const sourceW = cropW / scale;
-            const sourceH = cropH / scale;
-
-            // Gắn size chính xác cho canvas để không bị méo hay lấy dư
-            hiddenCanvas.width = sourceW;
-            hiddenCanvas.height = sourceH;
-            resultCanvas.width = sourceW;
-            resultCanvas.height = sourceH;
-
-            const ctxHidden = hiddenCanvas.getContext('2d');
-            
-            // BỎ LẬT GƯƠNG, tiến hành crop thẳng từ video
-            ctxHidden.drawImage(video, sourceX, sourceY, sourceW, sourceH, 0, 0, sourceW, sourceH);
-
-            // Xử lý tách nền giấy trắng -> nền trong suốt
-            const imgData = ctxHidden.getImageData(0, 0, sourceW, sourceH);
+            const imgData = tempCtx.getImageData(cropX, cropY, cropW, cropH);
             const data = imgData.data;
-            const threshold = 130; 
+            const threshold = 160; // Nâng ngưỡng lên 160 giúp xóa nền sạch hơn
             
+            // Lọc nền trắng thành trong suốt, chữ thành màu xanh đậm
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i]; const g = data[i + 1]; const b = data[i + 2];
-                // Tính độ xám sáng
                 const v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-                
                 if (v >= threshold) {
-                    data[i + 3] = 0; // Biến nền trắng thành trong suốt
+                    data[i + 3] = 0; // Xóa nền
                 } else {
-                    data[i] = 0;     // Đổi nét mực thành màu xanh đen thẩm mỹ hơn
-                    data[i + 1] = 20;  
-                    data[i + 2] = 120; 
-                    data[i + 3] = 255; 
+                    data[i] = 0; data[i + 1] = 20; data[i + 2] = 120; data[i + 3] = 255; // Xanh đậm
                 }
             }
 
+            // 4. Gắn kết quả cuối cùng vào Canvas hiển thị
+            resultCanvas.width = cropW;
+            resultCanvas.height = cropH;
             const ctxResult = resultCanvas.getContext('2d');
             ctxResult.putImageData(imgData, 0, 0);
 
@@ -767,13 +769,34 @@
             document.getElementById('video-container').classList.add('hidden');
             document.getElementById('result-container').classList.remove('hidden');
             document.getElementById('btn-capture').classList.add('hidden');
+            document.getElementById('btn-flip').classList.remove('hidden'); // Hiển thị nút lật
             document.getElementById('btn-retake').classList.remove('hidden');
             document.getElementById('btn-save-sig').classList.remove('hidden');
         }
 
+        // TÍNH NĂNG MỚI: Lật ảnh nếu bị ngược chữ do mặc định camera của thiết bị
+        function flipSignature() {
+            const canvas = document.getElementById('canvas-result');
+            const ctx = canvas.getContext('2d');
+            
+            // Backup ảnh hiện tại
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+            // Lật và vẽ lại
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(tempCanvas, 0, 0);
+            ctx.restore();
+        }
+
         async function uploadSignature() {
             const canvas = document.getElementById('canvas-result');
-            const base64Data = canvas.toDataURL('image/png'); // Lấy ảnh tách nền dạng PNG
+            const base64Data = canvas.toDataURL('image/png'); 
             
             showLoading("Đang lưu chữ ký lên hệ thống...");
             try {
