@@ -200,7 +200,8 @@
 <body class="bg-slate-50 text-slate-800 font-sans h-screen overflow-hidden flex relative">
 
     <!-- TOAST CONTAINER -->
-    <div id="global-loading" class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in no-print">
+    <div id="global-loading"
+        class="hidden fixed inset-0 bg-slate-900/70 z-[9999] flex flex-col items-center justify-center fade-in no-print">
         <i data-lucide="loader-2" class="w-12 h-12 text-medical-500 animate-spin mb-4"></i>
         <p class="text-white font-bold text-lg">Đang xử lý dữ liệu lên máy chủ...</p>
         <p class="text-yellow-400 text-sm mt-1">Vui lòng KHÔNG đóng trình duyệt lúc này!</p>
@@ -1224,13 +1225,14 @@
                 <!-- BỔ SUNG TRẠNG THÁI NGHỈ VIỆC -->
                 <div class="bg-red-50 p-3 rounded-lg border border-red-100 mt-3">
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="u-danghi" class="w-4 h-4 text-red-600 rounded focus:ring-red-500" 
-                               onchange="document.getElementById('wrap-ngaynghi').classList.toggle('hidden', !this.checked)">
+                        <input type="checkbox" id="u-danghi" class="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                            onchange="document.getElementById('wrap-ngaynghi').classList.toggle('hidden', !this.checked)">
                         <span class="text-sm font-bold text-red-700">Đã nghỉ việc</span>
                     </label>
                     <div id="wrap-ngaynghi" class="hidden mt-2">
                         <label class="block text-xs font-medium text-red-600 mb-1">Chọn ngày nghỉ</label>
-                        <input type="date" id="u-ngaynghi" class="w-full px-3 py-2 border border-red-200 rounded-lg text-sm outline-none">
+                        <input type="date" id="u-ngaynghi"
+                            class="w-full px-3 py-2 border border-red-200 rounded-lg text-sm outline-none">
                     </div>
                 </div>
 
@@ -1326,7 +1328,8 @@
                         class="w-full px-3 py-2 border rounded text-sm"></select></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs">Bắt đầu</label><input type="date" id="tb-ngaybd"
-                            class="w-full px-3 py-2 border rounded text-sm" required onchange="updateEndDateBasedOnStartDate()"></div>
+                            class="w-full px-3 py-2 border rounded text-sm" required
+                            onchange="updateEndDateBasedOnStartDate()"></div>
                     <div><label class="block text-xs">Hết hạn</label><input type="date" id="tb-ngaykt"
                             class="w-full px-3 py-2 border rounded text-sm" required></div>
                 </div>
@@ -1523,7 +1526,7 @@
             if (!dateStr) return "";
             let d = new Date(dateStr + "T12:00:00");
             let day = d.getDay(); // 0 = Chủ Nhật, 1 = Thứ 2...
-            let diff = (day === 0) ? 0 : 7 - day; 
+            let diff = (day === 0) ? 0 : 7 - day;
             d.setDate(d.getDate() + diff);
             let year = d.getFullYear();
             let month = String(d.getMonth() + 1).padStart(2, '0');
@@ -1760,7 +1763,7 @@
             const diff = today.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(today.setDate(diff));
         }
-        
+
         // CẬP NHẬT MỚI: Khởi tạo mặc định cho tất cả các field chọn ngày ngay khi nạp trang
         const currentMondayStr = normalizeDateStr(getMondayOfCurrentWeek());
         document.getElementById('tuan-bat-dau').value = currentMondayStr;
@@ -1801,10 +1804,17 @@
         async function loadDataFromGAS() {
             if (!GAS_URL) return;
             try {
-                document.getElementById('sync-status').classList.remove('hidden');
-
-                const endpoints = ["KhoaPhong", "NhanVien", "LoaiCaTruc", "PhieuLichTruc", "ChiTietLichTruc", "ThongBao", "LichSuThaoTac", "CauHinhKySo"];
-                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
+                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "BangChamCong", "CauHinhPhep"];
+                const promises = endpoints.map(async (ep) => {
+                    try {
+                        const response = await fetch(GAS_URL + "?action=" + ep);
+                        if (!response.ok) throw new Error("Network response was not ok");
+                        return await response.json();
+                    } catch (error) {
+                        console.error(`Lỗi khi tải ${ep}:`, error);
+                        return { status: "error", data: null };
+                    }
+                });
                 const results = await Promise.all(promises);
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
@@ -1875,58 +1885,65 @@
         }
 
         async function silentBackgroundSync() {
-            // NẾU NGƯỜI DÙNG ĐANG CÓ THAY ĐỔI CHƯA LƯU HOẶC ĐANG GỬI DỮ LIỆU, THÌ TẠM DỪNG ĐỒNG BỘ LẤY VỀ ĐỂ TRÁNH RESET DỮ LIỆU ĐANG XẾP
-            if (!GAS_URL || !currentUser || isPushingData || hasUnsavedChanges) return; 
+                // NẾU NGƯỜI DÙNG ĐANG CÓ THAY ĐỔI CHƯA LƯU HOẶC ĐANG GỬI DỮ LIỆU, THÌ TẠM DỪNG ĐỒNG BỘ LẤY VỀ ĐỂ TRÁNH RESET DỮ LIỆU ĐANG XẾP
+                if (!GAS_URL || !currentUser || isPushingData || hasUnsavedChanges) return;
 
-            try {
-                // Tải dữ liệu âm thầm không hiện UI loading
-                const endpoints = ["KhoaPhong", "NhanVien", "LoaiCaTruc", "PhieuLichTruc", "ChiTietLichTruc", "ThongBao", "LichSuThaoTac", "CauHinhKySo"];
-                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
-                const results = await Promise.all(promises);
+                try {
+                    // Tải dữ liệu âm thầm không hiện UI loading
+                    const endpoints = ["KhoaPhong", "NhanVien", "LoaiCaTruc", "PhieuLichTruc", "ChiTietLichTruc", "ThongBao", "LichSuThaoTac", "CauHinhKySo"];
+                    const promises = endpoints.map(async (ep) => {
+                        try {
+                            const response = await fetch(GAS_URL + "?action=" + ep);
+                            if (!response.ok) throw new Error("Network response was not ok");
+                            return await response.json();
+                        } catch (error) {
+                            return { status: "error", data: null };
+                        }
+                    });
+                    const results = await Promise.all(promises);
 
-                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
-                if (results[1] && results[1].status === "success") {
-                    MOCK_DB.users = (results[1].data || []).map(u => ({ 
-                        ...u, 
-                        MaNV: String(u.MaNV), 
-                        ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE', 
-                        CoTruc: u.CoTruc === undefined || String(u.CoTruc).toUpperCase() !== 'FALSE', 
-                        NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
-                        NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : "" 
-                    }));
+                    if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
+                    if (results[1] && results[1].status === "success") {
+                        MOCK_DB.users = (results[1].data || []).map(u => ({
+                            ...u,
+                            MaNV: String(u.MaNV),
+                            ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE',
+                            CoTruc: u.CoTruc === undefined || String(u.CoTruc).toUpperCase() !== 'FALSE',
+                            NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
+                            NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
+                        }));
+                    }
+                    if (results[2] && results[2].status === "success") MOCK_DB.loaiCa = results[2].data || [];
+                    if (results[3] && results[3].status === "success") MOCK_DB.phieu = (results[3].data || []).map(p => ({ ...p, TuanTruc: normalizeDateStr(p.TuanTruc) }));
+                    if (results[4] && results[4].status === "success" && results[4].data) MOCK_DB.shifts = results[4].data.map(s => ({ ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc) }));
+                    if (results[5] && results[5].status === "success") MOCK_DB.thongBao = (results[5].data || []).map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
+                    if (results[6] && results[6].status === "success") MOCK_DB.auditLogs = results[6].data || [];
+                    if (results[7] && results[7].status === "success") MOCK_DB.cauHinhKySo = results[7].data || [];
+
+                    refreshCurrentView(); // Cập nhật lại UI nếu có dữ liệu mới
+                } catch (e) {
+                    // Lỗi mạng thì bỏ qua, chờ chu kỳ tiếp theo
                 }
-                if (results[2] && results[2].status === "success") MOCK_DB.loaiCa = results[2].data || [];
-                if (results[3] && results[3].status === "success") MOCK_DB.phieu = (results[3].data || []).map(p => ({ ...p, TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                if (results[4] && results[4].status === "success" && results[4].data) MOCK_DB.shifts = results[4].data.map(s => ({ ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc) }));
-                if (results[5] && results[5].status === "success") MOCK_DB.thongBao = (results[5].data || []).map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
-                if (results[6] && results[6].status === "success") MOCK_DB.auditLogs = results[6].data || [];
-                if (results[7] && results[7].status === "success") MOCK_DB.cauHinhKySo = results[7].data || [];
-
-                refreshCurrentView(); // Cập nhật lại UI nếu có dữ liệu mới
-            } catch (e) {
-                // Lỗi mạng thì bỏ qua, chờ chu kỳ tiếp theo
             }
-        }
-
         function refreshCurrentView() {
             if (!currentUser) return;
-            
+
             checkAndRenderNotifications(); // Luôn kiểm tra thông báo mới
 
             if (!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardStats();
-            
+
             if (!document.getElementById('view-admin-review').classList.contains('hidden')) renderAdminApprovalTable();
-            
+
             if (!document.getElementById('view-admin-users').classList.contains('hidden')) renderAdminUsersTable();
-            
+
             if (!document.getElementById('view-admin-departments').classList.contains('hidden')) renderAdminDepartmentsTable();
-            
+
             if (!document.getElementById('view-admin-audit').classList.contains('hidden')) renderAuditLog();
-            
+
             if (!document.getElementById('view-admin-thongbao').classList.contains('hidden')) renderAdminThongBaoTable();
-            
+
             if (!document.getElementById('view-user-master-schedule').classList.contains('hidden')) renderUserMasterTable();
-            
+
             if (!document.getElementById('view-contacts').classList.contains('hidden')) renderContactsTable();
 
             if (!document.getElementById('view-xem-lich-khoa').classList.contains('hidden')) renderXemLichKhoaTable();
@@ -1935,7 +1952,7 @@
                 // ĐẶC BIỆT: Màn hình xếp lịch Khoa
                 const tuan = forceMonday('tuan-bat-dau');
                 const phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
-                
+
                 // Chỉ refresh lại lưới lịch nếu trạng thái lịch đã bị khóa (KHTH duyệt/chốt) 
                 // hoặc KHTH Trả lại. Còn nếu đang là "Nháp", ta KHÔNG refresh lưới để 
                 // tránh ghi đè làm mất dữ liệu user đang xếp dở tay chưa kịp Lưu.
@@ -1949,18 +1966,30 @@
         }
 
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC: Chờ lưu bảng này xong mới được lưu bảng kế tiếp
-        async function syncWithGAS(actionName, payloadData) {
-            document.getElementById('sync-status').classList.remove('hidden');
-            isPushingData = true; // Khóa đồng bộ ngầm
+       async function syncWithGAS(actionName, payloadData) {
+            // CHỐT CHẶN AN TOÀN: Ngăn chặn việc gửi mảng rỗng lên làm xóa trắng DB
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
             try {
-                await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: actionName, data: payloadData }) });
+                const response = await fetch(GAS_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                    body: JSON.stringify({ action: actionName, data: payloadData }) 
+                });
+                const result = await response.json();
+                if (result.status !== 'success') {
+                    throw new Error('Lỗi phản hồi từ server');
+                }
             } catch (e) {
-                showToast("Lỗi mạng: Dữ liệu hiện chỉ lưu tạm trên trình duyệt.", "error");
-            } finally {
-                document.getElementById('sync-status').classList.add('hidden');
-                isPushingData = false; // Mở khóa đồng bộ ngầm
+                console.error("Lỗi đồng bộ", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
             }
         }
+
 
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC
         async function logActivity(actionDesc, details = "") {
@@ -2047,7 +2076,7 @@
                     if (xemSel) xemSel.innerHTML = options;
                     switchView('view-khoa-schedule');
                 }
-                
+
                 // Bắt đầu tiến trình đồng bộ ngầm khi đăng nhập thành công
                 startAutoSync();
             } else {
@@ -2159,13 +2188,13 @@
             // Tính toán lại tuần hiện tại chính xác mỗi khi chuyển màn hình
             const realCurrentMonday = normalizeDateStr(getMondayOfCurrentWeek());
 
-            if (viewId === 'view-dashboard') { 
+            if (viewId === 'view-dashboard') {
                 document.getElementById('dash-tuan-bat-dau').value = realCurrentMonday;
-                setTimeout(() => updateDashboardStats(), 50); 
+                setTimeout(() => updateDashboardStats(), 50);
             }
-            else if (viewId === 'view-khoa-schedule') { 
+            else if (viewId === 'view-khoa-schedule') {
                 document.getElementById('tuan-bat-dau').value = realCurrentMonday;
-                checkWeeklyStatus(); 
+                checkWeeklyStatus();
             }
             else if (viewId === 'view-admin-users') {
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
@@ -2188,22 +2217,22 @@
                 renderAdminUsersTable();
             }
             else if (viewId === 'view-admin-departments') { renderAdminDepartmentsTable(); }
-            else if (viewId === 'view-admin-review') { 
+            else if (viewId === 'view-admin-review') {
                 document.getElementById('admin-tuan-bat-dau').value = realCurrentMonday;
-                renderAdminApprovalTable(); 
+                renderAdminApprovalTable();
             }
             else if (viewId === 'view-master-print') { renderMasterTable(); }
-            else if (viewId === 'view-xem-lich-khoa') { 
+            else if (viewId === 'view-xem-lich-khoa') {
                 document.getElementById('xem-tuan-bat-dau').value = realCurrentMonday;
-                renderXemLichKhoaTable(); 
+                renderXemLichKhoaTable();
             }
-            else if (viewId === 'view-user-master-schedule') { 
+            else if (viewId === 'view-user-master-schedule') {
                 document.getElementById('user-master-tuan').value = realCurrentMonday;
-                renderUserMasterTable(); 
+                renderUserMasterTable();
             }
-            else if (viewId === 'view-contacts') { 
+            else if (viewId === 'view-contacts') {
                 document.getElementById('contacts-tuan-bat-dau').value = realCurrentMonday;
-                renderContactsTable(); 
+                renderContactsTable();
             }
             else if (viewId === 'view-admin-thongbao') {
                 document.getElementById('zalo-link-input').value = ZALO_TARGET_URL;
@@ -2273,7 +2302,7 @@
             if (idx > -1) {
                 MOCK_DB.users[idx] = currentUser;
             }
-            
+
             localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Cập nhật local storage để không bị mất khi reload
 
             await syncWithGAS('sync_NhanVien', MOCK_DB.users);
@@ -2714,15 +2743,15 @@
         }
 
         function openThongBaoModal() {
-            document.getElementById('tb-tieude').value = ''; 
-            document.getElementById('tb-noidung').value = ''; 
+            document.getElementById('tb-tieude').value = '';
+            document.getElementById('tb-noidung').value = '';
             document.getElementById('tb-nguoinhan').value = 'ALL';
-            
-            const today = new Date().toISOString().split('T')[0]; 
+
+            const today = new Date().toISOString().split('T')[0];
             const sunday = getSundayOfWeek(today);
-            
-            document.getElementById('tb-ngaybd').value = today; 
-            document.getElementById('tb-ngaykt').value = sunday; 
+
+            document.getElementById('tb-ngaybd').value = today;
+            document.getElementById('tb-ngaykt').value = sunday;
             document.getElementById('thongbao-modal').classList.remove('hidden');
         }
 
@@ -2735,7 +2764,7 @@
             if (newTB.NgayBatDau > newTB.NgayKetThuc) return showToast("Ngày kết thúc phải sau ngày bắt đầu!", "error");
 
             MOCK_DB.thongBao.push(newTB); closeThongBaoModal(); renderAdminThongBaoTable(); checkAndRenderNotifications();
-            
+
             await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
             await logActivity("Tạo thông báo mới", `Gửi: ${newTB.NguoiNhan}`);
             showToast("Đã ban hành thông báo!", "success");
@@ -2744,7 +2773,7 @@
         function deleteThongBao(id) {
             showConfirmModal("Xác nhận Xóa", "Xóa thông báo này khỏi hệ thống?", async () => {
                 MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
-                renderAdminThongBaoTable(); checkAndRenderNotifications(); 
+                renderAdminThongBaoTable(); checkAndRenderNotifications();
                 await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
                 await logActivity("Xóa thông báo", `ID: ${id}`);
                 showToast("Đã xóa thông báo!", "success");
@@ -2815,10 +2844,10 @@
                     : '<span class="text-red-500"><i data-lucide="x-circle" class="w-3 h-3 inline"></i> Không trực</span>';
 
                 const cchnUI = u.CCHN ? `<div class="text-[10px] text-slate-500 mt-1"><i data-lucide="award" class="w-3 h-3 inline"></i> CCHN: ${u.CCHN}</div>` : '';
-                
+
                 const statusNghiViec = u.NgayNghi ? `<div class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold mt-1 inline-block">Đã nghỉ (${u.NgayNghi.split('-').reverse().join('/')})</div>` : '';
 
-                const deleteBtn = (currentUser && currentUser.Role === 'Admin_KHTH') 
+                const deleteBtn = (currentUser && currentUser.Role === 'Admin_KHTH')
                     ? `<button onclick="deleteUser('${u.MaNV}')" class="text-red-400 hover:text-red-600 p-1" title="Xóa"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
                     : '';
 
@@ -2852,7 +2881,7 @@
 
             populateDeptDropdown();
             const cbs = document.querySelectorAll('input[name="u-khoa-cb"]');
-            
+
             cbs.forEach(c => {
                 c.checked = false;
                 c.disabled = false;
@@ -2970,8 +2999,8 @@
 
             if (document.getElementById('form-mode').value === 'add') {
                 const isDuplicate = MOCK_DB.users.some(u => {
-                    const nameMatches = u.HoTen.trim().toLowerCase() === hoTenInput.toLowerCase() || 
-                                        (u.TenHienThi && u.TenHienThi.trim().toLowerCase() === hoTenInput.toLowerCase());
+                    const nameMatches = u.HoTen.trim().toLowerCase() === hoTenInput.toLowerCase() ||
+                        (u.TenHienThi && u.TenHienThi.trim().toLowerCase() === hoTenInput.toLowerCase());
                     if (nameMatches) {
                         const uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
                         return uKhoas.some(k => selectedKhoas.includes(k));
@@ -2988,7 +3017,7 @@
             const ngayNghiVal = daNghi ? document.getElementById('u-ngaynghi').value : "";
 
             const newUser = {
-                ...existingUser, 
+                ...existingUser,
                 MaNV: maNV,
                 HoTen: hoTenInput,
                 MaKhoa: finalKhoas,
@@ -3003,7 +3032,7 @@
                 CoTruc: document.getElementById('u-cotruc').checked,
                 BHXH: document.getElementById('u-bhxh').value.trim(),
                 CCHN: document.getElementById('u-cchn').value.trim(),
-                NgayNghi: ngayNghiVal 
+                NgayNghi: ngayNghiVal
             };
 
             if (document.getElementById('form-mode').value === 'add') {
@@ -3017,7 +3046,7 @@
         }
 
         function deleteUser(maNV) {
-            showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`,async () => {
+            showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`, async () => {
                 MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV));
                 await logActivity("Xóa nhân sự", `Mã: ${maNV}`);
                 renderAdminUsersTable();
@@ -3079,7 +3108,7 @@
             showToast("Lưu thông tin khoa thành công", "success");
         }
 
-       async function deleteDepartment(m) {
+        async function deleteDepartment(m) {
             if (MOCK_DB.users.some(u => (u.MaKhoa || "").includes(m))) return showToast("Không thể xóa Khoa đang có nhân sự!", "error");
             showConfirmModal("Xác nhận xóa", "Xóa khoa phòng này khỏi hệ thống?", async () => {
                 MOCK_DB.khoa = MOCK_DB.khoa.filter(d => d.MaKhoa !== m);
@@ -3237,16 +3266,16 @@
             }
 
             localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.floor(Math.random() * 100), NgayTruc: selectedCell.date, MaNV: String(maNV), MaKhoa: currentUser.ActiveKhoa, ChucDanh: chucDanh });
-            logActivity("Xếp lịch", `Gán NV ${maNV} vào ${selectedCell.date}`); 
+            logActivity("Xếp lịch", `Gán NV ${maNV} vào ${selectedCell.date}`);
             markUnsaved(); // Đánh dấu chưa lưu
             renderWeeklyGrid("Nháp");
         }
 
-        function removeShift(id) { 
-            localShifts = localShifts.filter(s => s.MaChiTiet !== id); 
+        function removeShift(id) {
+            localShifts = localShifts.filter(s => s.MaChiTiet !== id);
             markUnsaved(); // Đánh dấu chưa lưu
-            renderWeeklyGrid("Nháp"); 
-            logActivity("Xóa ca trực", `ID: ${id}`); 
+            renderWeeklyGrid("Nháp");
+            logActivity("Xóa ca trực", `ID: ${id}`);
         }
 
         function autoSchedule() {
@@ -3272,9 +3301,9 @@
                     }
                 });
             });
-            logActivity("Tự động phân bổ lịch"); 
+            logActivity("Tự động phân bổ lịch");
             markUnsaved(); // Đánh dấu chưa lưu
-            renderWeeklyGrid("Nháp"); 
+            renderWeeklyGrid("Nháp");
             showToast("Đã điền tự động các vị trí trống!", "success");
         }
 
@@ -3319,7 +3348,7 @@
             const deptName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
 
             if (isApproved) {
-                const today = new Date().toISOString().split('T')[0]; 
+                const today = new Date().toISOString().split('T')[0];
                 const sunday = getSundayOfWeek(today);
 
                 const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - ${deptName}`, NoiDung: `${deptName} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: sunday };
@@ -3354,8 +3383,8 @@
             MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
             MOCK_DB.shifts.push(...localShifts);
             await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-            await logActivity("Lưu nháp lịch"); 
-            showToast("Đã lưu nháp an toàn.", "success"); 
+            await logActivity("Lưu nháp lịch");
+            showToast("Đã lưu nháp an toàn.", "success");
             clearUnsaved(); // Xóa mác chưa lưu sau khi save
             checkWeeklyStatus();
         }
@@ -3371,12 +3400,12 @@
                     if (phieu) { phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; } else { MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); }
                     const weekDates = getDatesInWeek(tuan);
                     MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); MOCK_DB.shifts.push(...localShifts);
-                    
-                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); 
+
+                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
                     await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-                    await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`); 
-                    
-                    showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success"); 
+                    await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`);
+
+                    showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
                     clearUnsaved();
                     checkWeeklyStatus();
                 } finally {
@@ -3576,9 +3605,9 @@
                     try {
                         phieu.TrangThai = "Đã duyệt"; phieu.NguoiDuyet = currentUser.MaNV; phieu.NgayDuyet = new Date().toISOString().split('T')[0];
                         await logActivity("Phê duyệt lịch", `Khoa: ${phieu.MaKhoa}`);
-                        await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu); 
-                        showToast("Đã duyệt lịch thành công.", "success"); 
-                        renderAdminApprovalTable(); 
+                        await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
+                        showToast("Đã duyệt lịch thành công.", "success");
+                        renderAdminApprovalTable();
                         updateDashboardStats();
                     } finally {
                         hideGlobalLoading(); // Tắt màn hình chờ
@@ -3782,7 +3811,7 @@
                             rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                         });
                     }
-                   else if (col.type === 'group') {
+                    else if (col.type === 'group') {
                         col.children.forEach(child => {
                             const txtArray = shiftsToDay.filter(s => child.maKhoas.includes(s.MaKhoa)).map(s => {
                                 const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); return nv ? (nv.TenHienThi || nv.HoTen) : '';
@@ -3838,7 +3867,7 @@
             document.getElementById('preview-master-table').innerHTML = data.tbody;
 
             const extraInfoEl = document.getElementById('master-extra-info');
-            if(extraInfoEl) extraInfoEl.innerHTML = renderDuocExtra(tuan);
+            if (extraInfoEl) extraInfoEl.innerHTML = renderDuocExtra(tuan);
         }
 
         function renderUserMasterTable() {
@@ -3859,7 +3888,7 @@
                 document.getElementById('user-master-tbody').innerHTML = data.tbody;
 
                 const extraInfoEl = document.getElementById('user-master-extra-info');
-                if(extraInfoEl) extraInfoEl.innerHTML = renderDuocExtra(tuan);
+                if (extraInfoEl) extraInfoEl.innerHTML = renderDuocExtra(tuan);
             } else {
                 alertBox.classList.remove('hidden');
                 container.classList.add('hidden');
