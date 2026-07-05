@@ -642,29 +642,49 @@
         });
 
         async function syncWithGAS(actionName, payloadData) {
-            try {
-                await fetch(GAS_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: actionName, data: payloadData })
-                });
-            } catch (e) {
-                console.error("Lỗi đồng bộ", e);
-                showToast("Lỗi mạng: Trạng thái hiện tại chỉ được lưu tạm trên trình duyệt.", "error");
+                // CHỐT CHẶN AN TOÀN: Ngăn chặn việc gửi mảng rỗng lên làm xóa trắng DB
+                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
+                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                    return;
+                }
+
+                try {
+                    const response = await fetch(GAS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: actionName, data: payloadData })
+                    });
+                    const result = await response.json();
+                    if (result.status !== 'success') {
+                        throw new Error('Lỗi phản hồi từ server');
+                    }
+                } catch (e) {
+                    console.error("Lỗi đồng bộ", e);
+                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Trạng thái hiện tại chỉ được lưu tạm trên trình duyệt.", "error");
+                }
             }
-        }
 
         async function loadDataFromGAS() {
-            document.getElementById('loading-screen').classList.remove('hidden');
-            document.getElementById('retry-btn-container').classList.add('hidden');
-            document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
-            document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
-            lucide.createIcons();
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('retry-btn-container').classList.add('hidden');
+                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
+                document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
+                lucide.createIcons();
 
-            try {
-                const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "PhieuBoiDuong"];
-                const promises = endpoints.map(ep => fetch(GAS_URL + "?action=" + ep).then(r => r.json()).catch(e => null));
-                const results = await Promise.all(promises);
+                try {
+                    const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "PhieuBoiDuong"];
+                    const promises = endpoints.map(async (ep) => {
+                        try {
+                            const response = await fetch(GAS_URL + "?action=" + ep);
+                            if (!response.ok) throw new Error("Network response was not ok");
+                            return await response.json();
+                        } catch (error) {
+                            console.error(`Lỗi khi tải ${ep}:`, error);
+                            return { status: "error", data: null };
+                        }
+                    });
+                    const results = await Promise.all(promises);
 
                 if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
                 if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
