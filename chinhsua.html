@@ -295,9 +295,9 @@
         async function fetchUsersForLogin() {
             document.getElementById('initial-loading').classList.remove('hidden');
             try {
-                const res = await fetch(GAS_URL + "?action=NhanVien");
-                const result = await res.json();
-                if (result.status === "success") DB.NhanVien = result.data || [];
+                const { data, error } = await _supabase.from('NhanVien').select('*');
+                if (error) throw error;
+                DB.NhanVien = data || [];
             } catch (e) {
                 alert("Lỗi tải dữ liệu đăng nhập!");
             } finally {
@@ -330,14 +330,19 @@
         async function loadDashboardData() {
             showLoading("Đang tải dữ liệu phiếu...");
             try {
-                const [resNV, resLSP, resTTC] = await Promise.all([
-                    fetch(GAS_URL + "?action=NhanVien").then(r => r.json()),
-                    fetch(GAS_URL + "?action=LuuSoPhieu").then(r => r.json()),
-                    fetch(GAS_URL + "?action=TrangThaiChinh").then(r => r.json())
+                const [
+                    { data: users },
+                    { data: luuSoPhieu },
+                    { data: trangThaiChinh }
+                ] = await Promise.all([
+                    _supabase.from('NhanVien').select('*'),
+                    _supabase.from('LuuSoPhieu').select('*'),
+                    _supabase.from('TrangThaiChinh').select('*')
                 ]);
-                if (resNV.status === "success") DB.NhanVien = resNV.data;
-                if (resLSP.status === "success") DB.LuuSoPhieu = resLSP.data;
-                if (resTTC.status === "success") DB.TrangThaiChinh = resTTC.data;
+                
+                DB.NhanVien = users || [];
+                DB.LuuSoPhieu = luuSoPhieu || [];
+                DB.TrangThaiChinh = trangThaiChinh || [];
 
                 const me = DB.NhanVien.find(u => String(u.MaNV) === String(currentUser.MaNV));
                 if(me) {
@@ -345,7 +350,12 @@
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 }
                 renderTicketList();
-            } catch (error) { alert("Lỗi tải dữ liệu. Vui lòng F5 lại trang."); } finally { hideLoading(); }
+            } catch (error) { 
+                console.error(error); 
+                alert("Lỗi tải dữ liệu. Vui lòng F5 lại trang."); 
+            } finally { 
+                hideLoading(); 
+            }
         }
 
         function getUserInfo(maNV) {
@@ -603,24 +613,64 @@
             if(isChecked && !nguoi2Val) return alert("Vui lòng chọn người đại diện Khoa liên đới để đồng xác nhận!");
 
             const todayStr = new Date().toISOString().split('T')[0];
-            const payload = {
-                NguoiYeuCau: String(currentUser.MaNV).trim(),
-                NguoiYeuCau2: isChecked ? String(nguoi2Val).trim() : "",
-                NgayYeuCau: todayStr,
-                MaKhoa: document.getElementById('inp-khoa').value,
-                NoiDung: noiDung,
-                LyDo: lyDo
-            };
-
+            
             showLoading("Đang gửi yêu cầu...");
             try {
-                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "submit_phieu_hotro", data: payload }) });
-                const result = await res.json();
-                if(result.status === "success") {
-                    alert(`Gửi phiếu thành công! Số phiếu của bạn là: ${result.soPhieu}`);
-                    await loadDashboardData(); closeTicketDetail();
-                } else { alert("Lỗi server: " + result.message); }
-            } catch(e) { alert("Lỗi kết nối mạng!"); } finally { hideLoading(); }
+                // 1. Tự động tạo Số Phiếu mới mô phỏng lại logic của Backend cũ
+                const currentYear = new Date().getFullYear();
+                let nextNumber = 1;
+                
+                // Lấy danh sách phiếu năm nay để tìm số lớn nhất
+                const { data: currentTickets } = await _supabase.from('LuuSoPhieu').select('SoPhieu, NgayYeuCau');
+                    
+                if (currentTickets && currentTickets.length > 0) {
+                    const ticketsThisYear = currentTickets.filter(t => t.NgayYeuCau && new Date(t.NgayYeuCau).getFullYear() === currentYear);
+                    if (ticketsThisYear.length > 0) {
+                        const maxNum = Math.max(...ticketsThisYear.map(t => {
+                            const match = String(t.SoPhieu).match(/^(\d+)/);
+                            return match ? parseInt(match[1]) : 0;
+                        }));
+                        nextNumber = maxNum + 1;
+                    }
+                }
+                
+                const soPhieuMoi = String(nextNumber).padStart(4, '0') + "/PYC-HT";
+                
+                // 2. Lưu vào bảng LuuSoPhieu
+                const payload = {
+                    SoPhieu: soPhieuMoi,
+                    NguoiYeuCau: String(currentUser.MaNV).trim(),
+                    NguoiYeuCau2: isChecked ? String(nguoi2Val).trim() : "",
+                    NgayYeuCau: todayStr,
+                    MaKhoa: document.getElementById('inp-khoa').value,
+                    NoiDung: noiDung,
+                    LyDo: lyDo,
+                    Link: ""
+                };
+
+                const { error: err1 } = await _supabase.from('LuuSoPhieu').insert(payload);
+                if (err1) throw err1;
+
+                // 3. Tạo trạng thái ban đầu trong TrangThaiChinh
+                const initialLog = "Creator:" + currentUser.MaNV;
+                const initialStatus = isChecked ? "Chờ Đồng ký" : "Chờ Kế Toán duyệt";
+                
+                const { error: err2 } = await _supabase.from('TrangThaiChinh').insert({
+                    SoPhieu: soPhieuMoi,
+                    TrangThai: initialStatus,
+                    NguoiDuyet: initialLog
+                });
+                if (err2) throw err2;
+
+                alert(`Gửi phiếu thành công! Số phiếu của bạn là: ${soPhieuMoi}`);
+                await loadDashboardData(); 
+                closeTicketDetail();
+            } catch(e) { 
+                console.error(e);
+                alert("Lỗi kết nối mạng hoặc CSDL!"); 
+            } finally { 
+                hideLoading(); 
+            }
         }
 
         function renderActionButtons(ticket) {
@@ -672,22 +722,30 @@
 
             let newLog = selectedTicket.NguoiDuyetLog ? `${selectedTicket.NguoiDuyetLog}|${logPrefix}:${currentUser.MaNV}` : `${logPrefix}:${currentUser.MaNV}`;
 
-            if(step === 'CNTT') showLoading("Đang xuất file PDF lưu trữ, vui lòng KHÔNG ĐÓNG TRANG (mất khoảng 5-10 giây)...");
+            if(step === 'CNTT') showLoading("Đang chốt phiếu hoàn thành...");
             else showLoading("Đang xử lý chữ ký...");
             
             try {
-                const payload = { keyColumn: "SoPhieu", keyValue: selectedTicket.SoPhieu, updateData: { TrangThai: newTrangThai, NguoiDuyet: newLog } };
-                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "update_TrangThaiChinh", data: payload }) });
-                const result = await res.json();
+                // Upsert vào bảng TrangThaiChinh thay vì gọi tới GAS
+                const { error } = await _supabase.from('TrangThaiChinh').upsert({
+                    SoPhieu: selectedTicket.SoPhieu,
+                    TrangThai: newTrangThai,
+                    NguoiDuyet: newLog
+                });
                 
-                if (result.status === "success") {
-                    alert("Đã ký xác nhận thành công!");
-                    await loadDashboardData(); openTicketDetail(selectedTicket.SoPhieu); 
-                } else { alert("Lỗi: " + result.message); }
+                if (error) throw error;
+                
+                alert("Đã ký xác nhận thành công!");
+                await loadDashboardData(); 
+                openTicketDetail(selectedTicket.SoPhieu); 
             } catch (e) {
-                alert("Hoàn thành! (Nếu có độ trễ do mạng khi lưu PDF, hệ thống sẽ tự tải lại để lấy link PDF mới nhất).");
-                await loadDashboardData(); closeTicketDetail();
-            } finally { hideLoading(); }
+                console.error(e);
+                alert("Lỗi hệ thống: " + e.message);
+                await loadDashboardData(); 
+                closeTicketDetail();
+            } finally { 
+                hideLoading(); 
+            }
         }
 
         // =========================================================================
@@ -837,19 +895,47 @@
             
             showLoading("Đang lưu chữ ký lên hệ thống...");
             try {
-                const payload = { maNV: currentUser.MaNV, base64: base64Data };
-                const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify({ action: "upload_signature", data: payload }) });
-                const result = await res.json();
+                // 1. Convert base64 Data sang Blob Image
+                const base64 = base64Data.replace(/^data:image\/\w+;base64,/, "");
+                const byteCharacters = atob(base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/png' });
+
+                // 2. Upload file lên bucket 'images' trên Supabase Storage
+                const fileName = `ChuKy_${currentUser.MaNV}_${Date.now()}.png`;
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('images')
+                    .upload(fileName, blob, { contentType: 'image/png', upsert: true });
+
+                if (uploadError) throw uploadError;
+
+                // 3. Lấy URL Public của ảnh
+                const { data: publicUrlData } = _supabase.storage
+                    .from('images')
+                    .getPublicUrl(fileName);
+                const publicUrl = publicUrlData.publicUrl;
+
+                // 4. Lưu Link vào bảng NhanVien
+                const { error: dbError } = await _supabase.from('NhanVien')
+                    .update({ ChuKy: publicUrl })
+                    .eq('MaNV', currentUser.MaNV);
+
+                if (dbError) throw dbError;
                 
-                if (result.status === "success") {
-                    alert("Lưu chữ ký mới thành công! Chữ ký cũ (nếu có) đã được thay thế.");
-                    currentUser.ChuKy = result.url;
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    closeCamera();
-                } else { alert("Lỗi lưu file: " + result.message); }
+                alert("Lưu chữ ký mới thành công! Chữ ký cũ (nếu có) đã được thay thế.");
+                currentUser.ChuKy = publicUrl;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                closeCamera();
             } catch(e) {
-                alert("Lỗi kết nối khi tải file lên Drive.");
-            } finally { hideLoading(); }
+                console.error(e);
+                alert("Lỗi kết nối khi tải file lên Storage của Supabase.");
+            } finally { 
+                hideLoading(); 
+            }
         }
     </script>
 </body>
