@@ -2454,8 +2454,33 @@
             try {
                 const tableName = actionName.replace('sync_', '');
                 
+                // --- BẮT ĐẦU ĐOẠN SỬA LỖI ---
+                // Làm sạch dữ liệu: Chỉ lấy đúng các cột có trên Supabase, 
+                // loại bỏ các trường ảo (TenHienThi, KhoaList...) do giao diện tự sinh ra
+                let processedData = payloadData;
+                if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(u => ({
+                        MaNV: String(u.MaNV),
+                        HoTen: u.HoTen || "",
+                        MaKhoa: u.MaKhoa || "",
+                        ChucDanh: u.ChucDanh || "",
+                        SDT: u.SDT || "",
+                        Email: u.Email || "",
+                        Username: u.Username || "",
+                        Password: u.Password || "",
+                        Role: u.Role || "User_Khoa",
+                        ChungChiHS: u.ChungChiHS || false,
+                        NgayVaoLam: u.NgayVaoLam || "",
+                        CoTruc: u.CoTruc !== false,
+                        BHXH: u.BHXH || "",
+                        CCHN: u.CCHN || "",
+                        NgayNghi: u.NgayNghi || ""
+                    }));
+                }
+                // --- KẾT THÚC ĐOẠN SỬA LỖI ---
+
                 if (tableName === 'CauHinhPhep') {
-                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: payloadData });
+                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
                     if (error) throw error;
                     return;
                 }
@@ -2474,21 +2499,22 @@
                 
                 const pk = primaryKeys[tableName];
 
-                if (Array.isArray(payloadData)) {
+                // Đẩy dữ liệu đã được làm sạch lên Supabase
+                if (Array.isArray(processedData)) {
                     const chunkSize = 500;
-                    for (let i = 0; i < payloadData.length; i += chunkSize) {
-                        const chunk = payloadData.slice(i, i + chunkSize);
+                    for (let i = 0; i < processedData.length; i += chunkSize) {
+                        const chunk = processedData.slice(i, i + chunkSize);
                         const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
                         if (upsertError) throw upsertError;
                     }
                 } else {
-                    const { error: upsertError } = await _supabase.from(tableName).upsert(payloadData);
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
                     if (upsertError) throw upsertError;
                 }
 
                 // Xóa rác với hàm vòng lặp an toàn
-                if (pk && Array.isArray(payloadData)) {
-                    const payloadIds = new Set(payloadData.map(item => String(item[pk])));
+                if (pk && Array.isArray(processedData)) {
+                    const payloadIds = new Set(processedData.map(item => String(item[pk])));
                     const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
                     
                     if (!fetchError && dbRows) {
@@ -3006,10 +3032,17 @@
                 syncSpn.textContent = `Đang đồng bộ (${emailsToSync.length} email)...`;
 
                 try {
+                    // SỬ DỤNG LINK API CỦA GOOGLE APPS SCRIPT ĐỂ GỬI LỊCH QUA GOOGLE
+                    const GOOGLE_API_URL = "https://script.google.com/macros/s/AKfycbwdoYUYZA_ds-gbVsmVT5wnADzcNzE41hCccQzYekECwtHxojxTWWRXkzYnA1QlDVg4/exec";
+                    
                     let successCount = 0;
                     for (const email of emailsToSync) {
                         const payload = { email: email, shifts: syncDataByEmail[email] };
-                        await fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'sync_gcal', data: payload }) });
+                        await fetch(GOOGLE_API_URL, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                            body: JSON.stringify({ action: 'sync_gcal', data: payload }) 
+                        });
                         successCount++;
                     }
 
@@ -3019,9 +3052,10 @@
                     showToast(`Đã hoàn tất gửi lệnh đồng bộ cho ${successCount} tài khoản.`, "success");
                     await logActivity(currentUser.Role === 'User_Khoa' ? "Đồng bộ Google Lịch cá nhân" : "Đồng bộ Google Lịch Hàng Loạt", `Đồng bộ ${shiftsToSync.length} ca cho ${successCount} nhân viên tuần ${tuan}`);
                 } catch (e) {
+                    console.error(e);
                     syncStt.classList.add('hidden');
                     syncSpn.textContent = `Đang đồng bộ...`;
-                    showToast("Lỗi mạng khi thực hiện đồng bộ tới máy chủ.", "error");
+                    showToast("Lỗi mạng khi gửi yêu cầu lên Google Apps Script.", "error");
                 }
             });
         }
@@ -3723,7 +3757,7 @@
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
             const lock = (trangThai === 'Chờ duyệt' || trangThai === 'Đã duyệt');
 
-            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa));
+            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
 
@@ -3981,7 +4015,7 @@
             const weekDates = getDatesInWeek(tuan);
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
 
-            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(maKhoa));
+            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(maKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD'];
             rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
@@ -4420,7 +4454,7 @@
             if (!tuan) return;
             const weekDates = getDatesInWeek(tuan);
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
-            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa));
+            const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
             let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
