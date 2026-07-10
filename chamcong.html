@@ -1254,53 +1254,94 @@
         }
 
         async function syncWithGAS(actionName, payloadData) {
+            // Cho phép payload rỗng nếu là cấu hình phép (vì có thể họ xóa hết cấu hình)
             if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
-                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng.");
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
                 showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
                 return;
             }
 
             try {
                 const tableName = actionName.replace('sync_', '');
+                
+                // Làm sạch dữ liệu trước khi đẩy lên Supabase (Đề phòng trường hợp copy code qua lại giữa các file)
+                let processedData = payloadData;
+                if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(u => ({
+                        MaNV: String(u.MaNV),
+                        HoTen: u.HoTen || "",
+                        MaKhoa: u.MaKhoa || "",
+                        ChucDanh: u.ChucDanh || "",
+                        SDT: u.SDT || "",
+                        Email: u.Email || "",
+                        Username: u.Username || "",
+                        Password: u.Password || "",
+                        Role: u.Role || "User_Khoa",
+                        ChungChiHS: u.ChungChiHS || false,
+                        NgayVaoLam: u.NgayVaoLam || "",
+                        CoTruc: u.CoTruc !== false,
+                        BHXH: u.BHXH || "",
+                        CCHN: u.CCHN || "",
+                        NgayNghi: u.NgayNghi || ""
+                    }));
+                }
+
+                // Xử lý riêng cho lưu Cấu hình phép (file chamcong.html)
                 if (tableName === 'CauHinhPhep') {
-                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: payloadData });
+                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
                     if (error) throw error;
                     return;
                 }
 
                 const primaryKeys = {
-                    'KhoaPhong': 'MaKhoa', 'NhanVien': 'MaNV', 'LoaiCaTruc': 'MaLoaiCa',
-                    'PhieuLichTruc': 'MaPhieu', 'ChiTietLichTruc': 'MaChiTiet', 'ThongBao': 'MaTB',
-                    'LichSuThaoTac': 'ID', 'PhieuBoiDuong': 'MaPhieuBD', 'BangChamCong': 'MaBang'
+                    'KhoaPhong': 'MaKhoa',
+                    'NhanVien': 'MaNV',
+                    'LoaiCaTruc': 'MaLoaiCa',
+                    'PhieuLichTruc': 'MaPhieu',
+                    'ChiTietLichTruc': 'MaChiTiet',
+                    'ThongBao': 'MaTB',
+                    'LichSuThaoTac': 'ID',
+                    'PhieuBoiDuong': 'MaPhieuBD',
+                    'BangChamCong': 'MaBang'
                 };
+                
                 const pk = primaryKeys[tableName];
 
-                if (Array.isArray(payloadData)) {
-                    for (let i = 0; i < payloadData.length; i += 500) {
-                        const chunk = payloadData.slice(i, i + 500);
-                        const { error } = await _supabase.from(tableName).upsert(chunk);
-                        if (error) throw error;
+                // Đẩy dữ liệu lên Supabase theo từng block nhỏ
+                if (Array.isArray(processedData)) {
+                    const chunkSize = 500;
+                    for (let i = 0; i < processedData.length; i += chunkSize) {
+                        const chunk = processedData.slice(i, i + chunkSize);
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                        if (upsertError) throw upsertError;
                     }
                 } else {
-                    const { error } = await _supabase.from(tableName).upsert(payloadData);
-                    if (error) throw error;
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                    if (upsertError) throw upsertError;
                 }
 
-                if (pk && Array.isArray(payloadData)) {
-                    const payloadIds = new Set(payloadData.map(item => String(item[pk])));
+                // Xóa các dòng rác không còn tồn tại trong payload (chỉ áp dụng nếu gửi mảng)
+                if (pk && Array.isArray(processedData)) {
+                    const payloadIds = new Set(processedData.map(item => String(item[pk])));
                     const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
+                    
                     if (!fetchError && dbRows) {
-                        const idsToDelete = dbRows.map(row => String(row[pk])).filter(id => !payloadIds.has(id));
+                        const idsToDelete = dbRows
+                            .map(row => String(row[pk]))
+                            .filter(id => !payloadIds.has(id));
+                        
                         if (idsToDelete.length > 0) {
                             for (let i = 0; i < idsToDelete.length; i += 100) {
-                                await _supabase.from(tableName).delete().in(pk, idsToDelete.slice(i, i + 100));
+                                const deleteChunk = idsToDelete.slice(i, i + 100);
+                                await _supabase.from(tableName).delete().in(pk, deleteChunk);
                             }
                         }
                     }
                 }
+
             } catch (e) {
                 console.error("Lỗi đồng bộ Supabase:", e);
-                showToast("Lỗi mạng: Dữ liệu đang được lưu cục bộ.", "error");
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
             }
         }
 
