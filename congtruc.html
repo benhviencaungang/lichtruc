@@ -8,6 +8,10 @@
     <link rel="icon" type="image/x-icon" href="logo.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Thêm thư viện Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Thêm file cấu hình của chúng ta -->
+<script src="supabase-config.js"></script>
 
     <style>
         /* CSS DÀNH RIÊNG CHO BẢN IN A4 */
@@ -297,11 +301,8 @@
                 <option value="11">Tháng 11</option>
                 <option value="12">Tháng 12</option>
             </select>
-            <select id="sel-year" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
-                <option value="2024">2024</option>
-                <option value="2025">2025</option>
-                <option value="2026">2026</option>
-            </select>
+           <select id="sel-year" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
+                </select>
             <select id="sel-khoa" onchange="generateReport()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0 font-medium bg-emerald-50 text-emerald-900 border-emerald-200">
                 <!-- Tự động điền qua JS -->
             </select>
@@ -452,17 +453,29 @@
     <script>
         lucide.createIcons();
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
+        //const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], phieuBoiDuong: [] };
         let currentUser = null;
         let isPrintingMode = false; // Cờ theo dõi trạng thái đang in để ẩn hiện hàng trống
 
         // DANH SÁCH NGÀY LỄ CỐ ĐỊNH
+        // DANH SÁCH NGÀY LỄ CỐ ĐỊNH VÀ TẾT ÂM LỊCH TỚI 2030
         const FIXED_HOLIDAYS = [
             '01-01', '04-30', '05-01', '09-02', '09-03',
+            // 2024
             '2024-02-08', '2024-02-09', '2024-02-10', '2024-02-11', '2024-02-12', '2024-02-13', '2024-02-14', '2024-04-18',
+            // 2025
             '2025-01-28', '2025-01-29', '2025-01-30', '2025-01-31', '2025-02-01', '2025-02-02', '2025-02-03', '2025-04-07',
-            '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-04-26'
+            // 2026
+            '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-04-26',
+            // 2027
+            '2027-02-04', '2027-02-05', '2027-02-06', '2027-02-07', '2027-02-08', '2027-02-09', '2027-02-10', '2027-02-11', '2027-02-12', '2027-04-16',
+            // 2028
+            '2028-01-24', '2028-01-25', '2028-01-26', '2028-01-27', '2028-01-28', '2028-01-29', '2028-01-30', '2028-01-31', '2028-04-04',
+            // 2029
+            '2029-02-11', '2029-02-12', '2029-02-13', '2029-02-14', '2029-02-15', '2029-02-16', '2029-02-17', '2029-02-18', '2029-04-23',
+            // 2030
+            '2030-02-01', '2030-02-02', '2030-02-03', '2030-02-04', '2030-02-05', '2030-02-06', '2030-02-07', '2030-02-08', '2030-04-11'
         ];
 
         const ROLE_MAP = {
@@ -608,8 +621,8 @@
 
             try {
                 if (MOCK_DB.users.length === 0) {
-                    const res = await fetch(GAS_URL + "?action=NhanVien").then(r => r.json());
-                    if (res && res.status === "success") MOCK_DB.users = res.data || [];
+                    const { data } = await _supabase.from('NhanVien').select('*');
+                    if (data) MOCK_DB.users = data;
                 }
                 const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
                 if (user) {
@@ -641,63 +654,179 @@
             }
         });
 
-        async function syncWithGAS(actionName, payloadData) {
-                // CHỐT CHẶN AN TOÀN: Ngăn chặn việc gửi mảng rỗng lên làm xóa trắng DB
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
-                    return;
-                }
-
-                try {
-                    const response = await fetch(GAS_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: actionName, data: payloadData })
-                    });
-                    const result = await response.json();
-                    if (result.status !== 'success') {
-                        throw new Error('Lỗi phản hồi từ server');
-                    }
-                } catch (e) {
-                    console.error("Lỗi đồng bộ", e);
-                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Trạng thái hiện tại chỉ được lưu tạm trên trình duyệt.", "error");
+        // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
+        async function fetchAllSupabase(tableName, selectQuery = '*') {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                const { data, error } = await _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+                if (error) return { data: allData, error };
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
                 }
             }
+            return { data: allData, error: null };
+        }
+
+        async function syncWithGAS(actionName, payloadData) {
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng.");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+                const primaryKeys = {
+                    'KhoaPhong': 'MaKhoa', 'NhanVien': 'MaNV', 'LoaiCaTruc': 'MaLoaiCa',
+                    'PhieuLichTruc': 'MaPhieu', 'ChiTietLichTruc': 'MaChiTiet', 'ThongBao': 'MaTB',
+                    'LichSuThaoTac': 'ID', 'PhieuBoiDuong': 'MaPhieuBD', 'BangChamCong': 'MaBang'
+                };
+                const pk = primaryKeys[tableName];
+
+                if (Array.isArray(payloadData)) {
+                    for (let i = 0; i < payloadData.length; i += 500) {
+                        const chunk = payloadData.slice(i, i + 500);
+                        const { error } = await _supabase.from(tableName).upsert(chunk);
+                        if (error) throw error;
+                    }
+                } else {
+                    const { error } = await _supabase.from(tableName).upsert(payloadData);
+                    if (error) throw error;
+                }
+
+                if (pk && Array.isArray(payloadData)) {
+                    const payloadIds = new Set(payloadData.map(item => String(item[pk])));
+                    const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
+                    if (!fetchError && dbRows) {
+                        const idsToDelete = dbRows.map(row => String(row[pk])).filter(id => !payloadIds.has(id));
+                        if (idsToDelete.length > 0) {
+                            for (let i = 0; i < idsToDelete.length; i += 100) {
+                                await _supabase.from(tableName).delete().in(pk, idsToDelete.slice(i, i + 100));
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ.", "error");
+            }
+        }
+
+        // --- HÀM TẠO TÊN VIẾT TẮT ---
+        function processDisplayNames(usersList) {
+            let nameGroups = {};
+            usersList.forEach(item => {
+                let fullName = (item.HoTen || "").trim();
+                let parts = fullName.split(' ');
+                let firstName = parts.pop() || "";
+                if (!nameGroups[firstName]) nameGroups[firstName] = [];
+                nameGroups[firstName].push(item);
+            });
+
+            usersList.forEach(item => {
+                let fullName = (item.HoTen || "").trim();
+                let parts = fullName.split(' ');
+                let firstName = parts.pop() || "";
+
+                if (nameGroups[firstName].length === 1) item.TenHienThi = firstName;
+                else {
+                    let middleName = parts.length > 0 ? parts[parts.length - 1] : "";
+                    let attempt1 = (middleName ? middleName.charAt(0).toUpperCase() + "." : "") + firstName;
+
+                    let count = nameGroups[firstName].filter(x => {
+                        let xParts = (x.HoTen || "").trim().split(' '); xParts.pop();
+                        let xMiddle = xParts.length > 0 ? xParts[xParts.length - 1] : "";
+                        return ((xMiddle ? xMiddle.charAt(0).toUpperCase() + "." : "") + firstName) === attempt1;
+                    }).length;
+
+                    if (count === 1 || parts.length <= 1) item.TenHienThi = attempt1;
+                    else {
+                        let lastName = parts[0];
+                        item.TenHienThi = (lastName ? lastName.charAt(0).toUpperCase() + "." : "") + attempt1;
+                    }
+                }
+                if (!item.TenHienThi) item.TenHienThi = item.HoTen;
+            });
+            return usersList;
+        }
+
+        // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
+        async function fetchAllSupabase(tableName, selectQuery = '*') {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                const { data, error } = await _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+                if (error) return { data: allData, error };
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
+            }
+            return { data: allData, error: null };
+        }
 
         async function loadDataFromGAS() {
-                document.getElementById('loading-screen').classList.remove('hidden');
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
-                document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
-                lucide.createIcons();
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
+            document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
+            lucide.createIcons();
 
-                try {
-                    const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "PhieuBoiDuong"];
-                    const promises = endpoints.map(async (ep) => {
-                        try {
-                            const response = await fetch(GAS_URL + "?action=" + ep);
-                            if (!response.ok) throw new Error("Network response was not ok");
-                            return await response.json();
-                        } catch (error) {
-                            console.error(`Lỗi khi tải ${ep}:`, error);
-                            return { status: "error", data: null };
-                        }
-                    });
-                    const results = await Promise.all(promises);
+            try {
+                // Áp dụng lấy toàn bộ dữ liệu qua Supabase
+                const [
+                    { data: khoa },
+                    { data: users },
+                    { data: shifts },
+                    { data: phieuBoiDuong }
+                ] = await Promise.all([
+                    fetchAllSupabase('KhoaPhong'),
+                    fetchAllSupabase('NhanVien'),
+                    fetchAllSupabase('ChiTietLichTruc'),
+                    fetchAllSupabase('PhieuBoiDuong')
+                ]);
 
-                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
-                if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
-                if (results[3] && results[3].status === "success") MOCK_DB.phieuBoiDuong = results[3].data || [];
-                else MOCK_DB.phieuBoiDuong = [];
+                // Xóa khoảng trắng rác (.trim())
+                if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                
+                if (users) {
+                    let rawUsers = users.map(u => ({
+                        ...u,
+                        MaNV: String(u.MaNV).trim(),
+                        MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
+                        ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
+                        HoTen: String(u.HoTen).trim()
+                    }));
+                    MOCK_DB.users = processDisplayNames(rawUsers);
+                } else {
+                    MOCK_DB.users = [];
+                }
 
-                if (results[2] && results[2].status === "success") {
-                    MOCK_DB.shifts = (results[2].data || []).map(s => ({
-                        ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc)
+                MOCK_DB.phieuBoiDuong = phieuBoiDuong || [];
+
+                if (shifts) {
+                    MOCK_DB.shifts = shifts.map(s => ({
+                        ...s, 
+                        MaNV: String(s.MaNV).trim(), 
+                        MaKhoa: String(s.MaKhoa).trim(),
+                        ChucDanh: String(s.ChucDanh).trim(),
+                        NgayTruc: normalizeDateStr(s.NgayTruc)
                     }));
                 }
+                
                 showToast("Đã cập nhật dữ liệu mới nhất", "success");
             } catch (e) {
+                console.error(e);
                 document.getElementById('retry-btn-container').classList.remove('hidden');
                 document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
                 document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
@@ -717,11 +846,31 @@
             let defaultYear = today.getFullYear();
             if (today.getDate() < 5) {
                 defaultMonth -= 1;
-                if (defaultMonth === 0) { defaultMonth = 12; defaultYear -= 1; }
+                if (defaultMonth === 0) { 
+                    defaultMonth = 12; 
+                    defaultYear -= 1;
+                }
+            }
+            // Tự động sinh danh sách năm (từ 2024 đến năm hiện tại + 1)
+            const yearSelect = document.getElementById('sel-year');
+            yearSelect.innerHTML = '';
+            const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
+            for (let y = 2024; y <= maxYear; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
             }
 
             document.getElementById('sel-month').value = defaultMonth;
-            document.getElementById('sel-year').value = defaultYear;
+            
+            // Chọn năm mặc định nếu có trong danh sách
+            let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
+            if (yearExists) {
+                yearSelect.value = defaultYear;
+            } else {
+                yearSelect.value = today.getFullYear();
+            }
 
             const selKhoa = document.getElementById('sel-khoa');
             let dsKhoa = MOCK_DB.khoa || [];
@@ -1464,10 +1613,10 @@
             if (document.hidden || isEditing) return;
 
             try {
-                // Chỉ fetch dữ liệu phiếu (không cần lấy danh sách khoa/nhân viên để tránh nặng máy)
-                const res = await fetch(GAS_URL + "?action=PhieuBoiDuong").then(r => r.json());
-                if (res && res.status === "success") {
-                    const newData = res.data || [];
+                // Áp dụng lấy toàn bộ dữ liệu qua Supabase thay cho select('*')
+                const { data } = await fetchAllSupabase('PhieuBoiDuong');
+                if (data) {
+                    const newData = data;
                     
                     // So sánh sự thay đổi của dữ liệu
                     if (JSON.stringify(newData) !== JSON.stringify(MOCK_DB.phieuBoiDuong)) {
