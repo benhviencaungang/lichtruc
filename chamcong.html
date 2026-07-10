@@ -10,6 +10,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Thêm thư viện xuất Excel SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Thêm thư viện Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Thêm file cấu hình của chúng ta -->
+<script src="supabase-config.js"></script>
 
     <style>
         /* CSS DÀNH RIÊNG CHO BẢN IN A4 NẰM NGANG */
@@ -582,7 +586,7 @@
         }
         // ------------------------------------------------
 
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
+        //const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [], cauHinhPhep: null };
         let currentUser = null;
         let activeInputCell = null; 
@@ -1190,8 +1194,8 @@
 
             try {
                 if (MOCK_DB.users.length === 0) {
-                    const res = await fetch(GAS_URL + "?action=NhanVien").then(r => r.json());
-                    if (res && res.status === "success") MOCK_DB.users = res.data || [];
+                    const { data, error } = await _supabase.from('NhanVien').select('*');
+                    if (!error && data) MOCK_DB.users = data;
                 }
 
                 const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
@@ -1230,59 +1234,103 @@
             }
         });
 
+        // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
+        async function fetchAllSupabase(tableName, selectQuery = '*') {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                const { data, error } = await _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+                if (error) return { data: allData, error };
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
+            }
+            return { data: allData, error: null };
+        }
+
         async function syncWithGAS(actionName, payloadData) {
-                // CHỐT CHẶN AN TOÀN: Ngăn chặn việc gửi mảng rỗng lên làm xóa trắng DB
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng.");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+                if (tableName === 'CauHinhPhep') {
+                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: payloadData });
+                    if (error) throw error;
                     return;
                 }
 
-                try {
-                    const response = await fetch(GAS_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                        body: JSON.stringify({ action: actionName, data: payloadData })
-                    });
-                    const result = await response.json();
-                    if (result.status !== 'success') {
-                        throw new Error('Lỗi phản hồi từ server');
+                const primaryKeys = {
+                    'KhoaPhong': 'MaKhoa', 'NhanVien': 'MaNV', 'LoaiCaTruc': 'MaLoaiCa',
+                    'PhieuLichTruc': 'MaPhieu', 'ChiTietLichTruc': 'MaChiTiet', 'ThongBao': 'MaTB',
+                    'LichSuThaoTac': 'ID', 'PhieuBoiDuong': 'MaPhieuBD', 'BangChamCong': 'MaBang'
+                };
+                const pk = primaryKeys[tableName];
+
+                if (Array.isArray(payloadData)) {
+                    for (let i = 0; i < payloadData.length; i += 500) {
+                        const chunk = payloadData.slice(i, i + 500);
+                        const { error } = await _supabase.from(tableName).upsert(chunk);
+                        if (error) throw error;
                     }
-                } catch (e) {
-                    console.error("Lỗi đồng bộ", e);
-                    showToast("Lỗi mạng: Dữ liệu đang được lưu cục bộ.", "error");
+                } else {
+                    const { error } = await _supabase.from(tableName).upsert(payloadData);
+                    if (error) throw error;
                 }
+
+                if (pk && Array.isArray(payloadData)) {
+                    const payloadIds = new Set(payloadData.map(item => String(item[pk])));
+                    const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
+                    if (!fetchError && dbRows) {
+                        const idsToDelete = dbRows.map(row => String(row[pk])).filter(id => !payloadIds.has(id));
+                        if (idsToDelete.length > 0) {
+                            for (let i = 0; i < idsToDelete.length; i += 100) {
+                                await _supabase.from(tableName).delete().in(pk, idsToDelete.slice(i, i + 100));
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Dữ liệu đang được lưu cục bộ.", "error");
             }
+        }
 
         async function loadDataFromGAS() {
-                document.getElementById('loading-screen').classList.remove('hidden');
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                hasUnsavedChanges = false;
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            hasUnsavedChanges = false;
 
-                try {
-                    const endpoints = ["KhoaPhong", "NhanVien", "ChiTietLichTruc", "BangChamCong", "CauHinhPhep"];
-                    const promises = endpoints.map(async (ep) => {
-                        try {
-                            const response = await fetch(GAS_URL + "?action=" + ep);
-                            if (!response.ok) throw new Error("Network response was not ok");
-                            return await response.json();
-                        } catch (error) {
-                            console.error(`Lỗi khi tải ${ep}:`, error);
-                            return { status: "error", data: null };
-                        }
-                    });
-                    const results = await Promise.all(promises);
+            try {
+                const [
+                    { data: khoa }, { data: users }, { data: shifts },
+                    { data: bangChamCong }, { data: cauHinhPhep }
+                ] = await Promise.all([
+                    fetchAllSupabase('KhoaPhong'),
+                    fetchAllSupabase('NhanVien'),
+                    fetchAllSupabase('ChiTietLichTruc'),
+                    fetchAllSupabase('BangChamCong'),
+                    fetchAllSupabase('CauHinhPhep')
+                ]);
 
-                if (results[0] && results[0].status === "success") MOCK_DB.khoa = results[0].data || [];
-                if (results[1] && results[1].status === "success") MOCK_DB.users = results[1].data || [];
-                if (results[3] && results[3].status === "success") MOCK_DB.bangChamCong = results[3].data || [];
+                MOCK_DB.khoa = khoa || [];
+                MOCK_DB.users = users || [];
+                MOCK_DB.bangChamCong = bangChamCong || [];
                 
-                if (results[4] && results[4].status === "success") {
-                    MOCK_DB.cauHinhPhep = results[4].data || null;
+                if (cauHinhPhep && cauHinhPhep.length > 0) {
+                    MOCK_DB.cauHinhPhep = cauHinhPhep[0].data || null;
                 }
                 
-                if (results[2] && results[2].status === "success") {
-                    MOCK_DB.shifts = (results[2].data || []).map(s => {
+                if (shifts) {
+                    MOCK_DB.shifts = shifts.map(s => {
                         let parsedDate = String(s.NgayTruc || "").trim();
                         if (parsedDate) {
                             if (parsedDate.includes('T')) {
@@ -1290,36 +1338,22 @@
                                 if (!isNaN(utcMs)) {
                                     const vnMs = utcMs + (7 * 60 * 60 * 1000);
                                     const vnDate = new Date(vnMs);
-                                    const y = vnDate.getUTCFullYear();
-                                    const m = String(vnDate.getUTCMonth() + 1).padStart(2, '0');
-                                    const day = String(vnDate.getUTCDate()).padStart(2, '0');
-                                    parsedDate = `${y}-${m}-${day}`;
+                                    parsedDate = `${vnDate.getUTCFullYear()}-${String(vnDate.getUTCMonth() + 1).padStart(2, '0')}-${String(vnDate.getUTCDate()).padStart(2, '0')}`;
                                 }
                             } else {
                                 let tempStr = parsedDate.split(' ')[0].replace(/\//g, '-');
                                 let parts = tempStr.split('-');
                                 if (parts.length === 3) {
-                                    if (parts[0].length === 4) { 
-                                        parsedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                                    } else { 
-                                        parsedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                                    }
+                                    parsedDate = parts[0].length === 4 ? `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}` : `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                                 } else {
                                     parsedDate = tempStr;
                                 }
                             }
                         }
-                        
-                        return {
-                            ...s,
-                            MaNV: String(s.MaNV),
-                            NgayTruc: parsedDate
-                        };
+                        return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
                     });
                 }
-
                 showToast("Đã tải dữ liệu mới nhất.", "success");
-
             } catch (e) {
                 document.getElementById('retry-btn-container').classList.remove('hidden');
                 document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
@@ -1333,7 +1367,6 @@
                 document.getElementById('print-workspace').classList.remove('hidden');
             }
         }
-
         function initUI() {
             const today = getVNTime();
             
@@ -1382,7 +1415,56 @@
             buildStaticTableHeaders();
             generateReport();
         }
+        function initUI() {
+            const today = getVNTime();
+            
+            // 1. Cài đặt ngày ký in luôn luôn là ngày thực tế hiện tại
+            document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
+            document.getElementById('lbl-print-month').textContent = String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('lbl-print-year').textContent = String(today.getFullYear());
 
+            let defaultMonth = today.getMonth() + 1;
+            let defaultYear = today.getFullYear();
+            
+            const yearSelect = document.getElementById('sel-year');
+            yearSelect.innerHTML = '';
+            
+            // Tự động sinh danh sách năm (từ 2024 đến năm hiện tại + 1)
+            const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
+            for (let y = 2024; y <= maxYear; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            }
+            
+            if (defaultYear < 2024) {
+                defaultYear = 2024;
+            }
+            
+            // Logic lùi tháng hiển thị bảng chấm công nếu là những ngày đầu tháng
+            if(today.getDate() < 5) {
+                defaultMonth -= 1;
+                if(defaultMonth === 0) {
+                    defaultMonth = 12;
+                    defaultYear -= 1;
+                    if (defaultYear < 2024) defaultYear = 2024;
+                }
+            }
+
+            document.getElementById('sel-month').value = defaultMonth;
+            
+            let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
+            if (yearExists) {
+                yearSelect.value = defaultYear;
+            } else {
+                yearSelect.value = today.getFullYear().toString(); 
+            }
+
+            initKhoaFilter();
+            buildStaticTableHeaders();
+            generateReport();
+        }
         function buildStaticTableHeaders() {
             let tr1 = '';
             let tr2 = '<th>A</th><th>B</th>';
@@ -1530,7 +1612,7 @@
         }
 
         async function updateBangStatus(status) {
-            if (isSaving) return; 
+            if (isSaving) return;
             isSaving = true;
 
             document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
@@ -1544,8 +1626,9 @@
                 // Lấy dữ liệu mới nhất từ server để gộp (Concurrency Merge)
                 let latestServerDB = [];
                 try {
-                    const res = await fetch(GAS_URL + "?action=BangChamCong").then(r => r.json());
-                    if (res && res.status === "success") latestServerDB = res.data;
+                    // GỌI HÀM VÒNG LẶP SUPABASE MỚI THAY CHO FETCH GAS CŨ
+                    const { data, error } = await fetchAllSupabase('BangChamCong');
+                    if (!error && data) latestServerDB = data;
                 } catch(e) {
                     console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
                     latestServerDB = MOCK_DB.bangChamCong;
@@ -1613,7 +1696,7 @@
                     }
                 }
 
-                hasUnsavedChanges = false; 
+                hasUnsavedChanges = false;
                 currentOverallStatus = status; 
                 updateApprovalUI(status);
                 
@@ -1621,7 +1704,6 @@
 
                 // Cập nhật lại dữ liệu gốc
                 originalGridData = extractGridData();
-
                 if (hasMerged) {
                     showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
                     generateReport(); // Refresh UI to show merged data
