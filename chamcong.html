@@ -1871,7 +1871,7 @@
                         const parts = s.NgayTruc.split('-');
                         if(parts.length === 3) {
                             let d = parseInt(parts[2]);
-                            shiftMap[d] = s.ChucDanh || 'T24'; 
+                            shiftMap[d] ='T24'; 
                         }
                     });
 
@@ -2103,7 +2103,7 @@
                         const parts = s.NgayTruc.split('-');
                         if(parts.length === 3) {
                             let d = parseInt(parts[2]);
-                            shiftMap[d] = s.ChucDanh; 
+                            shiftMap[d] = 'T24'; 
                         }
                     });
 
