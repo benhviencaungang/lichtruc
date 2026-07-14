@@ -4108,9 +4108,14 @@
             const tbody = document.getElementById('admin-approval-body');
 
             const btnChot = document.getElementById('btn-chot-lich');
+            
+            // 1. TẠO BIẾN KIỂM TRA TRẠNG THÁI ĐÃ CHỐT
+            let isChot = false; 
+            let chotRecord = MOCK_DB.phieu.find(p => p.MaKhoa === 'ALL' && p.TuanTruc === tuan);
+
             if (btnChot) {
-                let chotRecord = MOCK_DB.phieu.find(p => p.MaKhoa === 'ALL' && p.TuanTruc === tuan);
                 if (chotRecord && chotRecord.TrangThai === 'Chốt') {
+                    isChot = true; // Bật cờ nếu KHTH đã chốt lịch
                     btnChot.innerHTML = `<i data-lucide="lock" class="w-4 h-4 mr-2"></i> Đã Chốt & Công Bố`;
                     btnChot.className = "px-4 py-2 bg-slate-600 text-white rounded-lg shadow flex items-center hover:bg-slate-700 transition";
                 } else {
@@ -4136,11 +4141,21 @@
                 if (phieu) {
                     if (phieu.TrangThai === "Chờ duyệt") {
                         st = `<span class="px-2 py-1 bg-yellow-100 text-yellow-800 font-bold rounded text-xs">Chờ duyệt</span>`;
-                        btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Duyệt')" class="px-3 py-1 bg-medical-600 text-white rounded text-xs mr-2 shadow-sm">Duyệt</button><button onclick="adminAction('${phieu.MaPhieu}', 'Mở Trả')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs shadow-sm">Trả lại</button>`;
+                        // 2. NẾU ĐÃ CHỐT -> VÔ HIỆU HÓA NÚT DUYỆT VÀ TRẢ LẠI
+                        if (isChot) {
+                            btn = btnView + `<button disabled class="px-3 py-1 bg-slate-300 text-white rounded text-xs mr-2 shadow-sm cursor-not-allowed" title="Vui lòng mở chốt toàn viện trước">Duyệt</button><button disabled class="px-3 py-1 bg-slate-200 text-slate-500 rounded text-xs shadow-sm cursor-not-allowed">Trả lại</button>`;
+                        } else {
+                            btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Duyệt')" class="px-3 py-1 bg-medical-600 text-white rounded text-xs mr-2 shadow-sm hover:bg-medical-700">Duyệt</button><button onclick="adminAction('${phieu.MaPhieu}', 'Mở Trả')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs shadow-sm hover:bg-red-200">Trả lại</button>`;
+                        }
                     } else if (phieu.TrangThai === "Đã duyệt") {
                         st = `<span class="px-2 py-1 bg-green-100 text-green-800 font-bold rounded text-xs"><i data-lucide="check-check" class="w-3 h-3 inline"></i> Đã duyệt</span>`;
                         let app = MOCK_DB.users.find(u => String(u.MaNV) === String(phieu.NguoiDuyet));
-                        btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Hủy')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded text-xs mr-2 shadow-sm hover:bg-slate-200">Hủy Duyệt</button> <span class="text-xs text-slate-400 block mt-1">Bởi: ${app ? app.HoTen : phieu.NguoiDuyet}</span>`;
+                        // 3. NẾU ĐÃ CHỐT -> VÔ HIỆU HÓA NÚT HỦY DUYỆT
+                        if (isChot) {
+                            btn = btnView + `<button disabled class="px-3 py-1 bg-slate-200 text-slate-400 rounded text-xs mr-2 shadow-sm cursor-not-allowed" title="Vui lòng mở chốt toàn viện trước">Hủy Duyệt</button> <span class="text-xs text-slate-400 block mt-1">Bởi: ${app ? app.HoTen : phieu.NguoiDuyet}</span>`;
+                        } else {
+                            btn = btnView + `<button onclick="adminAction('${phieu.MaPhieu}', 'Hủy')" class="px-3 py-1 bg-slate-100 text-slate-600 rounded text-xs mr-2 shadow-sm hover:bg-slate-200">Hủy Duyệt</button> <span class="text-xs text-slate-400 block mt-1">Bởi: ${app ? app.HoTen : phieu.NguoiDuyet}</span>`;
+                        }
                     } else if (phieu.TrangThai === "Trả lại") {
                         st = `<span class="px-2 py-1 bg-red-100 text-red-800 font-bold rounded text-xs">Đã Trả lại</span>`;
                         btn = btnView + `<span class="text-xs text-red-500 italic ml-2" title="${phieu.GhiChu}">Khoa đang sửa...</span>`;
