@@ -3759,10 +3759,24 @@
 
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
+            // Ép buộc ẩn cột Đóng dấu nếu không phải phòng TOCHUCHANHCHANH
+            if (currentUser.ActiveKhoa !== 'TOCHUCHANHCHANH') rolesInKhoa = rolesInKhoa.filter(r => r !== 'DONG_DAU');
+
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
 
+            // TỰ ĐỘNG THÊM CỘT CHÀO CỜ VÀ ĐÓNG DẤU
+            if (!rolesInKhoa.includes('CHAO_CO')) rolesInKhoa.push('CHAO_CO');
+            if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
+
             let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-24 text-center">Ngày</th>`;
-            rolesInKhoa.forEach(r => { const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; });
+            rolesInKhoa.forEach(r => { 
+                let tenRole = r;
+                if (r === 'CHAO_CO') tenRole = 'Chào cờ';
+                else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
+                
+                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; 
+            });
             theadHtml += `</tr>`;
 
             const tableThead = document.getElementById('khoa-schedule-thead'); if (tableThead) tableThead.innerHTML = theadHtml;
@@ -3800,7 +3814,20 @@
 
         function assignToSelectedCell(maNV, chucDanh) {
             if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
-            if (chucDanh !== selectedCell.role) return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
+            
+            // CHO PHÉP XẾP BẤT KỲ AI VÀO CỘT CHÀO CỜ HOẶC ĐÓNG DẤU
+            if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
+                return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
+            }
+
+            // RÀNG BUỘC CHÀO CỜ: CHỈ THỨ 2 VÀ CHỈ 1 NGƯỜI
+            if (selectedCell.role === 'CHAO_CO') {
+                const dSelect = new Date(selectedCell.date + "T12:00:00");
+                if (dSelect.getDay() !== 1) return showToast("Lịch chào cờ chỉ được xếp vào Thứ 2!", "error");
+                
+                const countChaoCo = localShifts.filter(s => s.NgayTruc === selectedCell.date && s.ChucDanh === 'CHAO_CO').length;
+                if (countChaoCo >= 1) return showToast("Chỉ xếp 1 người chào cờ vào Thứ 2!", "error");
+            }
 
             const isConflict = MOCK_DB.shifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date && s.MaKhoa !== currentUser.ActiveKhoa);
             if (isConflict) {
@@ -3819,9 +3846,10 @@
                 if (isConsLocal || isConsGlobal) showToast("CẢNH BÁO LUẬT LĐ: BS này đã trực ngày liền kề!", "warning");
             }
 
-            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.floor(Math.random() * 100), NgayTruc: selectedCell.date, MaNV: String(maNV), MaKhoa: currentUser.ActiveKhoa, ChucDanh: chucDanh });
+            // LƯU CHỨC DANH THEO CỘT ĐƯỢC CHỌN THAY VÌ CHỨC DANH GỐC CỦA NV
+            localShifts.push({ MaChiTiet: "CT_" + Date.now() + Math.floor(Math.random() * 100), NgayTruc: selectedCell.date, MaNV: String(maNV), MaKhoa: currentUser.ActiveKhoa, ChucDanh: selectedCell.role });
             logActivity("Xếp lịch", `Gán NV ${maNV} vào ${selectedCell.date}`);
-            markUnsaved(); // Đánh dấu chưa lưu
+            markUnsaved(); 
             renderWeeklyGrid("Nháp");
         }
 
@@ -4364,7 +4392,7 @@
             let tbody = '';
             const days = ['HAI', 'BA', 'TƯ', 'NĂM', 'SÁU', 'BẢY', 'CN'];
             for (let i = 0; i < 7; i++) {
-                const dateISO = weekDates[i]; const dObj = new Date(dateISO + "T12:00:00"); const shiftsToDay = MOCK_DB.shifts.filter(s => s.NgayTruc === dateISO);
+                const shiftsToDay = MOCK_DB.shifts.filter(s => s.NgayTruc === dateISO && s.ChucDanh !== 'CHAO_CO' && s.ChucDanh !== 'DONG_DAU');
                 let rowHtml = `<tr><td class="border border-slate-800 p-1 font-bold whitespace-nowrap text-[10px]">${days[i]}<br/><span class="font-normal">${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}</span></td>`;
 
                 officialOrder.forEach(col => {
@@ -4471,9 +4499,22 @@
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
+            // Ép buộc ẩn cột Đóng dấu nếu không phải phòng TOCHUCHANHCHANH
+            if (currentUser.ActiveKhoa !== 'TOCHUCHANHCHANH') rolesInKhoa = rolesInKhoa.filter(r => r !== 'DONG_DAU');
+            
+            if (!rolesInKhoa.includes('CHAO_CO')) rolesInKhoa.push('CHAO_CO');
+            if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
+            
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
             let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
-            rolesInKhoa.forEach(r => { const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; });
+            rolesInKhoa.forEach(r => { 
+                let tenRole = r;
+                if (r === 'CHAO_CO') tenRole = 'Chào cờ';
+                else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
+                
+                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; 
+            });
             theadHtml += `</tr>`;
             document.getElementById('xem-lich-khoa-thead').innerHTML = theadHtml;
             let html = '';
@@ -4493,7 +4534,7 @@
             document.getElementById('xem-lich-khoa-body').innerHTML = html;
         }
 
-        function openPrintKhoa() {
+       function openPrintKhoa() {
             const tuan = document.getElementById('tuan-bat-dau').value; if (!tuan) return showToast("Chọn tuần trước khi in!", "warning");
             const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
             document.getElementById('print-khoa-title').textContent = `LỊCH TRỰC ${khoaName}`;
@@ -4502,15 +4543,30 @@
             const days = ['THỨ HAI', 'THỨ BA', 'THỨ TƯ', 'THỨ NĂM', 'THỨ SÁU', 'THỨ BẢY', 'CHỦ NHẬT'];
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa));
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
+            // Ép buộc ẩn cột Đóng dấu nếu không phải phòng TOCHUCHANHCHANH
+            if (currentUser.ActiveKhoa !== 'TOCHUCHANHCHANH') rolesInKhoa = rolesInKhoa.filter(r => r !== 'DONG_DAU');
+            
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
 
-            let activeRoles = rolesInKhoa.filter(r => localShifts.some(s => s.ChucDanh === r));
+            // BỔ SUNG: Phân công Chào cờ
+            if (localShifts.some(s => s.ChucDanh === 'CHAO_CO') && !rolesInKhoa.includes('CHAO_CO')) rolesInKhoa.push('CHAO_CO');
+            
+            // Chỉ duy nhất TOCHUCHANHCHANH mới được phép ép hiển thị Đóng dấu
+            if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
+
+            let activeRoles = rolesInKhoa.filter(r => localShifts.some(s => s.ChucDanh === r) || (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && r === 'DONG_DAU'));
             if (activeRoles.length > 0) {
                 rolesInKhoa = activeRoles;
             }
-
+            
             let printThead = `<tr><th class="border border-slate-800 p-2 w-1/4">THỨ / NGÀY</th>`;
-            rolesInKhoa.forEach(r => { const tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; printThead += `<th class="border border-slate-800 p-2 uppercase">${tenRole}</th>`; });
+            rolesInKhoa.forEach(r => { 
+                let tenRole = r;
+                if (r === 'CHAO_CO') tenRole = 'Chào cờ';
+                else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
+                printThead += `<th class="border border-slate-800 p-2 uppercase">${tenRole}</th>`; 
+            });
             printThead += `</tr>`;
             document.getElementById('print-khoa-thead').innerHTML = printThead;
             let html = '';
@@ -4576,7 +4632,13 @@
                     const shiftsForKhoa = shiftsToday.filter(s => s.MaKhoa === k);
                     const namesArray = shiftsForKhoa.map(s => {
                         const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
-                        return nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
+                        let displayName = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
+                        
+                        // ĐÁNH DẤU CHO BẢN IN GỘP
+                        if (s.ChucDanh === 'CHAO_CO') displayName += ' (Chào cờ)';
+                        if (s.ChucDanh === 'DONG_DAU') displayName += ' (Đóng dấu)';
+                        
+                        return displayName;
                     }).filter(Boolean);
                     html += `<td class="border border-slate-800 p-2">${formatNames(namesArray)}</td>`;
                 });
