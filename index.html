@@ -4392,6 +4392,9 @@
             let tbody = '';
             const days = ['HAI', 'BA', 'TƯ', 'NĂM', 'SÁU', 'BẢY', 'CN'];
             for (let i = 0; i < 7; i++) {
+                const dateISO = weekDates[i];
+                const dObj = new Date(dateISO + "T12:00:00");
+                
                 const shiftsToDay = MOCK_DB.shifts.filter(s => s.NgayTruc === dateISO && s.ChucDanh !== 'CHAO_CO' && s.ChucDanh !== 'DONG_DAU');
                 let rowHtml = `<tr><td class="border border-slate-800 p-1 font-bold whitespace-nowrap text-[10px]">${days[i]}<br/><span class="font-normal">${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}</span></td>`;
 
