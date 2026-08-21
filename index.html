@@ -3831,7 +3831,7 @@
                 if (dSelect.getDay() !== 1) return showToast("Lịch chào cờ chỉ được xếp vào Thứ 2!", "error");
                 
                 const countChaoCo = localShifts.filter(s => s.NgayTruc === selectedCell.date && s.ChucDanh === 'CHAO_CO').length;
-                if (countChaoCo >= 1) return showToast("Chỉ xếp 1 người chào cờ vào Thứ 2!", "error");
+                if (countChaoCo >= 4) return showToast("Chỉ xếp 4 người chào cờ vào Thứ 2!", "error");
             }
 
             const isConflict = MOCK_DB.shifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date && s.MaKhoa !== currentUser.ActiveKhoa);
