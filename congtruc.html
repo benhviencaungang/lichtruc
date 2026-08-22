@@ -1496,11 +1496,28 @@
             
             const userShifts = {};
             shiftsInMonth.forEach(s => {
-                if (!userShifts[s.MaNV]) {
+                let pcRaw = (s.PhanCa || '24h').toLowerCase().trim();
+                
+                // NẾU LÀ CA 12H NGÀY THÌ BỎ QUA, KHÔNG TÍNH BỒI DƯỠNG
+                if (pcRaw === 'ngày' || pcRaw === 'ngay') return; 
+
+                // Gắn nhãn phân loại (Đêm hoặc 24h)
+                let pcKey = (pcRaw === 'đêm' || pcRaw === 'dem') ? 'Đêm' : '24h';
+                
+                // Tạo ID duy nhất (Trong trường hợp hiếm 1 người vừa có ca Đêm vừa có ca 24h trong cùng 1 tháng)
+                let uniqueKey = s.MaNV + '_' + pcKey;
+
+                if (!userShifts[uniqueKey]) {
                     const uInfo = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                     let roleDisplay = ROLE_MAP[s.ChucDanh] || s.ChucDanh;
                     if (roleDisplay.toLowerCase() === 'khác' || roleDisplay.toLowerCase() === 'k') roleDisplay = 'Nhân viên';
-                    userShifts[s.MaNV] = { name: uInfo ? (uInfo.HoTen || uInfo.TenHienThi) : s.MaNV, role: roleDisplay, weekdays: [], weekends: [], holidays: [] };
+                    userShifts[uniqueKey] = { 
+                        maNV: s.MaNV, 
+                        name: uInfo ? (uInfo.HoTen || uInfo.TenHienThi) : s.MaNV, 
+                        role: roleDisplay, 
+                        phanCa: pcKey,
+                        weekdays: [], weekends: [], holidays: [] 
+                    };
                 }
 
                 const d = new Date(s.NgayTruc + "T12:00:00");
@@ -1511,11 +1528,11 @@
                 let isHoliday = FIXED_HOLIDAYS.includes(s.NgayTruc) || FIXED_HOLIDAYS.includes(shortDateStr);
 
                 if (isHoliday) {
-                    if (!userShifts[s.MaNV].holidays.includes(dateNum)) userShifts[s.MaNV].holidays.push(dateNum);
+                    if (!userShifts[uniqueKey].holidays.includes(dateNum)) userShifts[uniqueKey].holidays.push(dateNum);
                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    if (!userShifts[s.MaNV].weekends.includes(dateNum)) userShifts[s.MaNV].weekends.push(dateNum);
+                    if (!userShifts[uniqueKey].weekends.includes(dateNum)) userShifts[uniqueKey].weekends.push(dateNum);
                 } else {
-                    if (!userShifts[s.MaNV].weekdays.includes(dateNum)) userShifts[s.MaNV].weekdays.push(dateNum);
+                    if (!userShifts[uniqueKey].weekdays.includes(dateNum)) userShifts[uniqueKey].weekdays.push(dateNum);
                 }
             });
 
@@ -1528,12 +1545,16 @@
             const padNum = (n) => n < 10 ? '0' + n : n;
             const formatDates = (arr) => arr.sort((a,b)=>a-b).join(', ');
 
-            for (let maNV in userShifts) {
-                const u = userShifts[maNV];
+            for (let uniqueKey in userShifts) {
+                const u = userShifts[uniqueKey];
+                const maNV = uniqueKey; // Dùng uniqueKey làm ID lưu trữ cấu hình để không bị ghi đè
 
-                let userShiftType = savedRates[`${maNV}_shift_type`];
-                if (!userShiftType) {
-                    userShiftType = isEmergency ? 'em12' : 'norm';
+                // TỰ ĐỘNG XÁC ĐỊNH MỨC GIÁ DỰA TRÊN DỮ LIỆU CHỨ KHÔNG CẦN DROPDOWN
+                let userShiftType = '';
+                if (u.phanCa === 'Đêm') {
+                    userShiftType = 'em12'; // Trực 12h đêm -> giá em12
+                } else {
+                    userShiftType = isEmergency ? 'em24' : 'norm'; // Trực 24h
                 }
 
                 let defWd = parsedDefRates.normWd, defWe = parsedDefRates.normWe, defHol = parsedDefRates.normHol;
@@ -1543,7 +1564,6 @@
                     defWd = parsedDefRates.em24Wd; defWe = parsedDefRates.em24We; defHol = parsedDefRates.em24Hol;
                 }
 
-                // Lấy chuỗi ngày, nếu Khoa đã sửa và lưu thì dùng của Khoa, ko thì tự gen
                 let autoDaysWd = formatDates(u.weekdays);
                 let autoDaysWe = formatDates(u.weekends);
                 let autoDaysHol = formatDates(u.holidays);
@@ -1552,7 +1572,6 @@
                 let finalDaysWe = savedRates[`${maNV}_we_days`] !== undefined ? savedRates[`${maNV}_we_days`] : autoDaysWe;
                 let finalDaysHol = savedRates[`${maNV}_hol_days`] !== undefined ? savedRates[`${maNV}_hol_days`] : autoDaysHol;
 
-                // Lấy số lượng đêm đã lưu
                 let wdNights = savedRates[`${maNV}_wd_n`] !== undefined ? parseInt(savedRates[`${maNV}_wd_n`]) : u.weekdays.length;
                 let weNights = savedRates[`${maNV}_we_n`] !== undefined ? parseInt(savedRates[`${maNV}_we_n`]) : u.weekends.length;
                 let holNights = savedRates[`${maNV}_hol_n`] !== undefined ? parseInt(savedRates[`${maNV}_hol_n`]) : u.holidays.length;
@@ -1569,30 +1588,17 @@
 
                 let activeCats = [];
                 if (isEditMode) {
-                    // Chế độ chỉnh sửa (Dành cho Khoa): Show đủ 3 hàng (Thường, Cuối tuần, Lễ Tết) để admin gõ thêm vào nếu thiếu
                     activeCats = categories;
                 } else {
-                    // Chế độ View (KHTH) hoặc Đang In: Lọc bay mất các hàng không có số đêm và không có chữ ngày nào
                     activeCats = categories.filter(c => c.nights > 0 || (c.daysStr && c.daysStr.trim() !== ""));
                 }
 
                 if (activeCats.length === 0) continue; 
                 let rowSpan = activeCats.length;
 
-                let shiftTypeSelectorHtml = '';
-                if (isEditMode) {
-                    shiftTypeSelectorHtml = `
-                    <div class="mt-1">
-                        <select class="text-[10pt] border border-blue-300 rounded p-1 text-blue-800 bg-blue-50 w-full outline-none shift-type-select" data-id="${maNV}_shift_type" onchange="changeShiftType(this, '${maNV}')">
-                            <option value="norm" ${userShiftType === 'norm' ? 'selected' : ''}>Trực 24/24</option>
-                            <option value="em12" ${userShiftType === 'em12' ? 'selected' : ''}>Trực 12/24 CC</option>
-                            <option value="em24" ${userShiftType === 'em24' ? 'selected' : ''}>Trực 24/24 CC</option>
-                        </select>
-                        <span class="print-value hidden text-[10pt] italic text-gray-600 font-normal">${userShiftType === 'em24' ? '(Trực 24/24 CC)' : (userShiftType === 'em12' ? '(Trực 12/24 CC)' : '')}</span>
-                    </div>`;
-                } else if (userShiftType === 'em24' || userShiftType === 'em12') {
-                    shiftTypeSelectorHtml = `<div class="text-[10pt] italic text-gray-600 mt-1 font-normal">${userShiftType === 'em24' ? '(Trực 24/24 CC)' : '(Trực 12/24 CC)'}</div>`;
-                }
+                // Thay thế hoàn toàn thẻ <select> bằng chữ cố định
+                let shiftDisplay = u.phanCa === 'Đêm' ? '(Trực 12/24 Đêm)' : (isEmergency ? '(Trực 24/24 CC)' : '(Trực 24/24)');
+                let shiftTypeSelectorHtml = `<div class="text-[10pt] italic text-gray-600 mt-1 font-normal">${shiftDisplay}</div>`;
 
                 activeCats.forEach((c, index) => {
                     let total = c.nights * (parseInt(c.rate) || 0);
@@ -1601,15 +1607,12 @@
                         totalAllNights += c.nights;
                     }
 
-                    // QUYỀN SỬA CHUỖI NGÀY TRỰC (Khoa)
                     let inputDaysHtml = isEditMode ? `<input type="text" class="days-input w-full border border-slate-300 rounded px-2 py-1 outline-none text-left text-[11pt] font-sans" data-id="${maNV}_${c.id}_days" value="${c.daysStr}" placeholder="VD: 1, 5, 10" oninput="autoUpdateNights(this)">` : '';
                     let printDaysHtml = `<span class="print-value-days ${isEditMode ? 'hidden' : ''}">${c.daysStr}</span>`;
 
-                    // QUYỀN SỬA SỐ ĐÊM (Khoa)
                     let inputNightsHtml = isEditMode ? `<input type="number" class="nights-input w-12 border border-slate-300 rounded px-1 py-1 outline-none text-center font-bold text-blue-700 bg-blue-50 text-[11pt]" data-id="${maNV}_${c.id}_n" value="${c.nights}" oninput="calculateTotals()">` : '';
                     let printNightsHtml = `<span class="print-value-nights ${isEditMode ? 'hidden' : ''}">${padNum(c.nights)}</span>`;
 
-                    // QUYỀN SỬA ĐƠN GIÁ (CHỈ CÓ TCKT ĐƯỢC HIỂN THỊ INPUT)
                     let inputRateHtml = `<input type="number" class="rate-input ${canEnterMoney ? 'w-full border border-slate-300 rounded px-2 py-1 outline-none text-center text-[11pt] font-medium' : 'hidden'}" data-id="${maNV}_${c.id}" data-nights="${c.nights}" value="${c.rate}" placeholder="Giá" oninput="calculateTotals()">`;
                     let printRateHtml = `<span class="print-value ${canEnterMoney ? 'hidden' : ''}">${(canViewMoney && c.rate) ? formatCurrency(c.rate) : ''}</span>`;
 
