@@ -1814,10 +1814,10 @@
             showToast("Đang tải dữ liệu lịch trực mới nhất...", "info");
             
             try {
-                // Kéo data lịch trực mới nếu có thay đổi
-                const res = await fetch(GAS_URL + "?action=ChiTietLichTruc").then(r => r.json());
-                if (res && res.status === "success") {
-                    MOCK_DB.shifts = (res.data || []).map(s => {
+                // Sửa lỗi fetch GAS_URL bằng cách lấy từ Supabase
+                const { data, error } = await fetchAllSupabase('ChiTietLichTruc');
+                if (!error && data) {
+                    MOCK_DB.shifts = data.map(s => {
                         let parsedDate = String(s.NgayTruc || "").trim();
                         if (parsedDate) {
                             if (parsedDate.includes('T')) {
@@ -1871,7 +1871,14 @@
                         const parts = s.NgayTruc.split('-');
                         if(parts.length === 3) {
                             let d = parseInt(parts[2]);
-                            shiftMap[d] ='T24'; 
+                            let pc = (s.PhanCa || '').toLowerCase().trim();
+                            let type = 'T24'; // Mặc định là 24h
+                            
+                            // Nhận diện theo hình ảnh (Ngày, Đêm)
+                            if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
+                            else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
+                            
+                            shiftMap[d] = type;
                         }
                     });
 
@@ -1882,9 +1889,10 @@
 
                         let newVal = null;
                         if (shiftMap[day]) {
-                            newVal = shiftMap[day]; // T24, T12N...
-                        } else if (shiftMap[day - 1]) {
-                            newVal = 'Rt'; // Ra trực
+                            newVal = shiftMap[day]; // T24, T12N, T12D
+                        } else if (shiftMap[day - 1] === 'T24') { 
+                            // CHỈ TRỰC 24 MỚI RA TRỰC, 12 Ngày/Đêm không ra trực
+                            newVal = 'Rt'; 
                         }
 
                         // Nếu là ngày có trực hoặc ra trực, ghi đè.
@@ -2103,7 +2111,14 @@
                         const parts = s.NgayTruc.split('-');
                         if(parts.length === 3) {
                             let d = parseInt(parts[2]);
-                            shiftMap[d] = 'T24'; 
+                            let pc = (s.PhanCa || '').toLowerCase().trim();
+                            let type = 'T24'; 
+                            
+                            // Sửa lại logic nhận diện
+                            if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
+                            else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
+                            
+                            shiftMap[d] = type; 
                         }
                     });
 
@@ -2131,9 +2146,9 @@
                                 
                                 let correctVal = '';
                                 if (shiftMap[day]) {
-                                    correctVal = 'T24';
-                                } else if (shiftMap[day - 1]) {
-                                    correctVal = 'Rt';
+                                    correctVal = shiftMap[day]; // Ghi đúng loại: T24, T12N hoặc T12D
+                                } else if (shiftMap[day - 1] === 'T24') {
+                                    correctVal = 'Rt'; // Chỉ T24 mới được Ra trực
                                 } else if (isHoliday(day, month, year)) {
                                     correctVal = 'L'; 
                                 } else if (dw === 0 || dw === 6) {
@@ -2386,7 +2401,14 @@
                     let d = parseInt(parts[2]);
                     let key = `${y}-${m}-${d}`;
                     if(!shiftsCache[key]) shiftsCache[key] = {};
-                    shiftsCache[key][String(s.MaNV)] = s.ChucDanh;
+                    
+                    let pc = (s.PhanCa || '').toLowerCase().trim();
+                    let type = 'T24'; 
+                    // Sửa lại logic nhận diện
+                    if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
+                    else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
+                    
+                    shiftsCache[key][String(s.MaNV)] = type; 
                 }
             });
 
@@ -2446,8 +2468,8 @@
                             let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
 
                             if (shiftToday) {
-                                val = 'T24';
-                            } else if (shiftYesterday) {
+                                val = shiftToday; 
+                            } else if (shiftYesterday === 'T24') {
                                 val = 'Rt';
                             } else if (isHoliday(d, m, y)) {
                                 val = 'L'; 
