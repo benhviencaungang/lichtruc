@@ -289,23 +289,61 @@
                     fetchAllSupabase('CauHinhPhep')
                 ]);
 
-                realDB.khoa = khoaData.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                // KIỂM SOÁT QUYỀN TRUY CẬP DỮ LIỆU
+                const isAdminKHTH = currentUser.Role === 'Admin_KHTH';
+                const managedKhoas = currentUser.KhoaList || []; // Mảng chứa mã các khoa đang quản lý
+
+                // 1. Lọc Khoa/Phòng
+                if (isAdminKHTH) {
+                    realDB.khoa = khoaData.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                } else {
+                    realDB.khoa = khoaData
+                        .map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }))
+                        .filter(k => managedKhoas.includes(k.MaKhoa));
+                }
                 
-                realDB.users = usersData.map(u => ({ 
+                // 2. Lọc Nhân viên
+                let rawUsers = usersData.map(u => ({ 
                     ...u, 
                     MaNV: String(u.MaNV).trim(),
                     NgayVaoLam: u.NgayVaoLam ? String(u.NgayVaoLam).substring(0,10) : "",
                     NgayNghi: u.NgayNghi ? String(u.NgayNghi).substring(0,10) : "" 
                 }));
+
+                if (!isAdminKHTH) {
+                    rawUsers = rawUsers.filter(u => {
+                        if (!u.MaKhoa) return false;
+                        const uKhoas = u.MaKhoa.split(',').map(s => s.trim());
+                        return uKhoas.some(k => managedKhoas.includes(k));
+                    });
+                }
+                realDB.users = rawUsers;
                 
-                realDB.shifts = shiftsData.map(s => ({
+                // 3. Lọc Lịch trực
+                let rawShifts = shiftsData.map(s => ({
                     ...s,
                     MaNV: String(s.MaNV).trim(),
                     MaKhoa: String(s.MaKhoa).trim(),
                     NgayTruc: s.NgayTruc.substring(0, 10)
                 }));
 
-                realDB.bangChamCong = bangChamCongData || [];
+                if (!isAdminKHTH) {
+                    // Chỉ lấy các ca trực mà Khoa mình phân công HOẶC do Nhân viên khoa mình đi trực
+                    const validUserIds = rawUsers.map(u => u.MaNV);
+                    rawShifts = rawShifts.filter(s => 
+                        managedKhoas.includes(s.MaKhoa) || validUserIds.includes(s.MaNV)
+                    );
+                }
+                realDB.shifts = rawShifts;
+
+                // 4. Lọc Bảng chấm công
+                if (isAdminKHTH) {
+                    realDB.bangChamCong = bangChamCongData || [];
+                } else {
+                    realDB.bangChamCong = (bangChamCongData || []).filter(b => 
+                        managedKhoas.includes(String(b.MaKhoa).trim())
+                    );
+                }
                 
                 // Parse cấu hình phép
                 if (cauHinhPhepData && cauHinhPhepData.length > 0) {
