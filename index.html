@@ -404,32 +404,40 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng trực
-                                        thuộc</label>
-                                    <input type="text" id="profile-khoa"
-                                        class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
-                                        title="Vui lòng liên hệ KHTH nếu muốn điều chuyển Khoa" readonly>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng trực thuộc</label>
+                                    <input type="text" id="profile-khoa" class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" readonly>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-600 mb-1">Chức danh</label>
-                                    <input type="text" id="profile-chucdanh"
-                                        class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
-                                        readonly>
+                                    <input type="text" id="profile-chucdanh" class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" readonly>
                                 </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại liên
-                                    hệ</label>
-                                <input type="text" id="profile-sdt"
-                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
-                                    placeholder="VD: 090...">
+                            
+                            <!-- BỔ SUNG KHUNG NHẬP CCCD, BHXH, CCHN CHO USER TỰ CẬP NHẬT -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span class="text-red-500">*</span></label>
+                                    <input type="text" id="profile-cccd" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Gồm đúng 12 số...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
+                                    <input type="text" id="profile-bhxh" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Nhập BHXH...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Chứng chỉ HN</label>
+                                    <input type="text" id="profile-cchn" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Nhập CCHN...">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-xs font-medium text-slate-600 mb-1">Email nhận lịch trực
-                                    (Google Calendar)</label>
-                                <input type="email" id="profile-email"
-                                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
-                                    placeholder="VD: user@gmail.com">
+
+                            <div class="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại liên hệ</label>
+                                    <input type="text" id="profile-sdt" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: 090...">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Email (Google Calendar)</label>
+                                    <input type="email" id="profile-email" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: user@gmail.com">
+                                </div>
                             </div>
 
                             <div class="pt-4 mt-6">
@@ -1229,17 +1237,19 @@
                     </div>
                 </div>
 
-                <!-- MỚI THÊM: BHXH và CCHN -->
-                <div class="grid grid-cols-2 gap-4 mt-2">
+               <!-- MỚI THÊM: CCCD, BHXH và CCHN -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
-                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm"
-                            placeholder="Nhập mã số BHXH...">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span class="text-red-500">*</span></label>
+                        <input type="text" id="u-cccd" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Đúng 12 số...">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Chứng chỉ hành nghề (CCHN)</label>
-                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm"
-                            placeholder="Nhập số CCHN...">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
+                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Nhập BHXH...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">CCHN</label>
+                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Nhập số CCHN...">
                     </div>
                 </div>
 
@@ -1722,18 +1732,26 @@
 
                         if (s1.ChucDanh === 'BS' && s2.ChucDanh === 'BS') {
                             if (getDaysDiff(s1.NgayTruc, s2.NgayTruc) === 1) {
-                                const exists = violations.some(v => v.Type === 'Luật LĐ' && String(v.MaNV) === String(maNV) && v.Ngay1 === s1.NgayTruc && v.Ngay2 === s2.NgayTruc);
-                                if (!exists) {
-                                    violations.push({
-                                        Type: 'Luật LĐ',
-                                        MaNV: maNV,
-                                        HoTen: hoTen,
-                                        Khoa1: MOCK_DB.khoa.find(k => k.MaKhoa === s1.MaKhoa)?.TenKhoa || s1.MaKhoa,
-                                        Khoa2: MOCK_DB.khoa.find(k => k.MaKhoa === s2.MaKhoa)?.TenKhoa || s2.MaKhoa,
-                                        Ngay1: s1.NgayTruc,
-                                        Ngay2: s2.NgayTruc,
-                                        MaKhoaData: [s1.MaKhoa, s2.MaKhoa]
-                                    });
+                                let pc1 = String(s1.PhanCa || '24h').toLowerCase();
+                                let pc2 = String(s2.PhanCa || '24h').toLowerCase();
+                                
+                                let isCa12h_1 = pc1.includes('ngay') || pc1.includes('ngày') || pc1.includes('dem') || pc1.includes('đêm') || pc1.includes('12');
+                                let isCa12h_2 = pc2.includes('ngay') || pc2.includes('ngày') || pc2.includes('dem') || pc2.includes('đêm') || pc2.includes('12');
+                                
+                                if (!isCa12h_1 && !isCa12h_2) {
+                                    const exists = violations.some(v => v.Type === 'Luật LĐ' && String(v.MaNV) === String(maNV) && v.Ngay1 === s1.NgayTruc && v.Ngay2 === s2.NgayTruc);
+                                    if (!exists) {
+                                        violations.push({
+                                            Type: 'Luật LĐ',
+                                            MaNV: maNV,
+                                            HoTen: hoTen,
+                                            Khoa1: MOCK_DB.khoa.find(k => k.MaKhoa === s1.MaKhoa)?.TenKhoa || s1.MaKhoa,
+                                            Khoa2: MOCK_DB.khoa.find(k => k.MaKhoa === s2.MaKhoa)?.TenKhoa || s2.MaKhoa,
+                                            Ngay1: s1.NgayTruc,
+                                            Ngay2: s2.NgayTruc,
+                                            MaKhoaData: [s1.MaKhoa, s2.MaKhoa]
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -1751,11 +1769,6 @@
             }
             return result.join('<br/>');
         }
-
-        // ---------------------------------------------------------------------------------------
-        // KHỐI 2: DỮ LIỆU & KẾT NỐI MÁY CHỦ (API SYNC)
-        // ---------------------------------------------------------------------------------------
-
         // ---------------------------------------------------------------------------------------
         // KHỐI 2: DỮ LIỆU & KẾT NỐI MÁY CHỦ (API SYNC)
         // ---------------------------------------------------------------------------------------
@@ -1900,6 +1913,7 @@
                         MaNV: String(u.MaNV).trim(),
                         MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
                         ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
+                        CCCD: u.CCCD ? String(u.CCCD).trim() : "", // THÊM DÒNG NÀY
                         ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
                         CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
                         NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
@@ -2032,6 +2046,7 @@
                         MaNV: String(u.MaNV).trim(),
                         MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
                         ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
+                        CCCD: u.CCCD ? String(u.CCCD).trim() : "",
                         ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
                         CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
                         NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
@@ -2488,6 +2503,7 @@
                         Username: u.Username || "",
                         Password: u.Password || "",
                         Role: u.Role || "User_Khoa",
+                        CCCD: u.CCCD ? String(u.CCCD).trim() : "", // THÊM DÒNG NÀY
                         ChungChiHS: u.ChungChiHS || false,
                         NgayVaoLam: u.NgayVaoLam || "",
                         CoTruc: u.CoTruc !== false,
@@ -2840,18 +2856,29 @@
             document.getElementById('profile-chucdanh').value = roleName || "";
             document.getElementById('profile-sdt').value = currentUser.SDT ? formatSDT(currentUser.SDT) : "";
             document.getElementById('profile-email').value = currentUser.Email || "";
+            // THÊM 3 DÒNG NÀY VÀO ĐÂY:
+            document.getElementById('profile-cccd').value = currentUser.CCCD || "";
+            document.getElementById('profile-bhxh').value = currentUser.BHXH || "";
+            document.getElementById('profile-cchn').value = currentUser.CCHN || "";
 
             document.getElementById('profile-old-pw').value = "";
             document.getElementById('profile-new-pw').value = "";
             document.getElementById('profile-confirm-pw').value = "";
         }
 
-        async function saveUserProfile(e) {
+       async function saveUserProfile(e) {
             e.preventDefault();
 
             const newHoTen = document.getElementById('profile-hoten').value.trim();
             const newSdt = document.getElementById('profile-sdt').value.trim();
             const newEmail = document.getElementById('profile-email').value.trim();
+            const newCccd = document.getElementById('profile-cccd').value.trim();
+            const newBhxh = document.getElementById('profile-bhxh').value.trim();
+            const newCchn = document.getElementById('profile-cchn').value.trim();
+
+            if (newCccd && !/^\d{12}$/.test(newCccd)) {
+                return showToast("LỖI: Số CCCD phải bao gồm đúng 12 chữ số!", "error");
+            }
 
             const oldPw = document.getElementById('profile-old-pw').value;
             const newPw = document.getElementById('profile-new-pw').value;
@@ -2875,19 +2902,18 @@
             currentUser.HoTen = newHoTen;
             currentUser.SDT = newSdt;
             currentUser.Email = newEmail;
+            currentUser.CCCD = newCccd;
+            currentUser.BHXH = newBhxh;
+            currentUser.CCHN = newCchn;
             currentUser.Password = finalPassword;
 
             const idx = MOCK_DB.users.findIndex(u => String(u.MaNV) === String(currentUser.MaNV));
-            if (idx > -1) {
-                MOCK_DB.users[idx] = currentUser;
-            }
+            if (idx > -1) MOCK_DB.users[idx] = currentUser;
 
-            localStorage.setItem('currentUser', JSON.stringify(currentUser)); // Cập nhật local storage để không bị mất khi reload
-
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await syncWithGAS('sync_NhanVien', MOCK_DB.users);
 
             document.getElementById('user-fullname').textContent = currentUser.HoTen;
-
             showToast("Đã lưu cập nhật Hồ sơ cá nhân thành công!", "success");
             await logActivity("Cập nhật Hồ sơ cá nhân", finalPassword !== currentUser.Password ? "Có thay đổi mật khẩu" : "Cập nhật liên hệ");
 
@@ -3496,6 +3522,7 @@
                     document.getElementById('u-email').value = user.Email || "";
                     document.getElementById('u-username').value = user.Username || "";
                     document.getElementById('u-password').value = user.Password || "";
+                    document.getElementById('u-cccd').value = user.CCCD || ""; // DÒNG MỚI THÊM NÀY
                     document.getElementById('u-bhxh').value = user.BHXH || "";
                     document.getElementById('u-cchn').value = user.CCHN || "";
 
@@ -3530,7 +3557,7 @@
                 document.getElementById('u-manv').readOnly = true;
                 document.getElementById('u-manv').value = Math.floor(100000000 + Math.random() * 900000000).toString();
 
-                ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password', 'u-bhxh', 'u-cchn', 'u-ngaynghi'].forEach(id => document.getElementById(id).value = "");
+               ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password', 'u-cccd', 'u-bhxh', 'u-cchn', 'u-ngaynghi'].forEach(id => document.getElementById(id).value = "");
                 document.getElementById('u-cchs').checked = false;
 
                 document.getElementById('u-ngayvaolam').value = new Date().toISOString().split('T')[0];
@@ -3613,6 +3640,7 @@
                 Email: document.getElementById('u-email').value.trim(),
                 Username: document.getElementById('u-username').value.trim(),
                 Password: document.getElementById('u-password').value.trim(),
+                
                 Role: userRole,
                 ChungChiHS: document.getElementById('u-cchs').checked,
                 NgayVaoLam: document.getElementById('u-ngayvaolam').value,
