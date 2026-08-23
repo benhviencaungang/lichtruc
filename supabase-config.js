@@ -1,6 +1,12 @@
-// Thông tin kết nối mới từ máy chủ vật lý qua Cloudflare Tunnel
-const SUPABASE_URL = 'https://merely-cheque-appeals-sunset.trycloudflare.com';
-const SUPABASE_ANON_KEY = 'sb_publishable_ublUNkIvVWK0ETY2h52pdA_CpbUOFoI';
+const SUPABASE_URL = 'https://ram-matthew-sheet-faster.trycloudflare.com';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE';
 
-// Khởi tạo client Supabase
-const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var _supabase = null;
+
+function initSupabaseClient() {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+        _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+}
+
+initSupabaseClient();
