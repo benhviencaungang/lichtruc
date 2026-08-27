@@ -12,7 +12,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Thêm thư viện Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Thêm file cấu hình của chúng ta -->
+    <!-- Thêm file cấu hình của chúng ta -->
     <script src="supabase-config.js"></script>
     <script>
         tailwind.config = {
@@ -231,7 +231,8 @@
         </div>
     </div>
     <!-- MODAL CHỌN CA TRỰC HSCC -->
-    <div id="shift-type-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+    <div id="shift-type-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800">
                 <i data-lucide="clock" class="w-5 h-5 mr-2 text-medical-600"></i> Chọn loại ca trực
@@ -239,12 +240,19 @@
             <div class="p-6 text-center">
                 <p class="text-sm text-slate-600 mb-6">Chọn khung giờ trực cho nhân sự này:</p>
                 <div class="grid grid-cols-3 gap-3">
-                    <button onclick="confirmShiftType('Ngày')" class="px-3 py-3 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-bold transition text-sm">12h Ngày</button>
-                    <button onclick="confirmShiftType('Đêm')" class="px-3 py-3 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg font-bold transition text-sm">12h Đêm</button>
-                    <button onclick="confirmShiftType('24h')" class="px-3 py-3 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg font-bold transition text-sm">Trực 24h</button>
+                    <button onclick="confirmShiftType('Ngày')"
+                        class="px-3 py-3 bg-orange-100 text-orange-700 hover:bg-orange-200 rounded-lg font-bold transition text-sm">12h
+                        Ngày</button>
+                    <button onclick="confirmShiftType('Đêm')"
+                        class="px-3 py-3 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-lg font-bold transition text-sm">12h
+                        Đêm</button>
+                    <button onclick="confirmShiftType('24h')"
+                        class="px-3 py-3 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 rounded-lg font-bold transition text-sm">Trực
+                        24h</button>
                 </div>
                 <div class="mt-6 flex justify-end border-t border-slate-100 pt-4">
-                    <button onclick="closeShiftTypeModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition">Hủy</button>
+                    <button onclick="closeShiftTypeModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition">Hủy</button>
                 </div>
             </div>
         </div>
@@ -404,39 +412,57 @@
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng trực thuộc</label>
-                                    <input type="text" id="profile-khoa" class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" readonly>
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng trực
+                                        thuộc</label>
+                                    <input type="text" id="profile-khoa"
+                                        class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+                                        readonly>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-600 mb-1">Chức danh</label>
-                                    <input type="text" id="profile-chucdanh" class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed" readonly>
+                                    <input type="text" id="profile-chucdanh"
+                                        class="w-full px-3 py-2 border border-slate-200 bg-slate-50 rounded-lg text-sm text-slate-500 cursor-not-allowed"
+                                        readonly>
                                 </div>
                             </div>
-                            
+
                             <!-- BỔ SUNG KHUNG NHẬP CCCD, BHXH, CCHN CHO USER TỰ CẬP NHẬT -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                                 <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span class="text-red-500">*</span></label>
-                                    <input type="text" id="profile-cccd" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Gồm đúng 12 số...">
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span
+                                            class="text-red-500">*</span></label>
+                                    <input type="text" id="profile-cccd"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                        placeholder="Gồm đúng 12 số...">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
-                                    <input type="text" id="profile-bhxh" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Nhập BHXH...">
+                                    <input type="text" id="profile-bhxh"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                        placeholder="Nhập BHXH...">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-medium text-slate-600 mb-1">Chứng chỉ HN</label>
-                                    <input type="text" id="profile-cchn" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Nhập CCHN...">
+                                    <input type="text" id="profile-cchn"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                        placeholder="Nhập CCHN...">
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4 mt-2">
                                 <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại liên hệ</label>
-                                    <input type="text" id="profile-sdt" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: 090...">
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại liên
+                                        hệ</label>
+                                    <input type="text" id="profile-sdt"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                        placeholder="VD: 090...">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-slate-600 mb-1">Email (Google Calendar)</label>
-                                    <input type="email" id="profile-email" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: user@gmail.com">
+                                    <label class="block text-xs font-medium text-slate-600 mb-1">Email (Google
+                                        Calendar)</label>
+                                    <input type="email" id="profile-email"
+                                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                        placeholder="VD: user@gmail.com">
                                 </div>
                             </div>
 
@@ -1237,19 +1263,24 @@
                     </div>
                 </div>
 
-               <!-- MỚI THÊM: CCCD, BHXH và CCHN -->
+                <!-- MỚI THÊM: CCCD, BHXH và CCHN -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span class="text-red-500">*</span></label>
-                        <input type="text" id="u-cccd" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="Đúng 12 số...">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="u-cccd"
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                            placeholder="Đúng 12 số...">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
-                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Nhập BHXH...">
+                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm"
+                            placeholder="Nhập BHXH...">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">CCHN</label>
-                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Nhập số CCHN...">
+                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm"
+                            placeholder="Nhập số CCHN...">
                     </div>
                 </div>
 
@@ -1734,10 +1765,10 @@
                             if (getDaysDiff(s1.NgayTruc, s2.NgayTruc) === 1) {
                                 let pc1 = String(s1.PhanCa || '24h').toLowerCase();
                                 let pc2 = String(s2.PhanCa || '24h').toLowerCase();
-                                
+
                                 let isCa12h_1 = pc1.includes('ngay') || pc1.includes('ngày') || pc1.includes('dem') || pc1.includes('đêm') || pc1.includes('12');
                                 let isCa12h_2 = pc2.includes('ngay') || pc2.includes('ngày') || pc2.includes('dem') || pc2.includes('đêm') || pc2.includes('12');
-                                
+
                                 if (!isCa12h_1 && !isCa12h_2) {
                                     const exists = violations.some(v => v.Type === 'Luật LĐ' && String(v.MaNV) === String(maNV) && v.Ngay1 === s1.NgayTruc && v.Ngay2 === s2.NgayTruc);
                                     if (!exists) {
@@ -1906,7 +1937,7 @@
 
                 // XÓA KHOẢNG TRẮNG BẰNG .trim() ĐỂ SO SÁNH CHÍNH XÁC
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                
+
                 if (users) {
                     let rawUsers = users.map(u => ({
                         ...u,
@@ -1919,7 +1950,7 @@
                         NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
                         NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
                     }));
-                    
+
                     // Hàm tạo tên viết tắt trực tiếp
                     let nameGroups = {};
                     rawUsers.forEach(item => {
@@ -1954,13 +1985,13 @@
                         }
                         if (!item.TenHienThi) item.TenHienThi = item.HoTen;
                     });
-                    
+
                     MOCK_DB.users = rawUsers;
                 }
 
                 if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
                 if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                
+
                 if (shifts) {
                     MOCK_DB.shifts = shifts.map(s => ({
                         ...s,
@@ -2030,7 +2061,7 @@
                 ]);
 
                 const hasError = responses.some(res => res.error);
-                if (hasError) return; 
+                if (hasError) return;
 
                 const [
                     { data: khoa }, { data: users }, { data: loaiCa },
@@ -2039,7 +2070,7 @@
                 ] = responses;
 
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                
+
                 if (users) {
                     let rawUsers = users.map(u => ({
                         ...u,
@@ -2088,15 +2119,15 @@
 
                 if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
                 if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                
-               if (shifts) {
+
+                if (shifts) {
                     MOCK_DB.shifts = shifts.map(s => ({
                         ...s,
                         MaNV: String(s.MaNV).trim(),
                         MaKhoa: String(s.MaKhoa).trim(),
                         ChucDanh: String(s.ChucDanh).trim(),
                         NgayTruc: normalizeDateStr(s.NgayTruc),
-                        PhanCa: s.PhanCa || '24h' 
+                        PhanCa: s.PhanCa || '24h'
                     })).sort((a, b) => String(a.MaChiTiet).localeCompare(String(b.MaChiTiet)));
                 }
 
@@ -2104,7 +2135,7 @@
                 if (auditLogs) MOCK_DB.auditLogs = auditLogs;
                 if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
 
-                refreshCurrentView(); 
+                refreshCurrentView();
             } catch (e) {
             }
         }
@@ -2127,7 +2158,7 @@
                 const hasError = responses.some(res => res.error);
                 if (hasError) {
                     console.warn("Đồng bộ ngầm gặp lỗi, hủy bỏ cập nhật để bảo toàn dữ liệu.");
-                    return; 
+                    return;
                 }
 
                 const [
@@ -2152,7 +2183,7 @@
                 MOCK_DB.auditLogs = auditLogs || [];
                 MOCK_DB.cauHinhKySo = cauHinhKySo || [];
 
-                refreshCurrentView(); 
+                refreshCurrentView();
             } catch (e) {
                 // Lỗi mạng thì bỏ qua, chờ chu kỳ tiếp theo
             }
@@ -2162,7 +2193,7 @@
             if (!currentUser) return;
 
             checkAndRenderNotifications(); // Luôn kiểm tra thông báo mới
-            
+
             if (!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardStats();
             if (!document.getElementById('view-admin-review').classList.contains('hidden')) renderAdminApprovalTable();
             if (!document.getElementById('view-admin-users').classList.contains('hidden')) renderAdminUsersTable();
@@ -2233,7 +2264,7 @@
                 ] = responses;
 
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                
+
                 if (users) {
                     let rawUsers = users.map(u => ({
                         ...u,
@@ -2281,7 +2312,7 @@
 
                 if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
                 if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                
+
                 if (shifts) {
                     MOCK_DB.shifts = shifts.map(s => ({
                         ...s,
@@ -2296,7 +2327,7 @@
                 if (auditLogs) MOCK_DB.auditLogs = auditLogs;
                 if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
 
-                 if (currentUser) {
+                if (currentUser) {
                     // BỔ SUNG: Khôi phục danh sách Dropdown Khoa khi tự động đăng nhập (F5 / chuyển trang)
                     const sel = document.getElementById('user-khoa-selector');
                     const xemSel = document.getElementById('xem-khoa-selector');
@@ -2307,14 +2338,14 @@
                         if (sel) sel.innerHTML = options;
                         if (xemSel) xemSel.innerHTML = options;
                     } else {
-                        const options = currentUser.KhoaList.map(k => { 
-                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); 
-                            return `<option value="${k}">${found ? found.TenKhoa : k}</option>`; 
+                        const options = currentUser.KhoaList.map(k => {
+                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k);
+                            return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
                         }).join('');
                         if (sel) sel.innerHTML = options;
                         if (xemSel) xemSel.innerHTML = options;
                     }
-                    
+
                     // Gán lại giá trị đang chọn
                     if (sel && currentUser.ActiveKhoa) sel.value = currentUser.ActiveKhoa;
                     if (xemSel && currentUser.ActiveKhoa) xemSel.value = currentUser.ActiveKhoa;
@@ -2374,7 +2405,7 @@
                 ]);
 
                 const hasError = responses.some(res => res.error);
-                if (hasError) return; 
+                if (hasError) return;
 
                 const [
                     { data: khoa }, { data: users }, { data: loaiCa },
@@ -2383,7 +2414,7 @@
                 ] = responses;
 
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                
+
                 if (users) {
                     let rawUsers = users.map(u => ({
                         ...u,
@@ -2431,7 +2462,7 @@
 
                 if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
                 if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                
+
                 if (shifts) {
                     MOCK_DB.shifts = shifts.map(s => ({
                         ...s,
@@ -2446,7 +2477,7 @@
                 if (auditLogs) MOCK_DB.auditLogs = auditLogs;
                 if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
 
-                refreshCurrentView(); 
+                refreshCurrentView();
             } catch (e) {
             }
         }
@@ -2455,7 +2486,7 @@
             if (!currentUser) return;
 
             checkAndRenderNotifications(); // Luôn kiểm tra thông báo mới
-            
+
             if (!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardStats();
             if (!document.getElementById('view-admin-review').classList.contains('hidden')) renderAdminApprovalTable();
             if (!document.getElementById('view-admin-users').classList.contains('hidden')) renderAdminUsersTable();
@@ -2485,12 +2516,13 @@
                 return;
             }
 
+            // BẬT KHOÁ ĐỒNG BỘ NGẦM
+            isPushingData = true; 
+
             try {
                 const tableName = actionName.replace('sync_', '');
-                
-                // --- BẮT ĐẦU ĐOẠN SỬA LỖI ---
-                // Làm sạch dữ liệu: Chỉ lấy đúng các cột có trên Supabase, 
-                // loại bỏ các trường ảo (TenHienThi, KhoaList...) do giao diện tự sinh ra
+
+                // --- LÀM SẠCH DỮ LIỆU BẢNG NHÂN VIÊN ---
                 let processedData = payloadData;
                 if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
                     processedData = payloadData.map(u => ({
@@ -2503,7 +2535,7 @@
                         Username: u.Username || "",
                         Password: u.Password || "",
                         Role: u.Role || "User_Khoa",
-                        CCCD: u.CCCD ? String(u.CCCD).trim() : "", // THÊM DÒNG NÀY
+                        CCCD: u.CCCD ? String(u.CCCD).trim() : "",
                         ChungChiHS: u.ChungChiHS || false,
                         NgayVaoLam: u.NgayVaoLam || "",
                         CoTruc: u.CoTruc !== false,
@@ -2512,7 +2544,8 @@
                         NgayNghi: u.NgayNghi || ""
                     }));
                 }
-                // --- KẾT THÚC ĐOẠN SỬA LỖI ---
+                
+                // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
                 if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
                     processedData = payloadData.map(s => ({
                         MaChiTiet: String(s.MaChiTiet),
@@ -2523,12 +2556,27 @@
                         PhanCa: s.PhanCa || '24h'
                     }));
                 }
+
+                // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
+                if (tableName === 'ThongBao' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(tb => ({
+                        MaTB: String(tb.MaTB),
+                        TieuDe: tb.TieuDe || "",
+                        NoiDung: tb.NoiDung || "",
+                        NguoiNhan: tb.NguoiNhan || "",
+                        NgayBatDau: tb.NgayBatDau || "",
+                        NgayKetThuc: tb.NgayKetThuc || "",
+                        DataDoiCa: tb.DataDoiCa || null,
+                        TrangThaiDoiCa: tb.TrangThaiDoiCa || null
+                    }));
+                }
+                
                 if (tableName === 'CauHinhPhep') {
                     const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
                     if (error) throw error;
                     return;
                 }
-
+                
                 const primaryKeys = {
                     'KhoaPhong': 'MaKhoa',
                     'NhanVien': 'MaNV',
@@ -2540,7 +2588,7 @@
                     'PhieuBoiDuong': 'MaPhieuBD',
                     'BangChamCong': 'MaBang'
                 };
-                
+
                 const pk = primaryKeys[tableName];
 
                 // Đẩy dữ liệu đã được làm sạch lên Supabase
@@ -2560,12 +2608,12 @@
                 if (pk && Array.isArray(processedData)) {
                     const payloadIds = new Set(processedData.map(item => String(item[pk])));
                     const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
-                    
+
                     if (!fetchError && dbRows) {
                         const idsToDelete = dbRows
                             .map(row => String(row[pk]))
                             .filter(id => !payloadIds.has(id));
-                        
+
                         if (idsToDelete.length > 0) {
                             for (let i = 0; i < idsToDelete.length; i += 100) {
                                 const deleteChunk = idsToDelete.slice(i, i + 100);
@@ -2578,6 +2626,9 @@
             } catch (e) {
                 console.error("Lỗi đồng bộ Supabase:", e);
                 showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+            } finally {
+                // TẮT KHÓA ĐỒNG BỘ NGẦM (Dùng setTimeout để đảm bảo máy chủ đã tiếp nhận xong)
+                setTimeout(() => { isPushingData = false; }, 3000); 
             }
         }
 
@@ -2703,7 +2754,7 @@
             renderXemLichKhoaTable();
         }
 
-       function buildMenu() {
+        function buildMenu() {
             const menuHtml = [];
             if (currentUser.Role === 'Admin_KHTH') {
                 menuHtml.push(`
@@ -2866,7 +2917,7 @@
             document.getElementById('profile-confirm-pw').value = "";
         }
 
-       async function saveUserProfile(e) {
+        async function saveUserProfile(e) {
             e.preventDefault();
 
             const newHoTen = document.getElementById('profile-hoten').value.trim();
@@ -3093,14 +3144,14 @@
                 try {
                     // SỬ DỤNG LINK API CỦA GOOGLE APPS SCRIPT ĐỂ GỬI LỊCH QUA GOOGLE
                     const GOOGLE_API_URL = "https://script.google.com/macros/s/AKfycbwdoYUYZA_ds-gbVsmVT5wnADzcNzE41hCccQzYekECwtHxojxTWWRXkzYnA1QlDVg4/exec";
-                    
+
                     let successCount = 0;
                     for (const email of emailsToSync) {
                         const payload = { email: email, shifts: syncDataByEmail[email] };
-                        await fetch(GOOGLE_API_URL, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                            body: JSON.stringify({ action: 'sync_gcal', data: payload }) 
+                        await fetch(GOOGLE_API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify({ action: 'sync_gcal', data: payload })
                         });
                         successCount++;
                     }
@@ -3249,28 +3300,158 @@
         // ---------------------------------------------------------------------------------------
 
         function checkAndRenderNotifications() {
-            const today = new Date().toISOString().split('T')[0];
-            const validNotifs = MOCK_DB.thongBao.filter(tb => {
-                const isTarget = tb.NguoiNhan === 'ALL' || (currentUser.KhoaList && currentUser.KhoaList.includes(tb.NguoiNhan));
-                const isDateValid = today >= tb.NgayBatDau && today <= tb.NgayKetThuc;
-                return isTarget && isDateValid;
-            });
+                const today = new Date().toISOString().split('T')[0];
+                const validNotifs = MOCK_DB.thongBao.filter(tb => {
+                    const isTarget = tb.NguoiNhan === 'ALL' ||
+                        (currentUser.KhoaList && currentUser.KhoaList.includes(tb.NguoiNhan)) ||
+                        (currentUser.Role === 'Admin_KHTH' && tb.NguoiNhan === 'Admin_KHTH');
 
-            const badge = document.getElementById('notif-badge');
-            if (validNotifs.length > 0) badge.classList.remove('hidden');
-            else badge.classList.add('hidden');
+                    const isDateValid = today >= tb.NgayBatDau && today <= tb.NgayKetThuc;
 
-            const listDiv = document.getElementById('notif-list');
-            if (validNotifs.length === 0) listDiv.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10">Không có thông báo mới</div>`;
-            else listDiv.innerHTML = validNotifs.map(tb => `<div class="bg-white p-3 rounded-lg shadow-sm border-l-4 border-medical-500"><h4 class="font-bold text-sm text-slate-800">${tb.TieuDe}</h4><p class="text-xs text-slate-600 mt-1">${tb.NoiDung}</p><p class="text-[10px] text-slate-400 mt-2 text-right">Hết hạn: ${tb.NgayKetThuc.split('-').reverse().join('/')}</p></div>`).join('');
+                    // --- BỔ SUNG ĐIỀU KIỆN ẨN ---
+                    // Nếu đây là thông báo Yêu cầu đổi ca VÀ đã được xử lý (không còn là Chờ duyệt nữa) -> Ẩn đi
+                    if (tb.DataDoiCa && tb.TrangThaiDoiCa !== 'Chờ duyệt') {
+                        return false;
+                    }
 
-            return validNotifs.length > 0;
-        }
+                    return isTarget && isDateValid;
+                });
+
+                const badge = document.getElementById('notif-badge');
+                if (validNotifs.length > 0) badge.classList.remove('hidden');
+                else badge.classList.add('hidden');
+
+                const listDiv = document.getElementById('notif-list');
+                if (validNotifs.length === 0) {
+                    listDiv.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10">Không có thông báo mới</div>`;
+                } else {
+                    listDiv.innerHTML = validNotifs.map(tb => {
+                        let extraAction = '';
+
+                        // Lúc này chỉ còn các yêu cầu 'Chờ duyệt' lọt qua được bộ lọc
+                        if (tb.DataDoiCa && tb.TrangThaiDoiCa === 'Chờ duyệt') {
+                            if (currentUser.Role === 'Admin_KHTH') {
+                                // Hiện 2 nút bấm cho KHTH
+                                extraAction = `
+                            <div class="mt-3 flex space-x-2 border-t border-slate-100 pt-3">
+                                <button onclick="duyetDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded hover:bg-emerald-600 shadow-sm transition">Duyệt & Đồng bộ</button>
+                                <button onclick="tuChoiDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 shadow-sm transition">Từ chối</button>
+                            </div>`;
+                            } else {
+                                // Hiện tag đang chờ cho người gửi
+                                extraAction = `<div class="mt-3 border-t border-slate-100 pt-2"><span class="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold rounded">⏳ Đang chờ KHTH duyệt</span></div>`;
+                            }
+                        }
+
+                        const borderColor = tb.DataDoiCa ? 'border-orange-500' : 'border-medical-500';
+
+                        return `<div class="bg-white p-3 rounded-lg shadow-sm border-l-4 ${borderColor} mb-3 relative">
+                        <h4 class="font-bold text-sm text-slate-800">${tb.TieuDe}</h4>
+                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">${tb.NoiDung}</p>
+                        ${extraAction}
+                        <p class="text-[10px] text-slate-400 mt-2 text-right">Hết hạn: ${tb.NgayKetThuc.split('-').reverse().join('/')}</p>
+                    </div>`;
+                    }).join('');
+
+                    setTimeout(() => lucide.createIcons(), 10);
+                }
+
+                return validNotifs.length > 0;
+            }
 
         function toggleNotifPanel() {
             document.getElementById('notif-panel').classList.toggle('translate-x-full');
         }
+        async function duyetDoiCa(maTB) {
+            showGlobalLoading(); // Hiện màn hình chờ
+            try {
+                const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                const swapData = JSON.parse(tb.DataDoiCa);
 
+                // 1. Cập nhật thẳng vào lịch toàn viện
+                const targetShift = MOCK_DB.shifts.find(s => s.MaChiTiet === swapData.maChiTiet);
+                if (targetShift) {
+                    targetShift.MaNV = String(swapData.tNV);
+                    const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
+                    if (tUser) targetShift.ChucDanh = tUser.ChucDanh;
+                    await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts); // Đồng bộ ca trực mới
+                }
+
+                // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
+                const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.sNV));
+                const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
+                const sName = sUser ? (sUser.TenHienThi || sUser.HoTen) : swapData.sNV;
+                const tName = tUser ? (tUser.TenHienThi || tUser.HoTen) : swapData.tNV;
+                const formattedDate = swapData.sDate.split('-').reverse().join('/');
+                const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === swapData.maKhoa)?.TenKhoa || swapData.maKhoa;
+
+                // 2. Thay đổi nội dung của thẻ thông báo gốc mà KHTH đang xem
+                tb.TrangThaiDoiCa = 'Đã duyệt';
+                tb.TieuDe = `LỊCH TRỰC CÓ THAY ĐỔI - ${khoaName}`;
+                tb.NoiDung = `KHTH đã duyệt: ${sName} đổi ca cho ${tName} vào ngày ${formattedDate}. Lịch trên hệ thống đã tự động cập nhật.`;
+
+                // 3. THÔNG BÁO CHO TOÀN VIỆN BIẾT LỊCH ĐÃ ĐỔI
+                const today = new Date().toISOString().split('T')[0];
+                MOCK_DB.thongBao.push({
+                    MaTB: "TB_REP_" + Date.now(),
+                    TieuDe: `✅ LỊCH TRỰC CÓ THAY ĐỔI - ${khoaName}`,
+                    NoiDung: `KHTH đã duyệt: ${khoaName} - ${sName} đổi ca cho ${tName} vào ngày ${formattedDate}. Lịch trên hệ thống đã tự động cập nhật.`,
+                    NguoiNhan: "ALL", // Chuyển thành "ALL" để thông báo toàn viện
+                    NgayBatDau: today,
+                    NgayKetThuc: getSundayOfWeek(today)
+                });
+
+                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                await logActivity("Duyệt yêu cầu đổi ca", `Mã ca: ${swapData.maChiTiet}`);
+                showToast("Đã duyệt đổi ca và thông báo cho Toàn viện!", "success");
+                refreshCurrentView(); // Cập nhật lại giao diện
+            } catch (error) {
+                showToast("Có lỗi xảy ra khi đồng bộ!", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+            async function tuChoiDoiCa(maTB) {
+                showGlobalLoading();
+                try {
+                    const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                    const swapData = JSON.parse(tb.DataDoiCa);
+
+                    // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
+                    const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.sNV));
+                    const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
+                    const sName = sUser ? (sUser.TenHienThi || sUser.HoTen) : swapData.sNV;
+                    const tName = tUser ? (tUser.TenHienThi || tUser.HoTen) : swapData.tNV;
+                    const formattedDate = swapData.sDate.split('-').reverse().join('/');
+                    const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === swapData.maKhoa)?.TenKhoa || swapData.maKhoa;
+
+                    // 1. Thay đổi nội dung của thẻ thông báo gốc mà KHTH đang xem[cite: 3]
+                    tb.TrangThaiDoiCa = 'Từ chối';
+                    tb.TieuDe = `TỪ CHỐI ĐỔI CA - ${khoaName}`;
+                    tb.NoiDung = `Đã từ chối yêu cầu: ${sName} nhờ ${tName} trực thay vào ngày ${formattedDate}.`;
+
+                    // 2. Báo về cho Khoa[cite: 3]
+                    const today = new Date().toISOString().split('T')[0];
+                    MOCK_DB.thongBao.push({
+                        MaTB: "TB_REP_" + Date.now(),
+                        TieuDe: `❌ YÊU CẦU ĐỔI CA BỊ TỪ CHỐI`,
+                        NoiDung: `KHTH từ chối yêu cầu: ${sName} đổi ca cho ${tName} vào ngày ${formattedDate}. Vui lòng giữ nguyên lịch trực ban đầu.`,
+                        NguoiNhan: swapData.maKhoa,
+                        NgayBatDau: today,
+                        NgayKetThuc: getSundayOfWeek(today)
+                    });
+
+                    await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                    await logActivity("Từ chối đổi ca", `Mã ca: ${swapData.maChiTiet}`);
+                    showToast("Đã từ chối yêu cầu đổi ca.", "warning");
+                    refreshCurrentView();
+                } catch (error) {
+                    showToast("Có lỗi xảy ra khi đồng bộ!", "error");
+                } finally {
+                    hideGlobalLoading();
+                }
+            }
         async function saveZaloLink() {
             const link = document.getElementById('zalo-link-input').value.trim();
             if (link) {
@@ -3385,8 +3566,14 @@
 
         function deleteThongBao(id) {
             showConfirmModal("Xác nhận Xóa", "Xóa thông báo này khỏi hệ thống?", async () => {
+                // 1. Cập nhật mảng tĩnh
                 MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
-                renderAdminThongBaoTable(); checkAndRenderNotifications();
+                
+                // 2. Render lại Giao diện Ngay Lập Tức
+                renderAdminThongBaoTable(); 
+                checkAndRenderNotifications();
+                
+                // 3. Đẩy lên Máy chủ (hàm này đã được bọc isPushingData bên trên)
                 await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
                 await logActivity("Xóa thông báo", `ID: ${id}`);
                 showToast("Đã xóa thông báo!", "success");
@@ -3557,7 +3744,7 @@
                 document.getElementById('u-manv').readOnly = true;
                 document.getElementById('u-manv').value = Math.floor(100000000 + Math.random() * 900000000).toString();
 
-               ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password', 'u-cccd', 'u-bhxh', 'u-cchn', 'u-ngaynghi'].forEach(id => document.getElementById(id).value = "");
+                ['u-hoten', 'u-sdt', 'u-email', 'u-username', 'u-password', 'u-cccd', 'u-bhxh', 'u-cchn', 'u-ngaynghi'].forEach(id => document.getElementById(id).value = "");
                 document.getElementById('u-cchs').checked = false;
 
                 document.getElementById('u-ngayvaolam').value = new Date().toISOString().split('T')[0];
@@ -3640,7 +3827,7 @@
                 Email: document.getElementById('u-email').value.trim(),
                 Username: document.getElementById('u-username').value.trim(),
                 Password: document.getElementById('u-password').value.trim(),
-                
+
                 Role: userRole,
                 ChungChiHS: document.getElementById('u-cchs').checked,
                 NgayVaoLam: document.getElementById('u-ngayvaolam').value,
@@ -3780,6 +3967,14 @@
                 badge.textContent = "Bị Trả Lại"; badge.className = "ml-4 px-2 py-0.5 bg-red-100 text-red-800 rounded text-xs font-bold";
                 reason.classList.remove('hidden'); reason.textContent = "Lý do: " + currentPhieu.GhiChu;
             }
+            const btnSwap = document.querySelector('button[onclick="openSwapShiftModal()"]');
+            if (btnSwap) {
+                if (currentUser.Role === 'Admin_Khoa' || currentUser.Role === 'Admin_KHTH') {
+                    btnSwap.classList.remove('hidden');
+                } else {
+                    btnSwap.classList.add('hidden');
+                }
+            }
             renderNhanVienList(); renderWeeklyGrid(currentPhieu ? currentPhieu.TrangThai : "Nháp");
         }
 
@@ -3828,13 +4023,13 @@
             if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
 
             let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-24 text-center">Ngày</th>`;
-            rolesInKhoa.forEach(r => { 
+            rolesInKhoa.forEach(r => {
                 let tenRole = r;
                 if (r === 'CHAO_CO') tenRole = 'Chào cờ';
                 else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
-                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
-                
-                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; 
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
+
+                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`;
             });
             theadHtml += `</tr>`;
 
@@ -3857,15 +4052,15 @@
 
         function renderChips(shifts, isLocked) {
             if (shifts.length === 0) return '';
-            
+
             let caNgay = [], caDem = [], ca24h = [];
-            
+
             shifts.forEach(s => {
                 const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                 const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
                 const btnXoa = isLocked ? '' : `<button onclick="event.stopPropagation(); removeShift('${s.MaChiTiet}')" class="ml-1 text-red-400 hover:text-red-600"><i data-lucide="x" class="w-3 h-3"></i></button>`;
                 const chip = `<div class="inline-flex items-center bg-blue-50 border border-blue-200 text-blue-800 text-xs px-1 py-0.5 rounded mb-1 mr-1"><span>${ten}</span>${btnXoa}</div>`;
-                
+
                 if (s.PhanCa === 'Ngày') caNgay.push(chip);
                 else if (s.PhanCa === 'Đêm') caDem.push(chip);
                 else ca24h.push(chip);
@@ -3875,7 +4070,7 @@
             if (caNgay.length > 0) html += `<div class="mb-1"><span class="font-bold text-orange-600 text-[10px] block">NGÀY:</span> ${caNgay.join('')}</div>`;
             if (caDem.length > 0) html += `<div class="mb-1"><span class="font-bold text-indigo-600 text-[10px] block">ĐÊM:</span> ${caDem.join('')}</div>`;
             if (ca24h.length > 0) html += `<div>${(caNgay.length > 0 || caDem.length > 0) ? '<span class="font-bold text-emerald-600 text-[10px] block">24H:</span>' : ''} ${ca24h.join('')}</div>`;
-            
+
             return html;
         }
 
@@ -3902,22 +4097,22 @@
         }
 
         function executeShiftAssignment(maNV, chucDanh, phanCa) {
-            localShifts.push({ 
-                MaChiTiet: "CT_" + Date.now() + String(Math.floor(Math.random() * 100)).padStart(2, '0'), 
-                NgayTruc: selectedCell.date, 
-                MaNV: String(maNV), 
-                MaKhoa: currentUser.ActiveKhoa, 
+            localShifts.push({
+                MaChiTiet: "CT_" + Date.now() + String(Math.floor(Math.random() * 100)).padStart(2, '0'),
+                NgayTruc: selectedCell.date,
+                MaNV: String(maNV),
+                MaKhoa: currentUser.ActiveKhoa,
                 ChucDanh: selectedCell.role,
-                PhanCa: phanCa 
+                PhanCa: phanCa
             });
             logActivity("Xếp lịch", `Gán NV ${maNV} vào ${selectedCell.date}`);
-            markUnsaved(); 
+            markUnsaved();
             renderWeeklyGrid("Nháp");
         }
 
         function assignToSelectedCell(maNV, chucDanh) {
             if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
-            
+
             if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
                 return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
             }
@@ -4032,16 +4227,46 @@
             const deptName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
 
             if (isApproved) {
+                // TÌM CHÍNH XÁC CA TRỰC TRÊN HỆ THỐNG ĐỂ ĐỔI
+                const targetShift = MOCK_DB.shifts.find(s => String(s.MaNV) === String(sNV) && s.NgayTruc === sDate && s.MaKhoa === currentUser.ActiveKhoa);
+
+                if (!targetShift) {
+                    return showToast("Lỗi: Không tìm thấy ca trực gốc trên hệ thống!", "error");
+                }
+
+                // TẠO DỮ LIỆU ĐỔI CA (Chứa ID ca trực để KHTH xử lý tự động)
+                const swapData = {
+                    maChiTiet: targetShift.MaChiTiet,
+                    sNV: sNV,
+                    tNV: tNV,
+                    sDate: sDate,
+                    maKhoa: currentUser.ActiveKhoa
+                };
+
                 const today = new Date().toISOString().split('T')[0];
                 const sunday = getSundayOfWeek(today);
 
-                const newTB = { MaTB: "TB_" + Date.now(), TieuDe: `YÊU CẦU TRỰC THẾ - ${deptName}`, NoiDung: `${deptName} xin phép cho ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV} trực thế cho ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} vào ngày ${sDate.split('-').reverse().join('/')}.`, NguoiNhan: "ALL", NgayBatDau: today, NgayKetThuc: sunday };
-                MOCK_DB.thongBao.push(newTB); await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao); await logActivity("Xin trực thế", `Ngày ${sDate}: ${sNV} -> ${tNV}`);
+                // TẠO THÔNG BÁO GỬI ĐÍCH DANH CHO ADMIN KHTH
+                const newTB = {
+                    MaTB: "TB_SWAP_" + Date.now(),
+                    TieuDe: `YÊU CẦU ĐỔI CA - ${deptName}`,
+                    NoiDung: `${deptName} xin phép đổi ca trực ngày ${sDate.split('-').reverse().join('/')}: từ ${sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV} sang ${tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV}.`,
+                    NguoiNhan: "Admin_KHTH", // Chỉ KHTH mới nhận được thông báo này
+                    NgayBatDau: today,
+                    NgayKetThuc: sunday,
+                    DataDoiCa: JSON.stringify(swapData), // Dữ liệu ngầm để xử lý đồng bộ
+                    TrangThaiDoiCa: 'Chờ duyệt' // Trạng thái phê duyệt
+                };
+
+                MOCK_DB.thongBao.push(newTB);
+                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                await logActivity("Xin trực thế (Gửi KHTH)", `Ngày ${sDate}: ${sNV} -> ${tNV}`);
 
                 document.getElementById('swap-modal').classList.add('hidden');
-                showToast("Lịch đã khóa. Đã gửi yêu cầu trực thế lên KHTH!", "success");
+                showToast("Lịch đã khóa. Đã gửi yêu cầu đổi ca lên KHTH duyệt!", "success");
 
-                showConfirmModal("Gửi thông báo Zalo", "Yêu cầu đã được lưu. Bạn có muốn gửi thông báo KHẨN CẤP thay đổi này vào nhóm Zalo để mọi người nắm thông tin ngay không?", () => {
+                // Vẫn giữ tính năng tùy chọn gửi thông báo khẩn qua Zalo
+                showConfirmModal("Gửi thông báo Zalo", "Yêu cầu đã gửi cho KHTH. Bạn có muốn gửi thông báo KHẨN CẤP vào nhóm Zalo ngay lúc này không?", () => {
                     shareSwapToZalo(sUser ? (sUser.TenHienThi || sUser.HoTen) : sNV, tUser ? (tUser.TenHienThi || tUser.HoTen) : tNV, sDate);
                 });
             } else {
@@ -4172,7 +4397,7 @@
                     const renderStatic = (arr) => arr.length === 0 ? '<span class="text-slate-400 italic text-xs p-1">Trống</span>' : arr.map(s => {
                         const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                         let displayName = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
-                        
+
                         // Định dạng màu và thêm (N) (Đ)
                         let colorClass = "bg-blue-50 border-blue-200 text-blue-800";
                         if (s.PhanCa === 'Ngày') {
@@ -4182,7 +4407,7 @@
                             displayName += ' (Đ)';
                             colorClass = "bg-indigo-50 border-indigo-200 text-indigo-800";
                         }
-                        
+
                         return `<span class="inline-block ${colorClass} text-xs px-2 py-1 rounded mr-1 mb-1">${displayName}</span>`;
                     }).join('');
                     html += `<td class="px-4 py-2 border-r align-top"><div class="min-h-[40px] content-start">${renderStatic(shiftsRole)}</div></td>`;
@@ -4249,9 +4474,9 @@
             const tbody = document.getElementById('admin-approval-body');
 
             const btnChot = document.getElementById('btn-chot-lich');
-            
+
             // 1. TẠO BIẾN KIỂM TRA TRẠNG THÁI ĐÃ CHỐT
-            let isChot = false; 
+            let isChot = false;
             let chotRecord = MOCK_DB.phieu.find(p => p.MaKhoa === 'ALL' && p.TuanTruc === tuan);
 
             if (btnChot) {
@@ -4507,29 +4732,29 @@
             for (let i = 0; i < 7; i++) {
                 const dateISO = weekDates[i];
                 const dObj = new Date(dateISO + "T12:00:00");
-                
+
                 const shiftsToDay = MOCK_DB.shifts.filter(s => s.NgayTruc === dateISO && s.ChucDanh !== 'CHAO_CO' && s.ChucDanh !== 'DONG_DAU');
                 let rowHtml = `<tr><td class="border border-slate-800 p-1 font-bold whitespace-nowrap text-[10px]">${days[i]}<br/><span class="font-normal">${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}</span></td>`;
 
                 officialOrder.forEach(col => {
                     if (col.type === 'single') {
-                        const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa)).map(s => { 
-                            const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); 
-                            let name = nv ? (nv.TenHienThi || nv.HoTen) : ''; 
+                        const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa)).map(s => {
+                            const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
+                            let name = nv ? (nv.TenHienThi || nv.HoTen) : '';
                             if (name && s.PhanCa === 'Ngày') name += ' (N)';
                             if (name && s.PhanCa === 'Đêm') name += ' (Đ)';
-                            return name; 
+                            return name;
                         }).filter(Boolean);
                         rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                     }
                     else if (col.type === 'multi') {
                         col.roles.forEach(role => {
                             const txtArray = shiftsToDay.filter(s => col.maKhoas.includes(s.MaKhoa) && s.ChucDanh === role).map(s => {
-                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); 
-                                let name = nv ? (nv.TenHienThi || nv.HoTen) : ''; 
+                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
+                                let name = nv ? (nv.TenHienThi || nv.HoTen) : '';
                                 if (name && s.PhanCa === 'Ngày') name += ' (N)';
                                 if (name && s.PhanCa === 'Đêm') name += ' (Đ)';
-                                return name; 
+                                return name;
                             }).filter(Boolean);
                             rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                         });
@@ -4537,11 +4762,11 @@
                     else if (col.type === 'group') {
                         col.children.forEach(child => {
                             const txtArray = shiftsToDay.filter(s => child.maKhoas.includes(s.MaKhoa)).map(s => {
-                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV)); 
-                                let name = nv ? (nv.TenHienThi || nv.HoTen) : ''; 
+                                const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
+                                let name = nv ? (nv.TenHienThi || nv.HoTen) : '';
                                 if (name && s.PhanCa === 'Ngày') name += ' (N)';
                                 if (name && s.PhanCa === 'Đêm') name += ' (Đ)';
-                                return name; 
+                                return name;
                             }).filter(Boolean);
                             rowHtml += `<td class="border border-slate-800 p-1 leading-tight">${formatNames(txtArray)}</td>`;
                         });
@@ -4631,19 +4856,19 @@
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             // Ép buộc ẩn cột Đóng dấu nếu không phải phòng TOCHUCHANHCHANH
             if (currentUser.ActiveKhoa !== 'TOCHUCHANHCHANH') rolesInKhoa = rolesInKhoa.filter(r => r !== 'DONG_DAU');
-            
+
             if (!rolesInKhoa.includes('CHAO_CO')) rolesInKhoa.push('CHAO_CO');
             if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
-            
+
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
             let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
-            rolesInKhoa.forEach(r => { 
+            rolesInKhoa.forEach(r => {
                 let tenRole = r;
                 if (r === 'CHAO_CO') tenRole = 'Chào cờ';
                 else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
-                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
-                
-                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`; 
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
+
+                theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`;
             });
             theadHtml += `</tr>`;
             document.getElementById('xem-lich-khoa-thead').innerHTML = theadHtml;
@@ -4657,7 +4882,7 @@
                     const renderStatic = (arr) => arr.length === 0 ? '<span class="text-slate-400 italic text-xs p-1">Trống</span>' : arr.map(s => {
                         const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                         let displayName = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
-                        
+
                         let colorClass = "bg-blue-50 border-blue-200 text-blue-800";
                         if (s.PhanCa === 'Ngày') {
                             displayName += ' (N)';
@@ -4676,7 +4901,7 @@
             document.getElementById('xem-lich-khoa-body').innerHTML = html;
         }
 
-       function openPrintKhoa() {
+        function openPrintKhoa() {
             const tuan = document.getElementById('tuan-bat-dau').value; if (!tuan) return showToast("Chọn tuần trước khi in!", "warning");
             const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === currentUser.ActiveKhoa)?.TenKhoa || currentUser.ActiveKhoa;
             document.getElementById('print-khoa-title').textContent = `LỊCH TRỰC ${khoaName}`;
@@ -4687,12 +4912,12 @@
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             // Ép buộc ẩn cột Đóng dấu nếu không phải phòng TOCHUCHANHCHANH
             if (currentUser.ActiveKhoa !== 'TOCHUCHANHCHANH') rolesInKhoa = rolesInKhoa.filter(r => r !== 'DONG_DAU');
-            
+
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
 
             // BỔ SUNG: Phân công Chào cờ
             if (localShifts.some(s => s.ChucDanh === 'CHAO_CO') && !rolesInKhoa.includes('CHAO_CO')) rolesInKhoa.push('CHAO_CO');
-            
+
             // Chỉ duy nhất TOCHUCHANHCHANH mới được phép ép hiển thị Đóng dấu
             if (currentUser.ActiveKhoa === 'TOCHUCHANHCHANH' && !rolesInKhoa.includes('DONG_DAU')) rolesInKhoa.push('DONG_DAU');
 
@@ -4700,14 +4925,14 @@
             if (activeRoles.length > 0) {
                 rolesInKhoa = activeRoles;
             }
-            
+
             let printThead = `<tr><th class="border border-slate-800 p-2 w-1/4">THỨ / NGÀY</th>`;
-            rolesInKhoa.forEach(r => { 
+            rolesInKhoa.forEach(r => {
                 let tenRole = r;
                 if (r === 'CHAO_CO') tenRole = 'Chào cờ';
                 else if (r === 'DONG_DAU') tenRole = 'Đóng dấu';
-                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r; 
-                printThead += `<th class="border border-slate-800 p-2 uppercase">${tenRole}</th>`; 
+                else tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
+                printThead += `<th class="border border-slate-800 p-2 uppercase">${tenRole}</th>`;
             });
             printThead += `</tr>`;
             document.getElementById('print-khoa-thead').innerHTML = printThead;
@@ -4717,24 +4942,24 @@
                 const shifts = localShifts.filter(s => s.NgayTruc === dateISO);
                 html += `<tr><td class="border border-slate-800 p-2 font-bold">${days[i]}<br/><span class="text-xs font-normal">${disp}</span></td>`;
                 rolesInKhoa.forEach(r => {
-                const shiftsRole = shifts.filter(s => s.ChucDanh === r);
-                
-                let caNgay = [], caDem = [], ca24h = [];
-                shiftsRole.forEach(s => {
-                    const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
-                    const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
-                    if (s.PhanCa === 'Ngày') caNgay.push(ten);
-                    else if (s.PhanCa === 'Đêm') caDem.push(ten);
-                    else ca24h.push(ten);
+                    const shiftsRole = shifts.filter(s => s.ChucDanh === r);
+
+                    let caNgay = [], caDem = [], ca24h = [];
+                    shiftsRole.forEach(s => {
+                        const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
+                        const ten = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
+                        if (s.PhanCa === 'Ngày') caNgay.push(ten);
+                        else if (s.PhanCa === 'Đêm') caDem.push(ten);
+                        else ca24h.push(ten);
+                    });
+
+                    let cellText = "";
+                    if (caNgay.length > 0) cellText += `Ngày: ${caNgay.join(' - ')}<br/>`;
+                    if (caDem.length > 0) cellText += `Đêm: ${caDem.join(' - ')}<br/>`;
+                    if (ca24h.length > 0) cellText += `${(caNgay.length > 0 || caDem.length > 0) ? '24h: ' : ''}${ca24h.join(' - ')}`;
+
+                    html += `<td class="border border-slate-800 p-2 text-xs leading-relaxed">${cellText || ''}</td>`;
                 });
-
-                let cellText = "";
-                if (caNgay.length > 0) cellText += `Ngày: ${caNgay.join(' - ')}<br/>`;
-                if (caDem.length > 0) cellText += `Đêm: ${caDem.join(' - ')}<br/>`;
-                if (ca24h.length > 0) cellText += `${(caNgay.length > 0 || caDem.length > 0) ? '24h: ' : ''}${ca24h.join(' - ')}`;
-
-                html += `<td class="border border-slate-800 p-2 text-xs leading-relaxed">${cellText || ''}</td>`;
-            });
                 html += `</tr>`;
             }
             document.getElementById('print-khoa-tbody').innerHTML = html; document.getElementById('print-khoa-modal').classList.remove('hidden');
@@ -4789,11 +5014,11 @@
                     const namesArray = shiftsForKhoa.map(s => {
                         const nv = MOCK_DB.users.find(u => String(u.MaNV) === String(s.MaNV));
                         let displayName = nv ? (nv.TenHienThi || nv.HoTen) : s.MaNV;
-                        
+
                         // ĐÁNH DẤU CHO BẢN IN GỘP
                         if (s.ChucDanh === 'CHAO_CO') displayName += ' (Chào cờ)';
                         if (s.ChucDanh === 'DONG_DAU') displayName += ' (Đóng dấu)';
-                        
+
                         return displayName;
                     }).filter(Boolean);
                     html += `<td class="border border-slate-800 p-2">${formatNames(namesArray)}</td>`;
