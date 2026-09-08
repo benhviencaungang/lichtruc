@@ -1868,8 +1868,9 @@
                 if (nvShifts.length > 0) {
                     const shiftMap = {};
                     nvShifts.forEach(s => {
+                        if (s.ChucDanh === 'CHAO_CO' || s.ChucDanh === 'DONG_DAU') return;
                         const parts = s.NgayTruc.split('-');
-                        if(parts.length === 3) {
+                        if (parts.length === 3) {
                             let d = parseInt(parts[2]);
                             let pc = (s.PhanCa || '').toLowerCase().trim();
                             let type = 'T24'; // Mặc định là 24h
@@ -1887,22 +1888,31 @@
                         const day = idx + 1;
                         if (day > daysInMonth) return;
 
+                        const currentVal = cell.innerText.trim();
                         let newVal = null;
+
                         if (shiftMap[day]) {
                             newVal = shiftMap[day]; // T24, T12N, T12D
-                        } else if (shiftMap[day - 1] === 'T24') { 
+                        } else if (shiftMap[day - 1] === 'T24') {
                             // CHỈ TRỰC 24 MỚI RA TRỰC, 12 Ngày/Đêm không ra trực
-                            newVal = 'Rt'; 
+                            newVal = 'Rt';
+                        } else {
+                            // XÓA DỮ LIỆU CŨ: Nếu lịch gốc không có, nhưng trên bảng đang dính ca trực cũ
+                            // thì reset ô đó về công chuẩn (+, T7, CN, L)
+                            if (['T24', 'T12N', 'T12D', 'Rt'].includes(currentVal)) {
+                                let dw = new Date(year, month - 1, day).getDay();
+                                if (isHoliday(day, month, year)) newVal = 'L';
+                                else if (dw === 0) newVal = 'CN';
+                                else if (dw === 6) newVal = 'T7';
+                                else newVal = '+';
+                            }
                         }
 
-                        // Nếu là ngày có trực hoặc ra trực, ghi đè.
-                        if (newVal) {
-                            const currentVal = cell.innerText.trim();
-                            if (currentVal !== newVal) {
-                                cell.innerText = newVal;
-                                updateCellStyles(cell, newVal);
-                                changedCount++;
-                            }
+                        // Thực hiện ghi đè hoặc xóa nếu có dữ liệu cần thay đổi
+                        if (newVal && currentVal !== newVal) {
+                            cell.innerText = newVal;
+                            updateCellStyles(cell, newVal);
+                            changedCount++;
                         }
                     });
                     recalcRow(tr);
@@ -1993,7 +2003,7 @@
             });
 
             MOCK_DB.users.forEach(u => {
-                if (u.ChucDanh === 'Quản lý') return;
+                if (u.ChucDanh === 'Quản lý' || u.CoTruc === false) return;
 
                 let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
                 let leaveDate = parseEmployeeDate(u.NgayNghi, true);
@@ -2108,8 +2118,9 @@
                     const shiftMap = {};
                     
                     nvShifts.forEach(s => {
+                        if (s.ChucDanh === 'CHAO_CO' || s.ChucDanh === 'DONG_DAU') return;
                         const parts = s.NgayTruc.split('-');
-                        if(parts.length === 3) {
+                        if (parts.length === 3) {
                             let d = parseInt(parts[2]);
                             let pc = (s.PhanCa || '').toLowerCase().trim();
                             let type = 'T24'; 
