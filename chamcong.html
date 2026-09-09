@@ -644,7 +644,7 @@
             if (day === 1 && month === 1) return true; 
             if (day === 30 && month === 4) return true; 
             if (day === 1 && month === 5) return true; 
-            if ((day === 2 || day === 3) && month === 9) return true; 
+            if ((day === 1 || day === 2) && month === 9) return true;
 
             const lunarHolidays = {
                 2026: ["14-2","15-2","16-2","17-2","18-2","19-2","20-2","21-2","22-2", "26-4"],
@@ -972,6 +972,22 @@
                 cell.innerText = finalVal;
                 updateCellStyles(cell, finalVal);
                 recalcRow(cell);
+
+                const tr = cell.closest('tr');
+                if (tr) {
+                    const maNV = tr.getAttribute('data-id');
+                    const cellIndex = Array.from(tr.children).indexOf(cell);
+                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                        if (otherTr !== tr) {
+                            const otherCell = otherTr.children[cellIndex];
+                            if (otherCell) {
+                                otherCell.innerText = finalVal;
+                                updateCellStyles(otherCell, finalVal);
+                                recalcRow(otherTr);
+                            }
+                        }
+                    });
+                }
             });
 
             closeShiftPicker(new Event('click'), true);
@@ -1004,11 +1020,41 @@
                 cell.innerText = copiedShiftValue;
                 updateCellStyles(cell, copiedShiftValue);
                 recalcRow(cell);
+
+                const tr = cell.closest('tr');
+                if (tr) {
+                    const maNV = tr.getAttribute('data-id');
+                    const cellIndex = Array.from(tr.children).indexOf(cell);
+                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                        if (otherTr !== tr) {
+                            const otherCell = otherTr.children[cellIndex];
+                            if (otherCell) {
+                                otherCell.innerText = copiedShiftValue;
+                                updateCellStyles(otherCell, copiedShiftValue);
+                                recalcRow(otherTr);
+                            }
+                        }
+                    });
+                }
             });
 
             closeShiftPicker(new Event('click'), true);
             markUnsaved(); 
             showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
+        }
+        function syncGhiChu(el) {
+            const tr = el.closest('tr');
+            if(!tr) return;
+            const maNV = tr.getAttribute('data-id');
+            const val = el.innerText;
+            document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                if (otherTr !== tr) {
+                    const otherGhiChu = otherTr.querySelector('.cell-ghichu');
+                    if (otherGhiChu && otherGhiChu.innerText !== val) {
+                        otherGhiChu.innerText = val;
+                    }
+                }
+            });
         }
 
         document.addEventListener('keydown', function(e) {
@@ -2003,7 +2049,7 @@
             });
 
             MOCK_DB.users.forEach(u => {
-                if (u.ChucDanh === 'Quản lý' || u.CoTruc === false) return;
+                if (u.ChucDanh === 'Quản lý') return;
 
                 let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
                 let leaveDate = parseEmployeeDate(u.NgayNghi, true);
@@ -2011,24 +2057,30 @@
                 if (leaveDate <= firstDayOfViewedMonth || joinDate > lastDayOfViewedMonth) return;
 
                 let maNVStr = String(u.MaNV);
-                let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
-                let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
+                let userKhoas = u.MaKhoa ? u.MaKhoa.split(',').map(s => s.trim()).filter(s => s !== '') : [];
+                if (userKhoas.length === 0) return;
 
-                let targetParentMk = null;
-
+                let parentMks = new Set();
+                userKhoas.forEach(mk => parentMks.add(getParentKhoaInfo(mk).ma));
+                
                 if (approvedOwnership[maNVStr]) {
-                    targetParentMk = approvedOwnership[maNVStr];
-                } else {
-                    targetParentMk = currentParentMk;
+                    parentMks.add(approvedOwnership[maNVStr]);
                 }
 
-                if (allowedParentKhoas.includes(targetParentMk)) {
-                    let displayGroupName = MOCK_DB.khoa.find(k => k.MaKhoa === targetParentMk)?.TenKhoa || targetParentMk;
-                    if (!processedGroups[displayGroupName].users.find(item => String(item.user.MaNV) === maNVStr)) {
-                        processedGroups[displayGroupName].users.push({ user: u, parentMaKhoa: targetParentMk });
-                        totalRenderedUsers++;
+                let isAdded = false;
+                parentMks.forEach(targetParentMk => {
+                    if (allowedParentKhoas.includes(targetParentMk)) {
+                        let displayGroupName = MOCK_DB.khoa.find(k => k.MaKhoa === targetParentMk)?.TenKhoa || targetParentMk;
+                        if (!processedGroups[displayGroupName]) processedGroups[displayGroupName] = { ten: displayGroupName, users: [] };
+                        
+                        if (!processedGroups[displayGroupName].users.find(item => String(item.user.MaNV) === maNVStr)) {
+                            processedGroups[displayGroupName].users.push({ user: u, parentMaKhoa: targetParentMk });
+                            isAdded = true;
+                        }
                     }
-                }
+                });
+
+                if (isAdded) totalRenderedUsers++;
             });
 
             document.getElementById('lbl-total-nv').textContent = totalRenderedUsers;
@@ -2233,7 +2285,7 @@
                         <td class="sum-nb font-bold text-emerald-600">${nb > 0 ? nb : ''}</td>
                         <td class="sum-om font-bold text-orange-600">${om > 0 ? om : ''}</td>
                         <td class="sum-khac font-bold text-purple-600">${khac > 0 ? khac : ''}</td>
-                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved()"'} class="cell-ghichu outline-none text-left pl-1 text-[10px]">${ghiChuVal}</td>
+                        <td ${isLocked ? '' : 'contenteditable="true" oninput="markUnsaved(); syncGhiChu(this)"'} class="cell-ghichu outline-none text-left pl-1 text-[10px]">${ghiChuVal}</td>
                     </tr>`;
 
                     tbodyHtml += rowHtml;
