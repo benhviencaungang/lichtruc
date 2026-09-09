@@ -407,6 +407,8 @@
                             <p>P/2: Nghỉ phép 1/2 ngày</p>
                             <p>Cô/2: Nghỉ con ốm 1/2 ngày</p>
                             <p>L/2: Nghỉ lễ 1/2 ngày</p>
+                            <p>PT: Nghỉ phép tang</p>
+                            <p>PC: Nghỉ phép cưới</p>
                         </div>
                     </div>
                 </div>
@@ -637,7 +639,9 @@
             { id: 'H/2', name: 'Đi học 1/2 ngày (H/2)', bg: '' },
             { id: 'Cô/2', name: 'Nghỉ con ốm 1/2 ngày (Cô/2)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'LT', name: 'Làm thêm ngày (+Nghỉ bù) (LT)', bg: 'bg-teal-100 text-teal-800 font-bold' },
-            { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' }
+            { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' },
+            { id: 'PT', name: 'Nghỉ phép tang (PT)', bg: 'bg-gray-100 text-gray-700 font-bold' },
+            { id: 'PC', name: 'Nghỉ phép cưới (PC)', bg: 'bg-pink-50 text-pink-600 font-bold' }
         ];
 
         function isHoliday(day, month, year) {
@@ -1606,7 +1610,7 @@
                     if (val === 'Ô' || val === 'O^') om += 1;
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
-                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(val)) khac += 1;
+                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(val)) khac += 1;
                     if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(val)) khac += 0.5;
                 });
             });
@@ -2265,7 +2269,7 @@
                                     if (v === 'Ô' || v === 'O^') om += 1;
                                     if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
 
-                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O'].includes(v)) khac += 1;
+                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(v)) khac += 1;
                                     if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(v)) khac += 0.5;
                                 });
                             }
