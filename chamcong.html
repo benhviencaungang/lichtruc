@@ -7,13 +7,14 @@
     <title>Bảng Chấm Công</title>
     <link rel="icon" type="image/x-icon" href="logo.ico">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Thêm thư viện xuất Excel SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Thêm thư viện Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- Thêm file cấu hình của chúng ta -->
-<script src="supabase-config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Thêm file cấu hình của chúng ta -->
+    <script src="supabase-config.js"></script>
 
     <style>
         /* CSS DÀNH RIÊNG CHO BẢN IN A4 NẰM NGANG */
@@ -23,7 +24,8 @@
                 margin: 8mm;
             }
 
-            html, body {
+            html,
+            body {
                 height: auto !important;
                 min-height: auto !important;
                 overflow: visible !important;
@@ -34,7 +36,15 @@
                 font-size: 10px !important;
             }
 
-            .no-print, #control-panel, #login-screen, #loading-screen, #shift-picker-popover, #toast-container, #custom-confirm-modal, #leave-stats-modal, #leave-config-modal {
+            .no-print,
+            #control-panel,
+            #login-screen,
+            #loading-screen,
+            #shift-picker-popover,
+            #toast-container,
+            #custom-confirm-modal,
+            #leave-stats-modal,
+            #leave-config-modal {
                 display: none !important;
             }
 
@@ -77,9 +87,10 @@
                 display: table-footer-group !important;
             }
 
-            th, td {
+            th,
+            td {
                 border: 1px solid black !important;
-                padding: 2px !important; 
+                padding: 2px !important;
                 color: black !important;
                 text-align: center;
                 vertical-align: middle;
@@ -92,16 +103,19 @@
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .bg-blue-50 {
                 background-color: #eff6ff !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .text-blue-700 {
                 color: #1d4ed8 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+
             .text-blue-800 {
                 color: #1e40af !important;
                 -webkit-print-color-adjust: exact;
@@ -119,7 +133,8 @@
             font-family: "Times New Roman", Times, serif;
         }
 
-        .table-custom th, .table-custom td {
+        .table-custom th,
+        .table-custom td {
             border: 1px solid black;
             padding: 4px;
             text-align: center;
@@ -132,17 +147,33 @@
             background-color: #fef08a !important;
             cursor: pointer;
         }
-        
+
         .cell-selected {
             box-shadow: inset 0 0 0 2px #2563eb !important;
             background-color: #dbeafe !important;
             color: #1e40af !important;
         }
 
-        .day-col { min-width: 22px; max-width: 26px; }
+        .day-col {
+            min-width: 22px;
+            max-width: 26px;
+        }
 
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         .editable-date {
             outline: none;
@@ -153,15 +184,19 @@
             text-align: center;
             user-select: auto;
         }
-        .editable-date:hover, .editable-date:focus {
+
+        .editable-date:hover,
+        .editable-date:focus {
             border-bottom-color: #3b82f6;
             background-color: #eff6ff;
         }
-        
-        .shift-select option { font-family: sans-serif; }
-        
-        input[type="number"]::-webkit-inner-spin-button, 
-        input[type="number"]::-webkit-outer-spin-button { 
+
+        .shift-select option {
+            font-family: sans-serif;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
             opacity: 1;
         }
     </style>
@@ -171,25 +206,34 @@
 
     <div id="toast-container" class="fixed bottom-4 right-4 z-[100] flex flex-col space-y-2 no-print"></div>
 
-    <div id="custom-confirm-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
+    <div id="custom-confirm-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[100] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden font-sans">
-            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800" id="confirm-modal-title">
+            <div class="bg-slate-50 px-6 py-4 border-b font-bold flex items-center text-slate-800"
+                id="confirm-modal-title">
                 <i data-lucide="help-circle" class="w-5 h-5 mr-2 text-blue-600"></i> Xác nhận
             </div>
             <div class="p-6 text-center md:text-left">
-                <p class="text-sm text-slate-600 mb-6 whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn có chắc chắn?</p>
+                <p class="text-sm text-slate-600 mb-6 whitespace-pre-line leading-relaxed" id="confirm-modal-desc">Bạn
+                    có chắc chắn?</p>
                 <div class="flex justify-end space-x-3">
-                    <button onclick="closeConfirmModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto" id="confirm-cancel-btn">Hủy</button>
-                    <button id="confirm-modal-btn" class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition w-full md:w-auto">Đồng ý</button>
+                    <button onclick="closeConfirmModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto"
+                        id="confirm-cancel-btn">Hủy</button>
+                    <button id="confirm-modal-btn"
+                        class="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition w-full md:w-auto">Đồng
+                        ý</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="login-screen" class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
+    <div id="login-screen"
+        class="fixed inset-0 bg-emerald-900 z-50 flex items-center justify-center fade-in hidden no-print">
         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-[90%] max-w-md mx-auto">
             <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div
+                    class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i data-lucide="shield-check" class="w-8 h-8"></i>
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800 font-sans">Đăng nhập Chấm Công</h1>
@@ -198,145 +242,201 @@
             <form id="login-form">
                 <div class="mb-4 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản</label>
-                    <input type="text" id="username" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <input type="text" id="username" autocomplete="off"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required>
                 </div>
                 <div class="mb-6 text-left font-sans">
                     <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
-                    <input type="password" id="password" autocomplete="off" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" required>
+                    <input type="password" id="password" autocomplete="off"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required>
                 </div>
                 <div id="login-error" class="hidden text-red-500 text-sm mb-4 font-sans text-center"></div>
-                <button type="submit" id="btn-login" class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
+                <button type="submit" id="btn-login"
+                    class="font-sans w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700 transition font-medium flex justify-center items-center">
                     <i data-lucide="log-in" class="w-4 h-4 mr-2"></i> Xác thực
                 </button>
                 <div class="mt-6 text-center font-sans">
-                    <a href="index.html" class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
+                    <a href="index.html"
+                        class="text-sm text-slate-500 hover:text-emerald-600 hover:underline transition"><i
+                            data-lucide="arrow-left" class="w-3 h-3 inline mr-1"></i> Quay lại màn hình chính</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="loading-screen" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center hidden no-print">
+    <div id="loading-screen"
+        class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[200] flex flex-col items-center justify-center hidden no-print">
         <div id="loading-icon-wrapper">
             <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>
         </div>
         <p class="font-sans text-slate-800 font-bold text-center text-lg" id="loading-text">Đang xử lý dữ liệu...</p>
         <div id="retry-btn-container" class="hidden mt-4 font-sans">
-            <button onclick="loadDataFromGAS()" class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
+            <button onclick="loadDataFromGAS()"
+                class="px-6 py-2 bg-emerald-600 text-white rounded-lg shadow hover:bg-emerald-700 transition flex items-center">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Thử lại
             </button>
         </div>
     </div>
 
-    <div id="shift-picker-popover" onclick="event.stopPropagation()" class="hidden absolute bg-white border border-slate-300 shadow-2xl rounded-xl z-[100] p-4 text-sm font-sans flex flex-col no-print w-80 fade-in">
+    <div id="shift-picker-popover" onclick="event.stopPropagation()"
+        class="hidden absolute bg-white border border-slate-300 shadow-2xl rounded-xl z-[100] p-4 text-sm font-sans flex flex-col no-print w-80 fade-in">
         <div class="font-bold text-blue-800 border-b border-slate-200 pb-2 mb-3 flex justify-between items-center">
             <span id="sp-title">Chọn công</span>
-            <button type="button" onclick="closeShiftPicker(event, true)" class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded p-1 transition-colors"><i data-lucide="x" class="w-4 h-4"></i></button>
+            <button type="button" onclick="closeShiftPicker(event, true)"
+                class="text-slate-400 hover:text-red-500 bg-slate-100 hover:bg-red-50 rounded p-1 transition-colors"><i
+                    data-lucide="x" class="w-4 h-4"></i></button>
         </div>
         <div class="flex gap-3 mb-4">
             <div class="w-1/2 flex flex-col">
                 <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Sáng</label>
-                <select id="sp-sang" onchange="handleMorningChange()" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer">
-                    </select>
+                <select id="sp-sang" onchange="handleMorningChange()"
+                    class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer">
+                </select>
             </div>
             <div class="w-1/2 flex flex-col">
                 <label class="text-[11px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Chiều</label>
-                <select id="sp-chieu" class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
-                    </select>
+                <select id="sp-chieu"
+                    class="shift-select border border-slate-300 rounded p-1.5 outline-none focus:border-blue-500 text-sm font-medium bg-slate-50 cursor-pointer disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                </select>
             </div>
         </div>
         <div class="flex justify-between gap-2 pt-2 border-t border-slate-100 items-center">
             <div class="flex gap-1">
-                <button type="button" onclick="copyShift()" class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm" title="Sao chép (Ctrl+C)">
+                <button type="button" onclick="copyShift()"
+                    class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm"
+                    title="Sao chép (Ctrl+C)">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                 </button>
-                <button type="button" onclick="pasteShift()" class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm" title="Dán (Ctrl+V)">
+                <button type="button" onclick="pasteShift()"
+                    class="px-2 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded transition flex items-center shadow-sm"
+                    title="Dán (Ctrl+V)">
                     <i data-lucide="clipboard-paste" class="w-3.5 h-3.5"></i>
                 </button>
             </div>
             <div class="flex gap-2">
-                <button type="button" onclick="clearShiftPicker()" class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition-colors">Xóa trống</button>
-                <button type="button" onclick="applyShiftSelection()" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-colors">Áp dụng</button>
+                <button type="button" onclick="clearShiftPicker()"
+                    class="px-3 py-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded transition-colors">Xóa
+                    trống</button>
+                <button type="button" onclick="applyShiftSelection()"
+                    class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-colors">Áp
+                    dụng</button>
             </div>
         </div>
     </div>
 
-    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden" id="control-panel">
-        
+    <div class="bg-white border-b border-slate-300 p-4 shadow-sm flex flex-col xl:flex-row items-center justify-between no-print gap-4 shrink-0 font-sans z-10 hidden"
+        id="control-panel">
+
         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto overflow-x-auto pb-2 xl:pb-0">
-            <button onclick="handleGoHome()" class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0 h-[38px]">
+            <button onclick="handleGoHome()"
+                class="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg flex items-center font-medium transition whitespace-nowrap shrink-0 h-[38px]">
                 <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Trang chủ
             </button>
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
-            
-            <select id="sel-month" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
-                <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option>
-                <option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option>
-                <option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option>
-                <option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
-            </select>
-            
-            <select id="sel-year" onchange="handleFilterChange()" class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
+
+            <select id="sel-month" onchange="handleFilterChange()"
+                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
+                <option value="1">Tháng 1</option>
+                <option value="2">Tháng 2</option>
+                <option value="3">Tháng 3</option>
+                <option value="4">Tháng 4</option>
+                <option value="5">Tháng 5</option>
+                <option value="6">Tháng 6</option>
+                <option value="7">Tháng 7</option>
+                <option value="8">Tháng 8</option>
+                <option value="9">Tháng 9</option>
+                <option value="10">Tháng 10</option>
+                <option value="11">Tháng 11</option>
+                <option value="12">Tháng 12</option>
             </select>
 
-            <select id="filter-khoa" onchange="handleFilterChange()" class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]">
+            <select id="sel-year" onchange="handleFilterChange()"
+                class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 h-[38px]">
+            </select>
+
+            <select id="filter-khoa" onchange="handleFilterChange()"
+                class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]">
                 <option value="ALL">-- Toàn viện --</option>
             </select>
 
-            <select id="view-mode" onchange="handleFilterChange()" class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium h-[38px]">
+            <select id="view-mode" onchange="handleFilterChange()"
+                class="border border-blue-300 rounded px-3 py-2 outline-none focus:border-blue-500 shrink-0 bg-blue-50 text-blue-800 font-medium h-[38px]">
                 <option value="chitiet">Chi tiết phòng/Khoa</option>
                 <option value="khoa">Góc nhìn Khoa (Ẩn H/C)</option>
                 <option value="gop">Gộp Phòng/Khoa</option>
             </select>
 
-            <button onclick="loadDataFromGAS()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Tải lại toàn bộ dữ liệu (cẩn thận mất dữ liệu chưa lưu)">
+            <button onclick="loadDataFromGAS()"
+                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]"
+                title="Tải lại toàn bộ dữ liệu (cẩn thận mất dữ liệu chưa lưu)">
                 <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i> Tải lại
             </button>
 
             <!-- NÚT ĐỒNG BỘ LỊCH TRỰC MỚI -->
-            <button onclick="syncShiftsManual()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]" title="Đồng bộ lịch trực (Chỉ cập nhật cho nhân viên có lịch, giữ nguyên người khác)">
+            <button onclick="syncShiftsManual()"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 flex items-center shadow transition whitespace-nowrap shrink-0 h-[38px]"
+                title="Đồng bộ lịch trực (Chỉ cập nhật cho nhân viên có lịch, giữ nguyên người khác)">
                 <i data-lucide="calendar-sync" class="w-4 h-4 mr-2"></i> Đồng bộ Lịch trực
             </button>
         </div>
 
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
-            <div id="approval-controls" class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 transition-all">
-                <span id="badge-status" class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa lưu</span>
-                
-                <button id="btn-save-draft" onclick="saveDraftData()" class="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 text-sm whitespace-nowrap shadow-sm transition">
+            <div id="approval-controls"
+                class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 transition-all">
+                <span id="badge-status"
+                    class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa
+                    lưu</span>
+
+                <button id="btn-save-draft" onclick="saveDraftData()"
+                    class="px-3 py-1.5 bg-slate-600 text-white rounded hover:bg-slate-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="save" class="w-3 h-3 inline mr-1"></i>Lưu
                 </button>
-                <button id="btn-send-approve" onclick="sendApprove()" class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-send-approve" onclick="sendApprove()"
+                    class="hidden px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="send" class="w-3 h-3 inline mr-1"></i><span id="btn-send-text">Trình TCHC</span>
                 </button>
-                <button id="btn-approve" onclick="approveBang()" class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-approve" onclick="approveBang()"
+                    class="hidden px-3 py-1.5 bg-emerald-600 text-white rounded hover:bg-emerald-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>Duyệt
                 </button>
-                <button id="btn-cancel-approve" onclick="cancelApprove()" class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
+                <button id="btn-cancel-approve" onclick="cancelApprove()"
+                    class="hidden px-3 py-1.5 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm whitespace-nowrap shadow-sm transition">
                     <i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Hủy/Từ chối
                 </button>
             </div>
 
-            <button id="btn-export-excel" onclick="openExportExcelModal()" class="hidden px-4 py-2 bg-green-600 text-white rounded-lg flex items-center shadow hover:bg-green-700 transition font-medium whitespace-nowrap shrink-0" title="Xuất dữ liệu chấm công ra file Excel">
+            <button id="btn-export-excel" onclick="openExportExcelModal()"
+                class="hidden px-4 py-2 bg-green-600 text-white rounded-lg flex items-center shadow hover:bg-green-700 transition font-medium whitespace-nowrap shrink-0"
+                title="Xuất dữ liệu chấm công ra file Excel">
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i> Xuất Excel
             </button>
 
-            <button id="btn-leave-config" onclick="openLeaveConfigModal()" class="hidden px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center shadow hover:bg-indigo-700 transition font-medium whitespace-nowrap shrink-0" title="Cấu hình số ngày phép được cộng thêm">
+            <button id="btn-leave-config" onclick="openLeaveConfigModal()"
+                class="hidden px-4 py-2 bg-indigo-600 text-white rounded-lg flex items-center shadow hover:bg-indigo-700 transition font-medium whitespace-nowrap shrink-0"
+                title="Cấu hình số ngày phép được cộng thêm">
                 <i data-lucide="settings-2" class="w-4 h-4 mr-2"></i> Cấu hình Phép
             </button>
 
-            <button id="btn-leave-stats" onclick="openLeaveStatsModal()" class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0" title="Thống kê Phép năm và Nghỉ bù">
+            <button id="btn-leave-stats" onclick="openLeaveStatsModal()"
+                class="hidden px-4 py-2 bg-purple-600 text-white rounded-lg flex items-center shadow hover:bg-purple-700 transition font-medium whitespace-nowrap shrink-0"
+                title="Thống kê Phép năm và Nghỉ bù">
                 <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
             </button>
 
-            <button id="btn-print" onclick="window.print()" class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0" title="In Bảng Chấm Công (A4 Ngang)">
+            <button id="btn-print" onclick="window.print()"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0"
+                title="In Bảng Chấm Công (A4 Ngang)">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i> In Bảng (A4)
             </button>
         </div>
     </div>
-    
+
     <div class="flex-1 overflow-auto p-4 md:p-8 bg-slate-200 no-print-bg hidden" id="print-workspace">
-        <div class="w-max min-w-full xl:min-w-[1250px] mx-auto bg-white shadow-xl border border-slate-200 p-8 print-area text-black">
-            
+        <div
+            class="w-max min-w-full xl:min-w-[1250px] mx-auto bg-white shadow-xl border border-slate-200 p-8 print-area text-black">
+
             <div class="flex justify-between items-start mb-2">
                 <div class="text-center w-1/3 text-[11pt]">
                     <p class="font-bold">SỞ Y TẾ VĨNH LONG</p>
@@ -346,13 +446,15 @@
                 <div class="text-center w-2/3 text-[11pt]">
                     <p class="font-bold">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                     <p class="font-bold">Độc Lập - Tự Do - Hạnh Phúc</p>
-                    <h1 class="font-bold text-[16pt] uppercase mt-4">BẢNG CHẤM CÔNG THÁNG <span id="lbl-month-year">01/2026</span></h1>
+                    <h1 class="font-bold text-[16pt] uppercase mt-4">BẢNG CHẤM CÔNG THÁNG <span
+                            id="lbl-month-year">01/2026</span></h1>
                 </div>
             </div>
 
             <div class="font-bold text-[11pt] mb-1 flex justify-between items-end">
                 <span>Tổng số nhân viên : <span id="lbl-total-nv">0</span></span>
-                <span class="text-[10px] italic font-normal text-gray-500 no-print">* Kéo thả chuột để chọn nhiều ô, dùng Ctrl+C và Ctrl+V để sao chép nhanh</span>
+                <span class="text-[10px] italic font-normal text-gray-500 no-print">* Kéo thả chuột để chọn nhiều ô,
+                    dùng Ctrl+C và Ctrl+V để sao chép nhanh</span>
             </div>
 
             <table class="w-full table-custom text-center">
@@ -365,12 +467,12 @@
                         <th rowspan="2" class="w-16">Ghi chú</th>
                     </tr>
                     <tr class="font-bold bg-white" id="header-days">
-                        </tr>
+                    </tr>
                     <tr class="bg-gray-100 font-bold text-[10px]" id="header-col-index">
-                        </tr>
+                    </tr>
                 </thead>
                 <tbody id="report-tbody">
-                    </tbody>
+                </tbody>
             </table>
 
             <div class="flex justify-between items-start mt-4 text-[10pt]">
@@ -421,7 +523,10 @@
                         <p class="uppercase"><br>Trưởng Khoa/Phòng</p>
                     </div>
                     <div class="w-1/3 font-normal">
-                        <p class="italic mb-1 whitespace-nowrap">Ngày <span id="lbl-print-day" contenteditable="true" class="editable-date">...</span> tháng <span id="lbl-print-month" contenteditable="true" class="editable-date">...</span> năm <span id="lbl-print-year" contenteditable="true" class="editable-date">20...</span></p>
+                        <p class="italic mb-1 whitespace-nowrap">Ngày <span id="lbl-print-day" contenteditable="true"
+                                class="editable-date">...</span> tháng <span id="lbl-print-month" contenteditable="true"
+                                class="editable-date">...</span> năm <span id="lbl-print-year" contenteditable="true"
+                                class="editable-date">20...</span></p>
                         <p class="font-bold uppercase">Phụ trách chấm công</p>
                     </div>
                 </div>
@@ -431,7 +536,8 @@
     </div>
 
     <!-- MODAL XUẤT EXCEL TÙY CHỈNH THỜI GIAN -->
-    <div id="export-excel-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+    <div id="export-excel-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
             <div class="bg-green-50 px-6 py-4 border-b border-green-100 font-bold flex items-center text-green-800">
                 <i data-lucide="file-spreadsheet" class="w-5 h-5 mr-2 text-green-600"></i> Xuất Dữ Liệu Chấm Công
@@ -440,23 +546,28 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Từ ngày</label>
-                        <input type="date" id="export-from-date" class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
+                        <input type="date" id="export-from-date"
+                            class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Đến ngày</label>
-                        <input type="date" id="export-to-date" class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
+                        <input type="date" id="export-to-date"
+                            class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Đối tượng xuất</label>
-                        <select id="export-role-filter" class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm bg-green-50 font-medium text-green-800">
+                        <select id="export-role-filter"
+                            class="w-full px-3 py-2 border border-slate-300 rounded outline-none focus:border-green-500 text-sm bg-green-50 font-medium text-green-800">
                             <option value="ALL" selected>Tất cả nhân viên</option>
                             <option value="BS">Chỉ xuất Bác sĩ (BS)</option>
                         </select>
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button onclick="closeExportExcelModal()" class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto">Hủy</button>
-                    <button onclick="processExportExcel()" class="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition w-full md:w-auto flex justify-center items-center">
+                    <button onclick="closeExportExcelModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition w-full md:w-auto">Hủy</button>
+                    <button onclick="processExportExcel()"
+                        class="px-4 py-2 text-sm text-white bg-green-600 hover:bg-green-700 rounded-lg shadow transition w-full md:w-auto flex justify-center items-center">
                         <i data-lucide="download" class="w-4 h-4 mr-2"></i> Xuất File
                     </button>
                 </div>
@@ -465,30 +576,37 @@
     </div>
 
     <!-- MODAL CẤU HÌNH PHÉP -->
-    <div id="leave-config-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+    <div id="leave-config-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-indigo-50 px-6 py-4 border-b border-indigo-100 flex justify-between items-center shrink-0">
                 <div>
                     <h3 class="font-bold text-lg text-indigo-800 flex items-center">
                         <i data-lucide="settings-2" class="w-5 h-5 mr-2"></i> Hệ thống Cấu hình Phép
                     </h3>
-                    <p class="text-sm text-indigo-600 mt-1">Cài đặt cộng/trừ ngày phép tổng hợp (Theo Khoa hoặc Điều chỉnh Cá nhân).</p>
+                    <p class="text-sm text-indigo-600 mt-1">Cài đặt cộng/trừ ngày phép tổng hợp (Theo Khoa hoặc Điều
+                        chỉnh Cá nhân).</p>
                 </div>
-                <button onclick="closeLeaveConfigModal()" class="text-indigo-400 hover:text-indigo-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeLeaveConfigModal()"
+                    class="text-indigo-400 hover:text-indigo-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
-            
+
             <div class="flex border-b border-slate-200 shrink-0 bg-white px-4">
-                <button onclick="switchLeaveConfigTab('khoa')" id="tab-btn-khoa" class="px-6 py-3 font-medium text-sm border-b-2 border-indigo-600 text-indigo-600 transition-colors">
+                <button onclick="switchLeaveConfigTab('khoa')" id="tab-btn-khoa"
+                    class="px-6 py-3 font-medium text-sm border-b-2 border-indigo-600 text-indigo-600 transition-colors">
                     <i data-lucide="building-2" class="w-4 h-4 inline mr-1.5"></i> Cấu hình theo Khoa (+2 Ngày)
                 </button>
-                <button onclick="switchLeaveConfigTab('canhan')" id="tab-btn-canhan" class="px-6 py-3 font-medium text-sm text-slate-500 hover:text-indigo-600 border-b-2 border-transparent transition-colors">
+                <button onclick="switchLeaveConfigTab('canhan')" id="tab-btn-canhan"
+                    class="px-6 py-3 font-medium text-sm text-slate-500 hover:text-indigo-600 border-b-2 border-transparent transition-colors">
                     <i data-lucide="user-cog" class="w-4 h-4 inline mr-1.5"></i> Điều chỉnh Cá nhân (Cộng/Trừ)
                 </button>
             </div>
 
             <div id="tab-content-khoa" class="flex-1 overflow-auto p-4 bg-slate-50">
                 <div class="mb-4 text-sm text-slate-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                    <i data-lucide="info" class="w-4 h-4 inline text-blue-500 mr-1"></i> Tick chọn những khoa/phòng thuộc diện độc hại. Nhân viên thuộc khoa được tích sẽ <b>tự động được cộng thêm 2 ngày phép</b>.
+                    <i data-lucide="info" class="w-4 h-4 inline text-blue-500 mr-1"></i> Tick chọn những khoa/phòng
+                    thuộc diện độc hại. Nhân viên thuộc khoa được tích sẽ <b>tự động được cộng thêm 2 ngày phép</b>.
                 </div>
                 <div id="leave-config-list-khoa">
                 </div>
@@ -497,7 +615,8 @@
             <div id="tab-content-canhan" class="flex-1 flex flex-col hidden min-h-0 bg-slate-50 relative">
                 <div class="p-4 bg-white border-b border-slate-200 shrink-0 flex items-center gap-4">
                     <label class="text-sm font-medium text-slate-700 whitespace-nowrap">Lọc theo Khoa/Phòng:</label>
-                    <select id="modal-khoa-filter" onchange="renderLeaveConfigUsers()" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-sm">
+                    <select id="modal-khoa-filter" onchange="renderLeaveConfigUsers()"
+                        class="flex-1 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-sm">
                         <option value="ALL">-- Tất cả --</option>
                     </select>
                 </div>
@@ -517,10 +636,13 @@
             </div>
 
             <div class="p-4 border-t border-slate-200 bg-white flex justify-between items-center shrink-0">
-                <span class="text-xs text-slate-500 italic">* Các điều chỉnh sẽ được cộng dồn (Khoa + Cá nhân) khi tính phép.</span>
+                <span class="text-xs text-slate-500 italic">* Các điều chỉnh sẽ được cộng dồn (Khoa + Cá nhân) khi tính
+                    phép.</span>
                 <div class="flex space-x-3">
-                    <button onclick="closeLeaveConfigModal()" class="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Hủy</button>
-                    <button onclick="saveLeaveConfig()" class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow transition flex items-center">
+                    <button onclick="closeLeaveConfigModal()"
+                        class="px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Hủy</button>
+                    <button onclick="saveLeaveConfig()"
+                        class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow transition flex items-center">
                         <i data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu Cấu Hình
                     </button>
                 </div>
@@ -529,18 +651,22 @@
     </div>
 
     <!-- MODAL QUẢN LÝ PHÉP NĂM -->
-    <div id="leave-stats-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+    <div id="leave-stats-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-purple-50 px-6 py-4 border-b border-purple-100 flex justify-between items-center shrink-0">
                 <div>
                     <h3 class="font-bold text-lg text-purple-800 flex items-center">
                         <i data-lucide="calculator" class="w-5 h-5 mr-2"></i> Thống kê Phép năm & Nghỉ bù (Năm Hiện Tại)
                     </h3>
-                    <p class="text-sm text-purple-600 mt-1">Dữ liệu được hệ thống tự động quét và tính toán dựa trên toàn bộ bảng chấm công trong năm.</p>
+                    <p class="text-sm text-purple-600 mt-1">Dữ liệu được hệ thống tự động quét và tính toán dựa trên
+                        toàn bộ bảng chấm công trong năm.</p>
                 </div>
-                <button onclick="closeLeaveStatsModal()" class="text-purple-400 hover:text-purple-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeLeaveStatsModal()"
+                    class="text-purple-400 hover:text-purple-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
-            
+
             <div class="flex-1 overflow-auto p-4 bg-slate-50">
                 <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                     <table class="w-full text-sm text-left">
@@ -548,22 +674,31 @@
                             <tr>
                                 <th class="px-4 py-3 border-b">Họ và Tên</th>
                                 <th class="px-4 py-3 border-b">Khoa</th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Dựa vào cột SoPhep + Cấu hình (Khoa/Cá nhân) + Thâm niên">Tổng<br>Phép Năm</th>
-                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Cả năm hiện tại">Phép<br>Đã nghỉ (Năm)</th>
-                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong tháng này">NGHỈ BÙ<br>TÍCH LŨY (THÁNG NÀY)</th>
-                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Trực T6, T7 trong cả năm">NGHỈ BÙ<br>TÍCH LŨY (CẢ NĂM)</th>
-                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Cả năm hiện tại">Nghỉ bù<br>Đã nghỉ (Năm)</th>
-                                <th class="px-4 py-3 border-b text-center bg-purple-50/50 text-purple-700" title="(Phép năm gốc + Ngày làm thêm LT - Phép đã nghỉ) + (Bù tích lũy năm - Bù đã nghỉ năm)">Tổng Còn Lại<br>(Phép + Bù)</th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50"
+                                    title="Dựa vào cột SoPhep + Cấu hình (Khoa/Cá nhân) + Thâm niên">Tổng<br>Phép Năm
+                                </th>
+                                <th class="px-4 py-3 border-b text-center bg-blue-50/50" title="Cả năm hiện tại">
+                                    Phép<br>Đã nghỉ (Năm)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50"
+                                    title="Trực T6, T7 trong tháng này">NGHỈ BÙ<br>TÍCH LŨY (THÁNG NÀY)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50"
+                                    title="Trực T6, T7 trong cả năm">NGHỈ BÙ<br>TÍCH LŨY (CẢ NĂM)</th>
+                                <th class="px-4 py-3 border-b text-center bg-emerald-50/50" title="Cả năm hiện tại">Nghỉ
+                                    bù<br>Đã nghỉ (Năm)</th>
+                                <th class="px-4 py-3 border-b text-center bg-purple-50/50 text-purple-700"
+                                    title="(Phép năm gốc + Ngày làm thêm LT - Phép đã nghỉ) + (Bù tích lũy năm - Bù đã nghỉ năm)">
+                                    Tổng Còn Lại<br>(Phép + Bù)</th>
                             </tr>
                         </thead>
                         <tbody id="leave-stats-tbody" class="divide-y divide-slate-200">
-                            </tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>
-            
+
             <div class="p-4 border-t border-slate-200 bg-white flex justify-end shrink-0">
-                <button onclick="closeLeaveStatsModal()" class="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Đóng</button>
+                <button onclick="closeLeaveStatsModal()"
+                    class="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition">Đóng</button>
             </div>
         </div>
     </div>
@@ -591,15 +726,15 @@
         //const GAS_URL = "https://script.google.com/macros/s/AKfycbxry_J3ZcwDSks3FNqsBUqFp-kUfqB1EASsRMQPX0OarCXc0_XYYyhG3xgKKknLzNPy/exec";
         let MOCK_DB = { khoa: [], users: [], shifts: [], bangChamCong: [], cauHinhPhep: null };
         let currentUser = null;
-        let activeInputCell = null; 
-        
+        let activeInputCell = null;
+
         let hasUnsavedChanges = false;
         let currentOverallStatus = 'Nháp';
 
         let currentRenderedMonth = null;
         let currentRenderedYear = null;
-        let isSaving = false; 
-        let copiedShiftValue = null; 
+        let isSaving = false;
+        let copiedShiftValue = null;
         let isDraggingSelection = false;
 
         // Biến lưu trữ trạng thái dữ liệu gốc để xử lý Concurrency (Nhiều người dùng chỉnh sửa)
@@ -645,19 +780,19 @@
         ];
 
         function isHoliday(day, month, year) {
-            if (day === 1 && month === 1) return true; 
-            if (day === 30 && month === 4) return true; 
-            if (day === 1 && month === 5) return true; 
+            if (day === 1 && month === 1) return true;
+            if (day === 30 && month === 4) return true;
+            if (day === 1 && month === 5) return true;
             if ((day === 1 || day === 2) && month === 9) return true;
 
             const lunarHolidays = {
-                2026: ["14-2","15-2","16-2","17-2","18-2","19-2","20-2","21-2","22-2", "26-4"],
-                2027: ["4-2","5-2","6-2","7-2","8-2","9-2","10-2","11-2","12-2", "16-4"],
-                2028: ["24-1","25-1","26-1","27-1","28-1","29-1","30-1","31-1", "4-4"],
-                2029: ["11-2","12-2","13-2","14-2","15-2","16-2","17-2","18-2", "23-4"],
-                2030: ["1-2","2-2","3-2","4-2","5-2","6-2","7-2","8-2", "11-4"]
+                2026: ["14-2", "15-2", "16-2", "17-2", "18-2", "19-2", "20-2", "21-2", "22-2", "26-4"],
+                2027: ["4-2", "5-2", "6-2", "7-2", "8-2", "9-2", "10-2", "11-2", "12-2", "16-4"],
+                2028: ["24-1", "25-1", "26-1", "27-1", "28-1", "29-1", "30-1", "31-1", "4-4"],
+                2029: ["11-2", "12-2", "13-2", "14-2", "15-2", "16-2", "17-2", "18-2", "23-4"],
+                2030: ["1-2", "2-2", "3-2", "4-2", "5-2", "6-2", "7-2", "8-2", "11-4"]
             };
-            
+
             let dateKey = `${day}-${month}`;
             if (lunarHolidays[year] && lunarHolidays[year].includes(dateKey)) {
                 return true;
@@ -686,9 +821,9 @@
 
         function parseEmployeeDate(dateStr, isEndDate = false) {
             if (!dateStr) return isEndDate ? new Date(2100, 0, 1) : new Date(1900, 0, 1);
-            
+
             let str = String(dateStr).trim();
-            
+
             if (str.includes('T')) {
                 let utcMs = new Date(str).getTime();
                 if (!isNaN(utcMs)) {
@@ -708,7 +843,7 @@
             if (str.includes('-')) {
                 let parts = str.split('-');
                 if (parts.length === 3) {
-                    if (parts[0].length === 4) { 
+                    if (parts[0].length === 4) {
                         let y = parseInt(parts[0]);
                         let m = parseInt(parts[1]) - 1;
                         let d = parseInt(parts[2]);
@@ -722,11 +857,11 @@
                     }
                 }
             }
-            
+
             if (!isNaN(parseInt(str)) && str.length === 4) {
                 return isEndDate ? new Date(parseInt(str), 11, 31, 23, 59, 59) : new Date(parseInt(str), 0, 1, 0, 0, 0);
             }
-            
+
             return isEndDate ? new Date(2100, 0, 1) : new Date(1900, 0, 1);
         }
 
@@ -734,10 +869,10 @@
             if (!maKhoaStr) return '';
             let khoas = maKhoaStr.split(',').map(s => s.trim()).filter(s => s !== '');
             if (khoas.length === 0) return '';
-            
+
             let firstKhoa = khoas[0].toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
             if ((firstKhoa === 'BGD' || firstKhoa === 'BANGIAMDOC') && khoas.length > 1) {
-                return khoas[1]; 
+                return khoas[1];
             }
             return khoas[0];
         }
@@ -745,7 +880,7 @@
         function getParentKhoaInfo(maKhoaGoc) {
             if (!maKhoaGoc) return { ma: '', ten: '' };
             let ma = maKhoaGoc.trim();
-            
+
             let kObj = MOCK_DB.khoa.find(k => String(k.MaKhoa).toUpperCase() === ma.toUpperCase());
             let ten = kObj ? kObj.TenKhoa : ma;
             let cleanTen = ten.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s/g, "");
@@ -806,7 +941,7 @@
                 spChieu.disabled = true;
                 spChieu.innerHTML = '<option value="">-- Không cần --</option>';
             }
-            
+
             const currentChieu = spChieu.getAttribute('data-current') || '';
             if (Array.from(spChieu.options).some(opt => opt.value === currentChieu)) {
                 spChieu.value = currentChieu;
@@ -822,7 +957,7 @@
         document.addEventListener('mousedown', (e) => {
             const table = document.querySelector('.table-custom');
             const popover = document.getElementById('shift-picker-popover');
-            
+
             if (table && !table.contains(e.target) && popover && !popover.contains(e.target)) {
                 clearSelection();
             }
@@ -833,11 +968,11 @@
         });
 
         function updateCellStyles(cell, val) {
-            cell.className = cell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', ''); 
-            
+            cell.className = cell.className.replace(/bg-[a-z]+-[0-9]+/g, '').replace(/text-[a-z]+-[0-9]+/g, '').replace('font-bold', '');
+
             let primarySymbol = parseShifts(val)[0] || '';
             let primarySymbolObj = SYMBOLS_DICT.find(s => s.id.toUpperCase() === primarySymbol.toUpperCase());
-            
+
             if (primarySymbolObj && primarySymbolObj.bg) {
                 cell.className += ` ${primarySymbolObj.bg}`;
             } else if (val === 'T7' || val === 'CN') {
@@ -849,21 +984,21 @@
 
         function initDragSelection() {
             const tbody = document.getElementById('report-tbody');
-            if(!tbody) return;
+            if (!tbody) return;
 
             tbody.addEventListener('mousedown', (e) => {
                 if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-                
+
                 const cell = e.target.closest('.cell-day');
                 if (!cell) return;
 
-                if (e.button === 2) { 
+                if (e.button === 2) {
                     if (!cell.classList.contains('cell-selected')) {
                         clearSelection();
                         cell.classList.add('cell-selected');
                         activeInputCell = cell;
                     }
-                    return; 
+                    return;
                 }
 
                 isDraggingSelection = true;
@@ -881,7 +1016,7 @@
                 if (!isDraggingSelection) return;
                 const cell = e.target.closest('.cell-day');
                 if (!cell) return;
-                
+
                 cell.classList.add('cell-selected');
                 activeInputCell = cell;
             });
@@ -889,10 +1024,10 @@
 
         function openShiftPicker(event, tdElement) {
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-            event.stopPropagation(); 
-            
+            event.stopPropagation();
+
             activeInputCell = tdElement;
-            
+
             if (!tdElement.classList.contains('cell-selected')) {
                 clearSelection();
                 tdElement.classList.add('cell-selected');
@@ -912,12 +1047,12 @@
             renderShiftOptions(spSang, 'all');
             spSang.value = sangVal;
 
-            spChieu.setAttribute('data-current', chieuVal); 
+            spChieu.setAttribute('data-current', chieuVal);
             handleMorningChange();
 
             const rect = tdElement.getBoundingClientRect();
             let top = rect.bottom + window.scrollY + 5;
-            let left = rect.left + window.scrollX - 100; 
+            let left = rect.left + window.scrollX - 100;
 
             if (left + 320 > window.innerWidth) left = window.innerWidth - 330;
             if (left < 10) left = 10;
@@ -928,8 +1063,8 @@
         }
 
         function handleRightClick(event, tdElement) {
-            event.preventDefault(); 
-            openShiftPicker(event, tdElement); 
+            event.preventDefault();
+            openShiftPicker(event, tdElement);
         }
 
         function closeShiftPicker(event, forceClose = false) {
@@ -952,27 +1087,27 @@
             const chieuVal = document.getElementById('sp-chieu').value;
 
             const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
-            const isChieuHalf = chieuVal !== ''; 
-            
+            const isChieuHalf = chieuVal !== '';
+
             if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
                 if (sangVal !== 'LT/2' && chieuVal !== 'LT/2') {
                     showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
-                    return; 
+                    return;
                 }
             }
 
             let finalVal = sangVal;
             if (chieuVal && sangVal) {
-                finalVal = `${sangVal}; ${chieuVal}`; 
+                finalVal = `${sangVal}; ${chieuVal}`;
             } else if (chieuVal && !sangVal) {
-                finalVal = `; ${chieuVal}`; 
+                finalVal = `; ${chieuVal}`;
             }
 
             const selectedCells = document.querySelectorAll('.cell-selected');
             const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
 
             cellsToUpdate.forEach(cell => {
-                if(!cell) return;
+                if (!cell) return;
                 cell.innerText = finalVal;
                 updateCellStyles(cell, finalVal);
                 recalcRow(cell);
@@ -995,14 +1130,14 @@
             });
 
             closeShiftPicker(new Event('click'), true);
-            markUnsaved(); 
+            markUnsaved();
         }
 
         function copyShift() {
             const selected = document.querySelector('.cell-selected');
             const targetCell = selected || activeInputCell;
             if (!targetCell) return;
-            
+
             copiedShiftValue = targetCell.innerText.trim();
             showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
         }
@@ -1020,7 +1155,7 @@
             if (cellsToUpdate.length === 0) return;
 
             cellsToUpdate.forEach(cell => {
-                if(!cell) return;
+                if (!cell) return;
                 cell.innerText = copiedShiftValue;
                 updateCellStyles(cell, copiedShiftValue);
                 recalcRow(cell);
@@ -1043,12 +1178,12 @@
             });
 
             closeShiftPicker(new Event('click'), true);
-            markUnsaved(); 
+            markUnsaved();
             showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
         }
         function syncGhiChu(el) {
             const tr = el.closest('tr');
-            if(!tr) return;
+            if (!tr) return;
             const maNV = tr.getAttribute('data-id');
             const val = el.innerText;
             document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
@@ -1061,9 +1196,9 @@
             });
         }
 
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-            
+
             if (e.ctrlKey || e.metaKey) {
                 if (e.key.toLowerCase() === 'c') {
                     e.preventDefault();
@@ -1083,7 +1218,7 @@
             confirmActionFn = actionFn;
             document.getElementById('custom-confirm-modal').classList.remove('hidden');
             lucide.createIcons();
-            
+
             const cancelBtn = document.getElementById('confirm-cancel-btn');
             cancelBtn.onclick = () => {
                 closeConfirmModal();
@@ -1103,9 +1238,9 @@
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline"></i>Đang xử lý...`;
             btn.disabled = true;
             lucide.createIcons();
-            
-            if(confirmActionFn) await confirmActionFn();
-            
+
+            if (confirmActionFn) await confirmActionFn();
+
             btn.innerHTML = "Đồng ý";
             btn.disabled = false;
             closeConfirmModal();
@@ -1113,14 +1248,14 @@
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
-            if(!container) return;
+            if (!container) return;
             const toast = document.createElement('div');
             const bgColor = type === 'error' ? 'bg-red-600' : (type === 'warning' ? 'bg-orange-500' : (type === 'info' ? 'bg-blue-600' : 'bg-emerald-600'));
             toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center fade-in transition-opacity duration-300`;
             toast.innerHTML = `<i data-lucide="${type === 'error' ? 'alert-circle' : (type === 'info' ? 'info' : 'check-circle')}" class="w-5 h-5 mr-2"></i><span class="font-sans">${message}</span>`;
             container.appendChild(toast);
             lucide.createIcons();
-            
+
             setTimeout(() => {
                 toast.classList.add('opacity-0');
                 setTimeout(() => toast.remove(), 300);
@@ -1145,8 +1280,8 @@
         function handleGoHome() {
             if (hasUnsavedChanges) {
                 showConfirmModal(
-                    "Cảnh báo: Dữ liệu chưa lưu!", 
-                    "Bạn đã thay đổi Bảng chấm công nhưng chưa lưu.\nHệ thống bắt buộc phải LƯU LẠI thay đổi trước khi thoát để tránh mất dữ liệu.\n\nNhấn 'Đồng ý' để tự tự động lưu và thoát.", 
+                    "Cảnh báo: Dữ liệu chưa lưu!",
+                    "Bạn đã thay đổi Bảng chấm công nhưng chưa lưu.\nHệ thống bắt buộc phải LƯU LẠI thay đổi trước khi thoát để tránh mất dữ liệu.\n\nNhấn 'Đồng ý' để tự tự động lưu và thoát.",
                     async () => {
                         await saveDraftData();
                         window.location.href = 'index.html';
@@ -1201,7 +1336,7 @@
             if (isAdminAll) {
                 filterKhoa.classList.remove('hidden');
                 if (btnLeaveConfig) btnLeaveConfig.classList.remove('hidden');
-                
+
                 let optionsHtml = '<option value="ALL">-- Toàn viện (Tất cả) --</option>';
                 let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
                 sortedKhoa.forEach(k => {
@@ -1231,7 +1366,7 @@
             return true;
         }
 
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const u = document.getElementById('username').value.toLowerCase().trim();
             const p = document.getElementById('password').value.trim();
@@ -1252,7 +1387,7 @@
 
                 if (user) {
                     const rawRole = (user.Role || '').trim();
-                    user.Role = rawRole; 
+                    user.Role = rawRole;
 
                     if (user.Role !== 'Admin_KHTH' && user.Role !== 'Admin_Khoa') {
                         errorDiv.textContent = "Bạn không có quyền truy cập chức năng này!";
@@ -1285,23 +1420,35 @@
         });
 
         // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
-        async function fetchAllSupabase(tableName, selectQuery = '*') {
-            let allData = [];
-            let from = 0;
-            const step = 1000;
-            while (true) {
-                const { data, error } = await _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
-                if (error) return { data: allData, error };
-                if (data && data.length > 0) {
-                    allData.push(...data);
-                    if (data.length < step) break;
-                    from += step;
-                } else {
-                    break;
+        // --- HÀM LẤY DỮ LIỆU TỐI ƯU TỪ SUPABASE ---
+            async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
+                let allData = [];
+                let from = 0;
+                const step = 1000;
+                while (true) {
+                    let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+
+                    // THÊM BỘ LỌC ĐỂ GIẢM TẢI (Tăng tốc độ tải trang)
+                    if (filter) {
+                        if (filter.type === 'date_range') {
+                            query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
+                        } else if (filter.type === 'eq') {
+                            query = query.eq(filter.column, filter.value);
+                        }
+                    }
+
+                    const { data, error } = await query;
+                    if (error) return { data: allData, error };
+                    if (data && data.length > 0) {
+                        allData.push(...data);
+                        if (data.length < step) break;
+                        from += step;
+                    } else {
+                        break;
+                    }
                 }
+                return { data: allData, error: null };
             }
-            return { data: allData, error: null };
-        }
 
         async function syncWithGAS(actionName, payloadData) {
             // Cho phép payload rỗng nếu là cấu hình phép (vì có thể họ xóa hết cấu hình)
@@ -1313,7 +1460,7 @@
 
             try {
                 const tableName = actionName.replace('sync_', '');
-                
+
                 // Làm sạch dữ liệu trước khi đẩy lên Supabase (Đề phòng trường hợp copy code qua lại giữa các file)
                 let processedData = payloadData;
                 if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
@@ -1354,7 +1501,7 @@
                     'PhieuBoiDuong': 'MaPhieuBD',
                     'BangChamCong': 'MaBang'
                 };
-                
+
                 const pk = primaryKeys[tableName];
 
                 // Đẩy dữ liệu lên Supabase theo từng block nhỏ
@@ -1374,12 +1521,12 @@
                 if (pk && Array.isArray(processedData)) {
                     const payloadIds = new Set(processedData.map(item => String(item[pk])));
                     const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
-                    
+
                     if (!fetchError && dbRows) {
                         const idsToDelete = dbRows
                             .map(row => String(row[pk]))
                             .filter(id => !payloadIds.has(id));
-                        
+
                         if (idsToDelete.length > 0) {
                             for (let i = 0; i < idsToDelete.length; i += 100) {
                                 const deleteChunk = idsToDelete.slice(i, i + 100);
@@ -1396,30 +1543,37 @@
         }
 
         async function loadDataFromGAS() {
-            document.getElementById('loading-screen').classList.remove('hidden');
-            document.getElementById('retry-btn-container').classList.add('hidden');
-            hasUnsavedChanges = false;
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('retry-btn-container').classList.add('hidden');
+                hasUnsavedChanges = false;
 
-            try {
-                const [
-                    { data: khoa }, { data: users }, { data: shifts },
-                    { data: bangChamCong }, { data: cauHinhPhep }
-                ] = await Promise.all([
-                    fetchAllSupabase('KhoaPhong'),
-                    fetchAllSupabase('NhanVien'),
-                    fetchAllSupabase('ChiTietLichTruc'),
-                    fetchAllSupabase('BangChamCong'),
-                    fetchAllSupabase('CauHinhPhep')
-                ]);
+                try {
+                    // Lấy giới hạn từ năm ngoái đến cuối năm nay để tối ưu tốc độ
+                    const targetYear = new Date().getFullYear();
+                    const startDate = `${targetYear - 1}-01-01`;
+                    const endDate = `${targetYear + 1}-12-31`;
+
+                    const [
+                        { data: khoa }, { data: users }, { data: shifts },
+                        { data: bangChamCong }, { data: cauHinhPhep }
+                    ] = await Promise.all([
+                        fetchAllSupabase('KhoaPhong'),
+                        fetchAllSupabase('NhanVien'),
+                        // CHỈ TẢI LỊCH TRỰC TRONG KHOẢNG THỜI GIAN CẦN THIẾT
+                        fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startDate, endDate: endDate }),
+                        // CHỈ TẢI BẢNG CHẤM CÔNG CỦA NĂM NAY VÀ NĂM NGOÁI
+                        fetchAllSupabase('BangChamCong', '*', { type: 'date_range', column: 'Nam', startDate: targetYear - 1, endDate: targetYear + 1 }),
+                        fetchAllSupabase('CauHinhPhep')
+                    ]);
 
                 MOCK_DB.khoa = khoa || [];
                 MOCK_DB.users = users || [];
                 MOCK_DB.bangChamCong = bangChamCong || [];
-                
+
                 if (cauHinhPhep && cauHinhPhep.length > 0) {
                     MOCK_DB.cauHinhPhep = cauHinhPhep[0].data || null;
                 }
-                
+
                 if (shifts) {
                     MOCK_DB.shifts = shifts.map(s => {
                         let parsedDate = String(s.NgayTruc || "").trim();
@@ -1460,7 +1614,7 @@
         }
         function initUI() {
             const today = getVNTime();
-            
+
             // 1. Cài đặt ngày ký in luôn luôn là ngày thực tế hiện tại
             document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
             document.getElementById('lbl-print-month').textContent = String(today.getMonth() + 1).padStart(2, '0');
@@ -1468,7 +1622,7 @@
 
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
-            
+
             const yearSelect = document.getElementById('sel-year');
             yearSelect.innerHTML = '';
             const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
@@ -1478,15 +1632,15 @@
                 opt.textContent = y;
                 yearSelect.appendChild(opt);
             }
-            
+
             if (defaultYear < 2026) {
                 defaultYear = 2026;
             }
-            
+
             // Logic lùi tháng hiển thị bảng chấm công nếu là những ngày đầu tháng
-            if(today.getDate() < 5) {
+            if (today.getDate() < 5) {
                 defaultMonth -= 1;
-                if(defaultMonth === 0) {
+                if (defaultMonth === 0) {
                     defaultMonth = 12;
                     defaultYear -= 1;
                     if (defaultYear < 2026) defaultYear = 2026;
@@ -1494,12 +1648,12 @@
             }
 
             document.getElementById('sel-month').value = defaultMonth;
-            
+
             let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
             if (yearExists) {
                 yearSelect.value = defaultYear;
             } else {
-                yearSelect.value = "2026"; 
+                yearSelect.value = "2026";
             }
 
             initKhoaFilter();
@@ -1508,7 +1662,7 @@
         }
         function initUI() {
             const today = getVNTime();
-            
+
             // 1. Cài đặt ngày ký in luôn luôn là ngày thực tế hiện tại
             document.getElementById('lbl-print-day').textContent = String(today.getDate()).padStart(2, '0');
             document.getElementById('lbl-print-month').textContent = String(today.getMonth() + 1).padStart(2, '0');
@@ -1516,10 +1670,10 @@
 
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
-            
+
             const yearSelect = document.getElementById('sel-year');
             yearSelect.innerHTML = '';
-            
+
             // Tự động sinh danh sách năm (từ 2024 đến năm hiện tại + 1)
             const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
             for (let y = 2024; y <= maxYear; y++) {
@@ -1528,15 +1682,15 @@
                 opt.textContent = y;
                 yearSelect.appendChild(opt);
             }
-            
+
             if (defaultYear < 2024) {
                 defaultYear = 2024;
             }
-            
+
             // Logic lùi tháng hiển thị bảng chấm công nếu là những ngày đầu tháng
-            if(today.getDate() < 5) {
+            if (today.getDate() < 5) {
                 defaultMonth -= 1;
-                if(defaultMonth === 0) {
+                if (defaultMonth === 0) {
                     defaultMonth = 12;
                     defaultYear -= 1;
                     if (defaultYear < 2024) defaultYear = 2024;
@@ -1544,12 +1698,12 @@
             }
 
             document.getElementById('sel-month').value = defaultMonth;
-            
+
             let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
             if (yearExists) {
                 yearSelect.value = defaultYear;
             } else {
-                yearSelect.value = today.getFullYear().toString(); 
+                yearSelect.value = today.getFullYear().toString();
             }
 
             initKhoaFilter();
@@ -1559,7 +1713,7 @@
         function buildStaticTableHeaders() {
             let tr1 = '';
             let tr2 = '<th>A</th><th>B</th>';
-            for(let i=1; i<=31; i++) {
+            for (let i = 1; i <= 31; i++) {
                 tr1 += `<th class="day-col">${i}</th>`;
                 tr2 += `<th class="day-col">${i}</th>`;
             }
@@ -1573,14 +1727,14 @@
                 <th class="w-8 leading-tight">Khác</th>
             `;
             tr2 += `<th>32</th><th>33</th><th>34</th><th>35</th><th>36</th><th>37</th><th>38</th><th>39</th>`;
-            
+
             document.getElementById('header-days').innerHTML = tr1;
             document.getElementById('header-col-index').innerHTML = tr2;
         }
 
         function recalcRow(el) {
             const tr = el.closest('tr');
-            if(!tr) return;
+            if (!tr) return;
 
             const cells = tr.querySelectorAll('.cell-day');
             let ngayViec = 0, truc24 = 0, truc12 = 0, p = 0, nb = 0, om = 0, khac = 0;
@@ -1643,19 +1797,19 @@
             if (status === 'Nháp' || status === 'Trả lại') {
                 badge.textContent = status === 'Nháp' ? "Chưa trình" : "Bị Trả Lại";
                 badge.className = `px-2 py-1 rounded text-xs font-bold whitespace-nowrap ${status === 'Nháp' ? 'bg-slate-200 text-slate-600' : 'bg-red-100 text-red-700'}`;
-                
+
                 if (isAdminAll || currentUser.Role === 'Admin_Khoa') {
                     btnDraft.classList.remove('hidden');
                     btnSend.classList.remove('hidden');
-                    if(btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình duyệt" : "Trình lại duyệt";
+                    if (btnSendText) btnSendText.textContent = status === 'Nháp' ? "Trình duyệt" : "Trình lại duyệt";
                 }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
-            } 
+            }
             else if (status === 'Chờ duyệt') {
                 badge.textContent = "Chờ TCHC Duyệt";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-yellow-100 text-yellow-800 whitespace-nowrap";
-                
+
                 if (isAdminAll) {
                     btnApprove.classList.remove('hidden');
                     btnCancel.classList.remove('hidden');
@@ -1663,11 +1817,11 @@
                 }
                 btnPrint.disabled = true;
                 btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
-            } 
+            }
             else if (status === 'Đã duyệt') {
                 badge.textContent = "Đã được Duyệt";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
-                
+
                 btnPrint.disabled = false;
                 btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
 
@@ -1682,20 +1836,20 @@
         function extractGridData() {
             let dataByKhoa = {};
             const rows = document.querySelectorAll('#report-tbody tr.data-row');
-            
+
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
-                const parentMaKhoa = tr.getAttribute('data-khoa'); 
-                
-                if(!dataByKhoa[parentMaKhoa]) dataByKhoa[parentMaKhoa] = {};
+                const parentMaKhoa = tr.getAttribute('data-khoa');
+
+                if (!dataByKhoa[parentMaKhoa]) dataByKhoa[parentMaKhoa] = {};
 
                 const cells = tr.querySelectorAll('.cell-day');
                 let userDays = {};
                 cells.forEach((c, idx) => {
                     let val = c.innerText.trim();
-                    if(val) userDays[idx + 1] = val;
+                    if (val) userDays[idx + 1] = val;
                 });
-                
+
                 let ghiChu = tr.querySelector('.cell-ghichu').innerText.trim();
                 dataByKhoa[parentMaKhoa][maNV] = { days: userDays, note: ghiChu };
             });
@@ -1713,45 +1867,45 @@
             try {
                 const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
                 const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-                
+
                 // Lấy dữ liệu mới nhất từ server để gộp (Concurrency Merge)
                 let latestServerDB = [];
                 try {
                     // GỌI HÀM VÒNG LẶP SUPABASE MỚI THAY CHO FETCH GAS CŨ
                     const { data, error } = await fetchAllSupabase('BangChamCong');
                     if (!error && data) latestServerDB = data;
-                } catch(e) {
+                } catch (e) {
                     console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
                     latestServerDB = MOCK_DB.bangChamCong;
                 }
 
-                let uiDataByKhoa = extractGridData(); 
+                let uiDataByKhoa = extractGridData();
                 let hasMerged = false;
 
                 for (let parentMk in uiDataByKhoa) {
                     const maBang = `BCC_${parentMk}_${month}_${year}`;
-                    
+
                     let uiGrid = uiDataByKhoa[parentMk];
                     let latestBang = latestServerDB.find(b => b.MaBang === maBang);
-                    
+
                     if (latestBang && latestBang.DuLieu) {
                         try {
                             let serverGrid = JSON.parse(latestBang.DuLieu);
                             // Thực hiện Gộp Dữ Liệu
-                            for(let nv in uiGrid) {
-                                if(serverGrid[nv]) {
-                                    for(let d = 1; d <= 31; d++) {
+                            for (let nv in uiGrid) {
+                                if (serverGrid[nv]) {
+                                    for (let d = 1; d <= 31; d++) {
                                         let uiVal = uiGrid[nv].days[d] || '';
                                         let serverVal = serverGrid[nv].days[d] || '';
                                         let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
-                                        
+
                                         // Nếu UI của mình không đổi so với lúc tải, nhưng Server lại có thay đổi mới -> Lấy của Server
                                         if (uiVal === origVal && serverVal !== origVal) {
                                             uiGrid[nv].days[d] = serverVal;
                                             hasMerged = true;
                                         }
                                     }
-                                    
+
                                     // Gộp cả Ghi chú
                                     let uiNote = uiGrid[nv].note || '';
                                     let serverNote = serverGrid[nv].note || '';
@@ -1762,7 +1916,7 @@
                                     }
                                 }
                             }
-                        } catch(e) {}
+                        } catch (e) { }
                     }
 
                     // Cập nhật lại MOCK_DB
@@ -1770,17 +1924,17 @@
                     let finalGridJson = JSON.stringify(uiGrid);
 
                     if (!bang) {
-                        bang = { 
-                            MaBang: maBang, MaKhoa: parentMk, Thang: month, Nam: year, TrangThai: status, 
-                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '', 
-                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '', 
-                            DuLieu: finalGridJson 
+                        bang = {
+                            MaBang: maBang, MaKhoa: parentMk, Thang: month, Nam: year, TrangThai: status,
+                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
+                            DuLieu: finalGridJson
                         };
                         MOCK_DB.bangChamCong.push(bang);
                     } else {
                         bang.TrangThai = status;
                         bang.DuLieu = finalGridJson;
-                        if(status === 'Đã duyệt') {
+                        if (status === 'Đã duyệt') {
                             bang.NguoiDuyet = currentUser.MaNV;
                             bang.NgayDuyet = getVNFormatYYYYMMDD();
                         }
@@ -1788,9 +1942,9 @@
                 }
 
                 hasUnsavedChanges = false;
-                currentOverallStatus = status; 
+                currentOverallStatus = status;
                 updateApprovalUI(status);
-                
+
                 await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
 
                 // Cập nhật lại dữ liệu gốc
@@ -1821,9 +1975,9 @@
         function approveBang() {
             const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
             const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-            
-            const msg = isBulk 
-                ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?" 
+
+            const msg = isBulk
+                ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?"
                 : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
 
             showConfirmModal("Xác nhận Phê duyệt", msg, async () => {
@@ -1835,9 +1989,9 @@
         function cancelApprove() {
             const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
             const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-            
-            const msg = isBulk 
-                ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?" 
+
+            const msg = isBulk
+                ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?"
                 : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
 
             showConfirmModal("Từ chối / Trả lại", msg, async () => {
@@ -1849,8 +2003,8 @@
         function getTenString(fullName) {
             if (!fullName) return { ten: "", hoDem: "" };
             let parts = fullName.trim().split(" ");
-            let ten = parts.pop(); 
-            let hoDem = parts.join(" "); 
+            let ten = parts.pop();
+            let hoDem = parts.join(" ");
             return { ten: ten.toLowerCase(), hoDem: hoDem.toLowerCase() };
         }
 
@@ -1860,9 +2014,9 @@
                 showToast("Bảng đã khóa, không thể đồng bộ!", "error");
                 return;
             }
-            
+
             showToast("Đang tải dữ liệu lịch trực mới nhất...", "info");
-            
+
             try {
                 // Sửa lỗi fetch GAS_URL bằng cách lấy từ Supabase
                 const { data, error } = await fetchAllSupabase('ChiTietLichTruc');
@@ -1881,9 +2035,9 @@
                                 let tempStr = parsedDate.split(' ')[0].replace(/\//g, '-');
                                 let parts = tempStr.split('-');
                                 if (parts.length === 3) {
-                                    if (parts[0].length === 4) { 
+                                    if (parts[0].length === 4) {
                                         parsedDate = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                                    } else { 
+                                    } else {
                                         parsedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                                     }
                                 } else { parsedDate = tempStr; }
@@ -1892,7 +2046,7 @@
                         return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
                     });
                 }
-            } catch(e) {
+            } catch (e) {
                 console.warn("Không tải được lịch trực mới, dùng dữ liệu hiện tại.");
             }
 
@@ -1902,18 +2056,18 @@
 
             // Chỉ lọc lịch trực của tháng này
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                if(!s.NgayTruc) return false;
+                if (!s.NgayTruc) return false;
                 const parts = s.NgayTruc.split('-');
                 return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
             });
 
             let changedCount = 0;
             const rows = document.querySelectorAll('#report-tbody tr.data-row');
-            
+
             rows.forEach(tr => {
                 const maNV = String(tr.getAttribute('data-id'));
                 const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === maNV);
-                
+
                 // Chỉ ĐỒNG BỘ cho nhân viên CÓ LỊCH TRỰC
                 if (nvShifts.length > 0) {
                     const shiftMap = {};
@@ -1924,11 +2078,11 @@
                             let d = parseInt(parts[2]);
                             let pc = (s.PhanCa || '').toLowerCase().trim();
                             let type = 'T24'; // Mặc định là 24h
-                            
+
                             // Nhận diện theo hình ảnh (Ngày, Đêm)
                             if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
                             else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
-                            
+
                             shiftMap[d] = type;
                         }
                     });
@@ -1980,14 +2134,14 @@
         function generateReport() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
-            
+
             currentRenderedMonth = month;
             currentRenderedYear = year;
-            
+
             document.getElementById('lbl-month-year').textContent = `${String(month).padStart(2, '0')}/${year}`;
             const daysInMonth = new Date(year, month, 0).getDate();
             const firstDayOfViewedMonth = new Date(year, month - 1, 1);
-            const lastDayOfViewedMonth = new Date(year, month, 0, 23, 59, 59); 
+            const lastDayOfViewedMonth = new Date(year, month, 0, 23, 59, 59);
 
             const viewModeEle = document.getElementById('view-mode');
             const viewMode = viewModeEle ? viewModeEle.value : 'chitiet';
@@ -1997,7 +2151,7 @@
 
             const isAdminAll = isGlobalAdmin();
             let baseAllowedKhoas = isAdminAll ? MOCK_DB.khoa.map(k => k.MaKhoa) : currentUser.KhoaList;
-            
+
             let allowedKhoas = baseAllowedKhoas;
             if (isAdminAll && selectedKhoaFilter !== 'ALL') {
                 allowedKhoas = [selectedKhoaFilter];
@@ -2021,7 +2175,7 @@
             let processedGroups = {};
             let totalRenderedUsers = 0;
 
-            let approvedOwnership = {}; 
+            let approvedOwnership = {};
             MOCK_DB.bangChamCong.forEach(b => {
                 if (parseInt(b.Thang) === month && parseInt(b.Nam) === year && b.TrangThai === 'Đã duyệt' && b.DuLieu) {
                     try {
@@ -2029,7 +2183,7 @@
                         Object.keys(parsed).forEach(nv => {
                             approvedOwnership[String(nv)] = getParentKhoaInfo(b.MaKhoa).ma;
                         });
-                    } catch(e) {}
+                    } catch (e) { }
                 }
             });
 
@@ -2037,13 +2191,13 @@
                 const maBang = `BCC_${parentMk}_${month}_${year}`;
                 const b = MOCK_DB.bangChamCong.find(x => x.MaBang === maBang);
 
-                if(b) {
-                    if(b.TrangThai === 'Nháp') hasDraft = true;
-                    if(b.TrangThai === 'Chờ duyệt') hasPending = true;
-                    if(b.TrangThai === 'Trả lại') hasRejected = true;
-                    if(b.TrangThai === 'Đã duyệt') hasApproved = true;
+                if (b) {
+                    if (b.TrangThai === 'Nháp') hasDraft = true;
+                    if (b.TrangThai === 'Chờ duyệt') hasPending = true;
+                    if (b.TrangThai === 'Trả lại') hasRejected = true;
+                    if (b.TrangThai === 'Đã duyệt') hasApproved = true;
                 } else {
-                    hasDraft = true; 
+                    hasDraft = true;
                 }
 
                 let parentKhoaName = MOCK_DB.khoa.find(k => k.MaKhoa === parentMk)?.TenKhoa || parentMk;
@@ -2066,7 +2220,7 @@
 
                 let parentMks = new Set();
                 userKhoas.forEach(mk => parentMks.add(getParentKhoaInfo(mk).ma));
-                
+
                 if (approvedOwnership[maNVStr]) {
                     parentMks.add(approvedOwnership[maNVStr]);
                 }
@@ -2076,7 +2230,7 @@
                     if (allowedParentKhoas.includes(targetParentMk)) {
                         let displayGroupName = MOCK_DB.khoa.find(k => k.MaKhoa === targetParentMk)?.TenKhoa || targetParentMk;
                         if (!processedGroups[displayGroupName]) processedGroups[displayGroupName] = { ten: displayGroupName, users: [] };
-                        
+
                         if (!processedGroups[displayGroupName].users.find(item => String(item.user.MaNV) === maNVStr)) {
                             processedGroups[displayGroupName].users.push({ user: u, parentMaKhoa: targetParentMk });
                             isAdded = true;
@@ -2094,10 +2248,10 @@
             else if (hasPending) overallStatus = 'Chờ duyệt';
             else if (hasApproved) overallStatus = 'Đã duyệt';
 
-            currentOverallStatus = overallStatus; 
+            currentOverallStatus = overallStatus;
             const isLocked = (overallStatus === 'Chờ duyệt' || overallStatus === 'Đã duyệt');
             updateApprovalUI(overallStatus);
-            
+
             hasUnsavedChanges = false;
 
             let globalSavedData = {};
@@ -2119,14 +2273,14 @@
                                 }
                             }
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 }
             });
 
             const shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                if(!s.NgayTruc) return false;
+                if (!s.NgayTruc) return false;
                 const parts = s.NgayTruc.split('-');
-                if(parts.length !== 3) return false;
+                if (parts.length !== 3) return false;
                 return parseInt(parts[1]) === month && parseInt(parts[0]) === year;
             });
 
@@ -2137,7 +2291,7 @@
                 processedGroups[groupName].users.sort((itemA, itemB) => {
                     let nameA = getTenString(itemA.user.HoTen);
                     let nameB = getTenString(itemB.user.HoTen);
-                    
+
                     let cmpTen = nameA.ten.localeCompare(nameB.ten, 'vi');
                     if (cmpTen !== 0) return cmpTen;
                     return nameA.hoDem.localeCompare(nameB.hoDem, 'vi');
@@ -2146,7 +2300,7 @@
 
             for (let groupName in processedGroups) {
                 let group = processedGroups[groupName];
-                if(group.users.length === 0) continue;
+                if (group.users.length === 0) continue;
 
                 const isAdministrative = !groupName.toLowerCase().includes('khoa');
                 const shouldHideHeader = viewMode === 'khoa' && isAdministrative;
@@ -2163,8 +2317,8 @@
 
                 group.users.forEach(item => {
                     const u = item.user;
-                    const maKhoa = item.parentMaKhoa; 
-                    
+                    const maKhoa = item.parentMaKhoa;
+
                     let isBoardSaved = MOCK_DB.bangChamCong.some(b => b.MaKhoa === maKhoa && parseInt(b.Thang) === month && parseInt(b.Nam) === year);
 
                     let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
@@ -2172,20 +2326,20 @@
 
                     const nvShifts = shiftsInMonth.filter(s => String(s.MaNV) === String(u.MaNV));
                     const shiftMap = {};
-                    
+
                     nvShifts.forEach(s => {
                         if (s.ChucDanh === 'CHAO_CO' || s.ChucDanh === 'DONG_DAU') return;
                         const parts = s.NgayTruc.split('-');
                         if (parts.length === 3) {
                             let d = parseInt(parts[2]);
                             let pc = (s.PhanCa || '').toLowerCase().trim();
-                            let type = 'T24'; 
-                            
+                            let type = 'T24';
+
                             // Sửa lại logic nhận diện
                             if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
                             else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
-                            
-                            shiftMap[d] = type; 
+
+                            shiftMap[d] = type;
                         }
                     });
 
@@ -2199,27 +2353,27 @@
 
                     const strMaNV = String(u.MaNV);
                     const nvSavedData = globalSavedData[strMaNV];
-                    
-                    for(let day = 1; day <= 31; day++) {
+
+                    for (let day = 1; day <= 31; day++) {
                         if (day > daysInMonth) {
                             rowHtml += `<td class="bg-gray-300"></td>`;
                         } else {
-                            let dateObj = new Date(year, month - 1, day, 12, 0, 0); 
-                            let dw = dateObj.getDay(); 
+                            let dateObj = new Date(year, month - 1, day, 12, 0, 0);
+                            let dw = dateObj.getDay();
                             let val = '';
                             let cellClass = 'cell-day transition';
-                            
+
                             if (dateObj >= joinDate && dateObj < leaveDate) {
-                                
+
                                 let correctVal = '';
                                 if (shiftMap[day]) {
                                     correctVal = shiftMap[day]; // Ghi đúng loại: T24, T12N hoặc T12D
                                 } else if (shiftMap[day - 1] === 'T24') {
                                     correctVal = 'Rt'; // Chỉ T24 mới được Ra trực
                                 } else if (isHoliday(day, month, year)) {
-                                    correctVal = 'L'; 
+                                    correctVal = 'L';
                                 } else if (dw === 0 || dw === 6) {
-                                    correctVal = dw === 0 ? 'CN' : 'T7'; 
+                                    correctVal = dw === 0 ? 'CN' : 'T7';
                                 } else {
                                     correctVal = '+';
                                 }
@@ -2228,7 +2382,7 @@
                                     if (nvSavedData.days[day] !== undefined) {
                                         val = nvSavedData.days[day];
                                     } else {
-                                        val = ''; 
+                                        val = '';
                                     }
                                 } else {
                                     val = correctVal;
@@ -2301,7 +2455,7 @@
             }
 
             document.getElementById('report-tbody').innerHTML = tbodyHtml;
-            
+
             // Lưu lại snapshot dữ liệu để thực hiện Merge khi Lưu
             originalGridData = extractGridData();
 
@@ -2315,7 +2469,7 @@
                 showToast("Tính năng này chỉ dành cho tài khoản Admin KHTH", "error");
                 return;
             }
-            
+
             const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
             const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
             const daysInMonth = new Date(year, month, 0).getDate();
@@ -2363,7 +2517,7 @@
             }
 
             let allowedParentKhoas = [...new Set(allowedKhoas.map(mk => getParentKhoaInfo(mk).ma))];
-            
+
             let approvedOwnership = {};
             MOCK_DB.bangChamCong.forEach(b => {
                 if (b.TrangThai === 'Đã duyệt' && b.DuLieu) {
@@ -2372,19 +2526,19 @@
                         Object.keys(parsed).forEach(nv => {
                             approvedOwnership[`${b.Thang}_${b.Nam}_${nv}`] = getParentKhoaInfo(b.MaKhoa).ma;
                         });
-                    } catch(e) {}
+                    } catch (e) { }
                 }
             });
 
             let targetUserIds = new Set();
-            
+
             MOCK_DB.users.forEach(u => {
                 if (u.ChucDanh === 'Quản lý') return;
 
                 if (roleFilter === 'BS') {
                     let cd = (u.ChucDanh || '').toUpperCase();
                     if (!cd.includes('BS') && !cd.includes('BÁC SĨ') && !cd.includes('BAC SI')) {
-                        return; 
+                        return;
                     }
                 }
 
@@ -2398,7 +2552,7 @@
                 let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
 
                 let isAllowed = allowedParentKhoas.includes(currentParentMk);
-                
+
                 if (!isAllowed) {
                     let tempD = new Date(dStart);
                     while (tempD <= dEnd) {
@@ -2430,7 +2584,7 @@
 
             function getMorningAfternoonReasons(symbolStr) {
                 if (!symbolStr) return { sang: "", chieu: "" };
-                
+
                 let parts = symbolStr.includes(';') ? symbolStr.split(';') : [symbolStr];
 
                 const getName = (sym) => {
@@ -2449,45 +2603,45 @@
                     let sym = parts[0].trim();
                     let isHalf = HALF_DAY_SYMBOLS.some(h => h.toUpperCase() === sym.toUpperCase());
                     if (isHalf) {
-                        res.sang = getName(sym); 
+                        res.sang = getName(sym);
                     } else {
                         res.sang = getName(sym);
-                        res.chieu = getName(sym); 
+                        res.chieu = getName(sym);
                     }
                 }
                 return res;
             }
 
-            let shiftsCache = {}; 
+            let shiftsCache = {};
             MOCK_DB.shifts.forEach(s => {
-                if(!s.NgayTruc) return;
+                if (!s.NgayTruc) return;
                 const parts = s.NgayTruc.split('-');
-                if(parts.length === 3) {
+                if (parts.length === 3) {
                     let y = parseInt(parts[0]);
                     let m = parseInt(parts[1]);
                     let d = parseInt(parts[2]);
                     let key = `${y}-${m}-${d}`;
-                    if(!shiftsCache[key]) shiftsCache[key] = {};
-                    
+                    if (!shiftsCache[key]) shiftsCache[key] = {};
+
                     let pc = (s.PhanCa || '').toLowerCase().trim();
-                    let type = 'T24'; 
+                    let type = 'T24';
                     // Sửa lại logic nhận diện
                     if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
                     else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
-                    
-                    shiftsCache[key][String(s.MaNV)] = type; 
+
+                    shiftsCache[key][String(s.MaNV)] = type;
                 }
             });
 
             let exportData = [];
             let currDate = new Date(dStart);
-            let cachedSavedMonths = {}; 
-            
+            let cachedSavedMonths = {};
+
             while (currDate <= dEnd) {
                 let y = currDate.getFullYear();
                 let m = currDate.getMonth() + 1;
                 let d = currDate.getDate();
-                let dw = currDate.getDay(); 
+                let dw = currDate.getDay();
                 let monthKey = `${y}-${m}`;
 
                 if (!cachedSavedMonths[monthKey]) {
@@ -2502,7 +2656,7 @@
                                         if (parsed[nv].days[dayD]) cachedSavedMonths[monthKey][nv].days[dayD] = parsed[nv].days[dayD];
                                     }
                                 }
-                            } catch(e) {}
+                            } catch (e) { }
                         }
                     });
                 }
@@ -2512,21 +2666,21 @@
 
                     let currentParentMk = getParentKhoaInfo(getPrimaryKhoa(u.MaKhoa)).ma;
                     let targetMk = approvedOwnership[`${m}_${y}_${maNV}`] || currentParentMk;
-                    if (!allowedParentKhoas.includes(targetMk)) return; 
+                    if (!allowedParentKhoas.includes(targetMk)) return;
 
                     let val = '';
                     let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
                     let leaveDate = parseEmployeeDate(u.NgayNghi, true);
 
                     if (currDate >= joinDate && currDate < leaveDate) {
-                        
+
                         if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days[d]) {
                             val = cachedSavedMonths[monthKey][maNV].days[d];
-                        } 
-                        
+                        }
+
                         if (!val || val.trim() === '') {
                             let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
-                            
+
                             let prevD = new Date(currDate);
                             prevD.setDate(prevD.getDate() - 1);
                             let py = prevD.getFullYear();
@@ -2535,11 +2689,11 @@
                             let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
 
                             if (shiftToday) {
-                                val = shiftToday; 
+                                val = shiftToday;
                             } else if (shiftYesterday === 'T24') {
                                 val = 'Rt';
                             } else if (isHoliday(d, m, y)) {
-                                val = 'L'; 
+                                val = 'L';
                             } else if (dw === 0 || dw === 6) {
                                 val = dw === 0 ? 'CN' : 'T7';
                             } else {
@@ -2572,22 +2726,22 @@
                 const worksheet = XLSX.utils.json_to_sheet(exportData);
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "ChamCong");
-                
+
                 const wscols = [
-                    {wch: 25}, 
-                    {wch: 15}, 
-                    {wch: 18}, 
-                    {wch: 25}, 
-                    {wch: 25}  
+                    { wch: 25 },
+                    { wch: 15 },
+                    { wch: 18 },
+                    { wch: 25 },
+                    { wch: 25 }
                 ];
                 worksheet['!cols'] = wscols;
 
-                const nameStart = `${String(dStart.getDate()).padStart(2,'0')}${String(dStart.getMonth()+1).padStart(2,'0')}${dStart.getFullYear()}`;
-                const nameEnd = `${String(dEnd.getDate()).padStart(2,'0')}${String(dEnd.getMonth()+1).padStart(2,'0')}${dEnd.getFullYear()}`;
-                
+                const nameStart = `${String(dStart.getDate()).padStart(2, '0')}${String(dStart.getMonth() + 1).padStart(2, '0')}${dStart.getFullYear()}`;
+                const nameEnd = `${String(dEnd.getDate()).padStart(2, '0')}${String(dEnd.getMonth() + 1).padStart(2, '0')}${dEnd.getFullYear()}`;
+
                 const fileName = `ChamCong_${nameStart}_den_${nameEnd}.xlsx`;
                 XLSX.writeFile(workbook, fileName);
-                
+
                 showToast("Xuất Excel thành công!", "success");
             } catch (error) {
                 console.error("Lỗi khi xuất Excel: ", error);
@@ -2619,19 +2773,19 @@
             if (!raw) {
                 const saved = localStorage.getItem('leave_combined_config');
                 if (saved) {
-                    try { raw = JSON.parse(saved); } catch(e) {}
+                    try { raw = JSON.parse(saved); } catch (e) { }
                 }
             }
             return parseLeaveConfig(raw);
         }
 
         function openLeaveConfigModal() {
-            tempLeaveConfig = JSON.parse(JSON.stringify(getCurrentLeaveConfig())); 
-            
+            tempLeaveConfig = JSON.parse(JSON.stringify(getCurrentLeaveConfig()));
+
             const listKhoaContainer = document.getElementById('leave-config-list-khoa');
             let htmlKhoa = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">';
             let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
-            
+
             sortedKhoa.forEach(k => {
                 const khoaId = String(k.MaKhoa).trim().toUpperCase();
                 const isChecked = tempLeaveConfig.khoa.includes(khoaId) ? 'checked' : '';
@@ -2681,8 +2835,8 @@
         function updateTempKhoaConfig(cb) {
             const khoaId = cb.value;
             const label = cb.closest('label');
-            if(cb.checked) {
-                if(!tempLeaveConfig.khoa.includes(khoaId)) tempLeaveConfig.khoa.push(khoaId);
+            if (cb.checked) {
+                if (!tempLeaveConfig.khoa.includes(khoaId)) tempLeaveConfig.khoa.push(khoaId);
                 label.classList.add('border-indigo-500', 'bg-indigo-50/50');
                 label.classList.remove('border-slate-200');
             } else {
@@ -2695,9 +2849,9 @@
         function renderLeaveConfigUsers() {
             const khoaId = document.getElementById('modal-khoa-filter').value;
             const listContainer = document.getElementById('modal-users-container');
-            
+
             let users = MOCK_DB.users.filter(u => u.ChucDanh !== 'Quản lý');
-            
+
             if (khoaId !== 'ALL') {
                 users = users.filter(u => {
                     let primary = getPrimaryKhoa(u.MaKhoa);
@@ -2717,7 +2871,7 @@
                 let val = tempLeaveConfig.caNhan[u.MaNV] !== undefined ? tempLeaveConfig.caNhan[u.MaNV] : '';
                 let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
                 let tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
-                
+
                 html += `
                     <tr class="hover:bg-slate-100 transition">
                         <td class="px-6 py-3 border-b font-medium text-slate-800">${u.HoTen}</td>
@@ -2729,7 +2883,7 @@
                     </tr>
                 `;
             });
-            
+
             if (users.length === 0) {
                 html = `<tr><td colspan="3" class="px-6 py-8 text-center text-slate-500 italic">Không tìm thấy nhân viên.</td></tr>`;
             }
@@ -2740,7 +2894,7 @@
         function updateTempLeaveConfigCaNhan(maNV, val) {
             let parsed = parseFloat(val);
             if (isNaN(parsed) || parsed === 0) {
-                delete tempLeaveConfig.caNhan[maNV]; 
+                delete tempLeaveConfig.caNhan[maNV];
             } else {
                 tempLeaveConfig.caNhan[maNV] = parsed;
             }
@@ -2752,7 +2906,7 @@
 
         async function saveLeaveConfig() {
             localStorage.setItem('leave_combined_config', JSON.stringify(tempLeaveConfig));
-            
+
             const btnSave = document.querySelector('#leave-config-modal button.bg-indigo-600');
             const originalHtml = btnSave.innerHTML;
             btnSave.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang đồng bộ...`;
@@ -2760,14 +2914,14 @@
 
             try {
                 await syncWithGAS('sync_CauHinhPhep', tempLeaveConfig);
-                
+
                 MOCK_DB.cauHinhPhep = JSON.parse(JSON.stringify(tempLeaveConfig));
-                
+
                 closeLeaveConfigModal();
                 showToast("Đã lưu cấu hình lên máy chủ thành công!", "success");
-                
+
                 if (!document.getElementById('leave-stats-modal').classList.contains('hidden')) {
-                    openLeaveStatsModal(); 
+                    openLeaveStatsModal();
                 }
             } catch (e) {
                 showToast("Lỗi mạng, hệ thống hiện đang lưu tạm trên máy này.", "warning");
@@ -2783,8 +2937,8 @@
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
             if (!user) return 12;
 
-            let baseP = 12; 
-            
+            let baseP = 12;
+
             if (user.SoPhep !== undefined && user.SoPhep !== null && String(user.SoPhep).trim() !== '') {
                 let dbPhep = parseInt(user.SoPhep);
                 if (!isNaN(dbPhep) && dbPhep > 0) {
@@ -2793,13 +2947,13 @@
             }
 
             const currentLeaveConfig = getCurrentLeaveConfig();
-            
+
             let userKhoaIds = (user.MaKhoa || "").split(',').map(s => s.trim());
-            let isToxicDept = false; 
+            let isToxicDept = false;
             const configKhoa = currentLeaveConfig.khoa || [];
 
             for (let mk of userKhoaIds) {
-                let parentMa = getParentKhoaInfo(mk).ma; 
+                let parentMa = getParentKhoaInfo(mk).ma;
                 let currentMkUpper = String(mk).trim().toUpperCase();
                 let parentMkUpper = String(parentMa).trim().toUpperCase();
 
@@ -2823,7 +2977,7 @@
             if (user.NgayVaoLam) {
                 let joinDateObj = parseEmployeeDate(user.NgayVaoLam, false);
                 let startYear = joinDateObj.getFullYear();
-                
+
                 if (startYear > 1900 && startYear <= currentYear) {
                     let yearsWorked = currentYear - startYear;
                     let extraDays = Math.floor(yearsWorked / 5);
@@ -2842,7 +2996,7 @@
             const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
             const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
             const daysInMonth = new Date(year, month, 0).getDate();
-            
+
             let tbodyHtml = '';
 
             let dbYearlyStats = {};
@@ -2855,7 +3009,7 @@
 
                 let mergedMonthData = {};
                 let savedBccs = MOCK_DB.bangChamCong.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
-                
+
                 if (savedBccs.length > 0) {
                     savedBccs.forEach(b => {
                         try {
@@ -2866,27 +3020,27 @@
                                     if (data[nv].days[d]) mergedMonthData[nv].days[d] = data[nv].days[d];
                                 }
                             }
-                        } catch(e){}
+                        } catch (e) { }
                     });
 
                     for (let nv in mergedMonthData) {
                         initUserStat(nv);
                         let userMonthData = mergedMonthData[nv];
                         let maKhoaDb = userMonthData.maKhoaLuu;
-                        
+
                         for (let day in userMonthData.days) {
                             let valStr = userMonthData.days[day];
                             if (!valStr) continue;
-                            
+
                             let parts = parseShifts(valStr);
                             parts.forEach(v => {
                                 v = v.toUpperCase();
-                                
+
                                 if (v === 'P') dbYearlyStats[nv].usedP += 1;
                                 else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
                                 else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
                                 else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-                                
+
                                 if (maKhoaDb !== 'HSCC') {
                                     if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
                                     else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
@@ -2902,16 +3056,16 @@
                     }
                 } else {
                     let shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                        if(!s.NgayTruc) return false;
+                        if (!s.NgayTruc) return false;
                         const parts = s.NgayTruc.split('-');
-                        if(parts.length !== 3) return false;
+                        if (parts.length !== 3) return false;
                         return parseInt(parts[0]) === year && parseInt(parts[1]) === m;
                     });
-                    
+
                     shiftsInMonth.forEach(s => {
                         if (s.MaKhoa !== 'HSCC') {
                             const parts = s.NgayTruc.split('-');
-                            if(parts.length === 3) {
+                            if (parts.length === 3) {
                                 const dDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
                                 const dw = dDate.getDay();
                                 if (dw === 5 || dw === 6) {
@@ -2927,10 +3081,10 @@
             rows.forEach(tr => {
                 const maNV = tr.getAttribute('data-id');
                 const maKhoa = tr.getAttribute('data-khoa');
-                
+
                 const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
                 const hoTen = hoTenText || tr.cells[1].innerText.trim();
-                
+
                 let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
                 let tenKhoaHienThi = maKhoa;
                 if (userObj) {
@@ -2951,7 +3105,7 @@
                         if (day > daysInMonth) return;
 
                         const dateObj = new Date(year, month - 1, day);
-                        const dw = dateObj.getDay(); 
+                        const dw = dateObj.getDay();
 
                         const rawVal = cell.innerText.trim().toUpperCase();
                         if (!rawVal) return;
@@ -2970,16 +3124,16 @@
                 }
 
                 let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
-                
+
                 let totalUsedP = currentUsedP + pastStats.usedP;
                 let totalUsedNb = currentUsedNb + pastStats.usedNb;
-                
-                let totalEarnedNb = currentEarnedNb + pastStats.earnedNb; 
+
+                let totalEarnedNb = currentEarnedNb + pastStats.earnedNb;
 
                 const remainingP = baseP - totalUsedP;
                 const remainNb = totalEarnedNb - totalUsedNb;
-                
-                const totalRemaining = remainingP + remainNb; 
+
+                const totalRemaining = remainingP + remainNb;
 
                 const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
                 const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
