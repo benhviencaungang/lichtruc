@@ -1882,108 +1882,117 @@
         }
 
         async function updateBangStatus(status) {
-            if (isSaving) return;
-            isSaving = true;
+                if (isSaving) return;
+                isSaving = true;
 
-            document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
-            document.getElementById('retry-btn-container').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
+                document.getElementById('retry-btn-container').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('hidden');
 
-            try {
-                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-
-                // Lấy dữ liệu mới nhất từ server để gộp (Concurrency Merge)
-                let latestServerDB = [];
                 try {
-                    // GỌI HÀM VÒNG LẶP SUPABASE MỚI THAY CHO FETCH GAS CŨ
-                    const { data, error } = await fetchAllSupabase('BangChamCong');
-                    if (!error && data) latestServerDB = data;
-                } catch (e) {
-                    console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
-                    latestServerDB = MOCK_DB.bangChamCong;
-                }
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
 
-                let uiDataByKhoa = extractGridData();
-                let hasMerged = false;
+                    // 1. Tải dữ liệu mới nhất từ server để gộp
+                    let latestServerDB = [];
+                    try {
+                        const { data, error } = await fetchAllSupabase('BangChamCong');
+                        if (!error && data) latestServerDB = data;
+                    } catch (e) {
+                        console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                        latestServerDB = MOCK_DB.bangChamCong;
+                    }
 
-                for (let parentMk in uiDataByKhoa) {
-                    const maBang = `BCC_${parentMk}_${month}_${year}`;
+                    let uiDataByKhoa = extractGridData();
+                    let hasMerged = false;
 
-                    let uiGrid = uiDataByKhoa[parentMk];
-                    let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+                    // 2. Sử dụng Map để đảm bảo KHÔNG BAO GIỜ trùng khóa chính MaBang
+                    let bangToUpsertMap = new Map();
 
-                    if (latestBang && latestBang.DuLieu) {
-                        try {
-                            let serverGrid = JSON.parse(latestBang.DuLieu);
-                            // Thực hiện Gộp Dữ Liệu
-                            for (let nv in uiGrid) {
-                                if (serverGrid[nv]) {
-                                    for (let d = 1; d <= 31; d++) {
-                                        let uiVal = uiGrid[nv].days[d] || '';
-                                        let serverVal = serverGrid[nv].days[d] || '';
-                                        let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+                    for (let parentMk in uiDataByKhoa) {
+                        const maBang = `BCC_${parentMk}_${month}_${year}`;
 
-                                        // Nếu UI của mình không đổi so với lúc tải, nhưng Server lại có thay đổi mới -> Lấy của Server
-                                        if (uiVal === origVal && serverVal !== origVal) {
-                                            uiGrid[nv].days[d] = serverVal;
+                        let uiGrid = uiDataByKhoa[parentMk];
+                        let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+
+                        if (latestBang && latestBang.DuLieu) {
+                            try {
+                                let serverGrid = JSON.parse(latestBang.DuLieu);
+                                // Thực hiện Gộp Dữ Liệu
+                                for (let nv in uiGrid) {
+                                    if (serverGrid[nv]) {
+                                        for (let d = 1; d <= 31; d++) {
+                                            let uiVal = uiGrid[nv].days[d] || '';
+                                            let serverVal = serverGrid[nv].days[d] || '';
+                                            let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+
+                                            // Nếu UI không đổi nhưng Server có đổi -> Lấy của Server
+                                            if (uiVal === origVal && serverVal !== origVal) {
+                                                uiGrid[nv].days[d] = serverVal;
+                                                hasMerged = true;
+                                            }
+                                        }
+
+                                        let uiNote = uiGrid[nv].note || '';
+                                        let serverNote = serverGrid[nv].note || '';
+                                        let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                        if (uiNote === origNote && serverNote !== origNote) {
+                                            uiGrid[nv].note = serverNote;
                                             hasMerged = true;
                                         }
                                     }
-
-                                    // Gộp cả Ghi chú
-                                    let uiNote = uiGrid[nv].note || '';
-                                    let serverNote = serverGrid[nv].note || '';
-                                    let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
-                                    if (uiNote === origNote && serverNote !== origNote) {
-                                        uiGrid[nv].note = serverNote;
-                                        hasMerged = true;
-                                    }
                                 }
-                            }
-                        } catch (e) { }
-                    }
+                            } catch (e) { }
+                        }
 
-                    // Cập nhật lại MOCK_DB
-                    let bang = MOCK_DB.bangChamCong.find(b => b.MaBang === maBang);
-                    let finalGridJson = JSON.stringify(uiGrid);
+                        let finalGridJson = JSON.stringify(uiGrid);
 
-                    if (!bang) {
-                        bang = {
-                            MaBang: maBang, MaKhoa: parentMk, Thang: month, Nam: year, TrangThai: status,
+                        // Xây dựng Object duy nhất cho maBang này
+                        let bangObj = {
+                            MaBang: maBang,
+                            MaKhoa: parentMk,
+                            Thang: month,
+                            Nam: year,
+                            TrangThai: status,
                             NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
                             NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
                             DuLieu: finalGridJson
                         };
-                        MOCK_DB.bangChamCong.push(bang);
-                    } else {
-                        bang.TrangThai = status;
-                        bang.DuLieu = finalGridJson;
-                        if (status === 'Đã duyệt') {
-                            bang.NguoiDuyet = currentUser.MaNV;
-                            bang.NgayDuyet = getVNFormatYYYYMMDD();
-                        }
+
+                        // Đưa vào Map để lọc trùng lặp
+                        bangToUpsertMap.set(maBang, bangObj);
                     }
+
+                    // 3. Cập nhật vào MOCK_DB (xóa cũ thêm mới để tránh trùng lặp)
+                    const newBangList = Array.from(bangToUpsertMap.values());
+
+                    newBangList.forEach(newBang => {
+                        const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
+                        if (index !== -1) {
+                            MOCK_DB.bangChamCong[index] = newBang;
+                        } else {
+                            MOCK_DB.bangChamCong.push(newBang);
+                        }
+                    });
+
+                    hasUnsavedChanges = false;
+                    currentOverallStatus = status;
+                    updateApprovalUI(status);
+
+                    // 4. Chỉ gửi những bảng vừa thay đổi (newBangList) lên Supabase thay vì gửi toàn bộ MOCK_DB
+                    await syncWithGAS('sync_BangChamCong', newBangList);
+
+                    originalGridData = extractGridData();
+                    if (hasMerged) {
+                        showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                        generateReport();
+                    }
+
+                } finally {
+                    isSaving = false;
+                    document.getElementById('loading-screen').classList.add('hidden');
                 }
-
-                hasUnsavedChanges = false;
-                currentOverallStatus = status;
-                updateApprovalUI(status);
-
-                await syncWithGAS('sync_BangChamCong', MOCK_DB.bangChamCong);
-
-                // Cập nhật lại dữ liệu gốc
-                originalGridData = extractGridData();
-                if (hasMerged) {
-                    showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
-                    generateReport(); // Refresh UI to show merged data
-                }
-
-            } finally {
-                isSaving = false;
-                document.getElementById('loading-screen').classList.add('hidden');
             }
-        }
 
         async function saveDraftData() {
             await updateBangStatus('Nháp');
