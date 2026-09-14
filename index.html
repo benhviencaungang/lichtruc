@@ -1879,138 +1879,144 @@
         }
 
         async function checkAutoLogin() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+
+                // 1. TRUY XUẤT LIỀN
+                document.getElementById('login-screen').classList.add('hidden');
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
+
+                document.getElementById('user-fullname').textContent = currentUser.HoTen;
+                document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
+
+                buildMenu();
+
+                // 2. SAU KHI VÀO TRONG MỚI TẢI CA TRỰC
+                await loadHeavyData();
+
+                const sel = document.getElementById('user-khoa-selector');
+                const xemSel = document.getElementById('xem-khoa-selector');
+                if (currentUser.Role === 'Admin_KHTH') {
+                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
+                    const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+                    if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                } else {
+                    const options = currentUser.KhoaList.map(k => {
+                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                    }).join('');
+                    if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                }
+                if (sel && currentUser.ActiveKhoa) sel.value = currentUser.ActiveKhoa;
+                if (xemSel && currentUser.ActiveKhoa) xemSel.value = currentUser.ActiveKhoa;
+
+                refreshCurrentView();
+
+                if (currentUser.Role === 'Admin_KHTH') switchView('view-dashboard');
+                else switchView('view-khoa-schedule');
+
+                startAutoSync();
+            }
+        }
+
+        // Bắt đầu quy trình tải dữ liệu an toàn khi mở trang
+            window.addEventListener('load', async () => {
+                await loadEssentialData();
+
+                // Kiểm tra xem đã có dữ liệu lưu phiên đăng nhập chưa
                 const savedUser = localStorage.getItem('currentUser');
                 if (savedUser) {
-                    currentUser = JSON.parse(savedUser);
-
-                    // 1. TRUY XUẤT LIỀN
-                    document.getElementById('login-screen').classList.add('hidden');
-                    const sidebar = document.getElementById('sidebar');
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.add('flex');
-                    document.getElementById('main-content').classList.remove('hidden');
-
-                    document.getElementById('user-fullname').textContent = currentUser.HoTen;
-                    document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
-
-                    buildMenu();
-
-                    // 2. SAU KHI VÀO TRONG MỚI TẢI CA TRỰC
-                    await loadHeavyData();
-
-                    const sel = document.getElementById('user-khoa-selector');
-                    const xemSel = document.getElementById('xem-khoa-selector');
-                    if (currentUser.Role === 'Admin_KHTH') {
-                        const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
-                        const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
-                        if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
-                    } else {
-                        const options = currentUser.KhoaList.map(k => {
-                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
-                        }).join('');
-                        if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
-                    }
-                    if (sel && currentUser.ActiveKhoa) sel.value = currentUser.ActiveKhoa;
-                    if (xemSel && currentUser.ActiveKhoa) xemSel.value = currentUser.ActiveKhoa;
-
-                    refreshCurrentView();
-
-                    if (currentUser.Role === 'Admin_KHTH') switchView('view-dashboard');
-                    else switchView('view-khoa-schedule');
-
-                    startAutoSync();
+                    await checkAutoLogin();
+                } else {
+                    // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
+                    await loadDataFromGAS();
                 }
-            }
-
-            // Bắt đầu quy trình 2 bước khi mở trang
-            window.onload = async () => {
-                await loadEssentialData();
-                await checkAutoLogin();
-            };
-
+            });
         // 1. TẢI DỮ LIỆU THIẾT YẾU (Chạy ngay khi mở web)
-            async function loadEssentialData() {
-                try {
-                    const initialLoading = document.getElementById('initial-loading');
-                    if (initialLoading) initialLoading.classList.remove('hidden');
+        async function loadEssentialData() {
+            try {
+                const initialLoading = document.getElementById('initial-loading');
+                if (initialLoading) initialLoading.classList.remove('hidden');
 
-                    const responses = await Promise.all([
-                        fetchAllSupabase('KhoaPhong'),
-                        fetchAllSupabase('NhanVien'),
-                        fetchAllSupabase('LoaiCaTruc'),
-                        fetchAllSupabase('CauHinhKySo')
-                    ]);
+                const responses = await Promise.all([
+                    fetchAllSupabase('KhoaPhong'),
+                    fetchAllSupabase('NhanVien'),
+                    fetchAllSupabase('LoaiCaTruc'),
+                    fetchAllSupabase('CauHinhKySo')
+                ]);
 
-                    const [{ data: khoa }, { data: users }, { data: loaiCa }, { data: cauHinhKySo }] = responses;
+                const [{ data: khoa }, { data: users }, { data: loaiCa }, { data: cauHinhKySo }] = responses;
 
-                    if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                    if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
-                    if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
+                if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
+                if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
 
-                    if (users) {
-                        let rawUsers = users.map(u => ({
-                            ...u, MaNV: String(u.MaNV).trim(), MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
-                            ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "", CCCD: u.CCCD ? String(u.CCCD).trim() : "",
-                            ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
-                            CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
-                            NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "", NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
-                        }));
+                if (users) {
+                    let rawUsers = users.map(u => ({
+                        ...u, MaNV: String(u.MaNV).trim(), MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
+                        ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "", CCCD: u.CCCD ? String(u.CCCD).trim() : "",
+                        ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
+                        CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
+                        NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "", NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
+                    }));
 
-                        let nameGroups = {};
-                        rawUsers.forEach(item => {
-                            let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
-                            if (!nameGroups[firstName]) nameGroups[firstName] = [];
-                            nameGroups[firstName].push(item);
-                        });
-                        rawUsers.forEach(item => {
-                            let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
-                            if (nameGroups[firstName].length === 1) item.TenHienThi = firstName;
-                            else {
-                                let middleName = parts.length > 0 ? parts[parts.length - 1] : "";
-                                let attempt1 = (middleName ? middleName.charAt(0).toUpperCase() + "." : "") + firstName;
-                                let count = nameGroups[firstName].filter(x => {
-                                    let xParts = (x.HoTen || "").trim().split(' '); xParts.pop();
-                                    let xMiddle = xParts.length > 0 ? xParts[xParts.length - 1] : "";
-                                    return ((xMiddle ? xMiddle.charAt(0).toUpperCase() + "." : "") + firstName) === attempt1;
-                                }).length;
-                                if (count === 1 || parts.length <= 1) item.TenHienThi = attempt1;
-                                else { let lastName = parts[0]; item.TenHienThi = (lastName ? lastName.charAt(0).toUpperCase() + "." : "") + attempt1; }
-                            }
-                            if (!item.TenHienThi) item.TenHienThi = item.HoTen;
-                        });
-                        MOCK_DB.users = rawUsers;
-                    }
-                    if (initialLoading) initialLoading.classList.add('hidden');
-                } catch (e) { console.error(e); showToast("Lỗi kết nối máy chủ ban đầu!", "error"); }
-            }
-
-            // 2. TẢI DỮ LIỆU NẶNG (Chỉ chạy sau khi xác thực đăng nhập)
-            async function loadHeavyData() {
-                try {
-                    showGlobalLoading();
-                    const range = getActiveDateRange();
-
-                    const responses = await Promise.all([
-                        fetchAllSupabase('PhieuLichTruc', '*', { column: 'TuanTruc', startDate: range.startDate, endDate: range.endDate }),
-                        fetchAllSupabase('ChiTietLichTruc', '*', { column: 'NgayTruc', startDate: range.startDate, endDate: range.endDate }),
-                        fetchAllSupabase('ThongBao'),
-                        _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(50)
-                    ]);
-
-                    const [{ data: phieu }, { data: shifts }, { data: thongBao }, { data: auditLogs }] = responses;
-
-                    if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                    if (shifts) MOCK_DB.shifts = shifts.map(s => ({ ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(), ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc) }));
-                    if (thongBao) MOCK_DB.thongBao = thongBao.map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
-                    if (auditLogs) MOCK_DB.auditLogs = auditLogs;
-                } catch (e) {
-                    console.error(e); showToast("Lỗi kết nối tải dữ liệu lịch trực!", "error");
-                } finally {
-                    hideGlobalLoading();
+                    let nameGroups = {};
+                    rawUsers.forEach(item => {
+                        let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
+                        if (!nameGroups[firstName]) nameGroups[firstName] = [];
+                        nameGroups[firstName].push(item);
+                    });
+                    rawUsers.forEach(item => {
+                        let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
+                        if (nameGroups[firstName].length === 1) item.TenHienThi = firstName;
+                        else {
+                            let middleName = parts.length > 0 ? parts[parts.length - 1] : "";
+                            let attempt1 = (middleName ? middleName.charAt(0).toUpperCase() + "." : "") + firstName;
+                            let count = nameGroups[firstName].filter(x => {
+                                let xParts = (x.HoTen || "").trim().split(' '); xParts.pop();
+                                let xMiddle = xParts.length > 0 ? xParts[xParts.length - 1] : "";
+                                return ((xMiddle ? xMiddle.charAt(0).toUpperCase() + "." : "") + firstName) === attempt1;
+                            }).length;
+                            if (count === 1 || parts.length <= 1) item.TenHienThi = attempt1;
+                            else { let lastName = parts[0]; item.TenHienThi = (lastName ? lastName.charAt(0).toUpperCase() + "." : "") + attempt1; }
+                        }
+                        if (!item.TenHienThi) item.TenHienThi = item.HoTen;
+                    });
+                    MOCK_DB.users = rawUsers;
                 }
-            }
+                if (initialLoading) initialLoading.classList.add('hidden');
+            } catch (e) { console.error(e); showToast("Lỗi kết nối máy chủ ban đầu!", "error"); }
+        }
 
-        window.onload = loadDataFromGAS;
+        // 2. TẢI DỮ LIỆU NẶNG (Chỉ chạy sau khi xác thực đăng nhập)
+        async function loadHeavyData() {
+            try {
+                showGlobalLoading();
+                const range = getActiveDateRange();
+
+                const responses = await Promise.all([
+                    fetchAllSupabase('PhieuLichTruc', '*', { column: 'TuanTruc', startDate: range.startDate, endDate: range.endDate }),
+                    fetchAllSupabase('ChiTietLichTruc', '*', { column: 'NgayTruc', startDate: range.startDate, endDate: range.endDate }),
+                    fetchAllSupabase('ThongBao'),
+                    _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(50)
+                ]);
+
+                const [{ data: phieu }, { data: shifts }, { data: thongBao }, { data: auditLogs }] = responses;
+
+                if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
+                if (shifts) MOCK_DB.shifts = shifts.map(s => ({ ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(), ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc) }));
+                if (thongBao) MOCK_DB.thongBao = thongBao.map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
+                if (auditLogs) MOCK_DB.auditLogs = auditLogs;
+            } catch (e) {
+                console.error(e); showToast("Lỗi kết nối tải dữ liệu lịch trực!", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
 
         function forceRefreshData() {
             showToast("Đang làm mới dữ liệu từ máy chủ...", "success");
@@ -2201,41 +2207,41 @@
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC: Chờ lưu bảng này xong mới được lưu bảng kế tiếp
         // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
         // Thêm bộ lọc filter vào tham số
-            async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
-                let allData = [];
-                let from = 0;
-                const step = 1000;
-                while (true) {
-                    let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+        async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
 
-                    // Nếu có bộ lọc thời gian, áp dụng vào câu query
-                    if (filter) {
-                        query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
-                    }
-
-                    const { data, error } = await query;
-                    if (error) return { data: allData, error };
-                    if (data && data.length > 0) {
-                        allData.push(...data);
-                        if (data.length < step) break;
-                        from += step;
-                    } else {
-                        break;
-                    }
+                // Nếu có bộ lọc thời gian, áp dụng vào câu query
+                if (filter) {
+                    query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
                 }
-                return { data: allData, error: null };
-            }
 
-            // Hàm tính toán khoảng thời gian: 60 ngày trước và 30 ngày sau
-            function getActiveDateRange() {
-                let now = new Date();
-                let past = new Date(); past.setDate(now.getDate() - 60);
-                let future = new Date(); future.setDate(now.getDate() + 30);
-                return {
-                    startDate: past.toISOString().split('T')[0],
-                    endDate: future.toISOString().split('T')[0]
-                };
+                const { data, error } = await query;
+                if (error) return { data: allData, error };
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
             }
+            return { data: allData, error: null };
+        }
+
+        // Hàm tính toán khoảng thời gian: 60 ngày trước và 30 ngày sau
+        function getActiveDateRange() {
+            let now = new Date();
+            let past = new Date(); past.setDate(now.getDate() - 60);
+            let future = new Date(); future.setDate(now.getDate() + 30);
+            return {
+                startDate: past.toISOString().split('T')[0],
+                endDate: future.toISOString().split('T')[0]
+            };
+        }
 
         async function loadDataFromGAS() {
             try {
@@ -2372,7 +2378,6 @@
             }
         }
 
-        window.onload = loadDataFromGAS;
 
         function forceRefreshData() {
             showToast("Đang làm mới dữ liệu từ máy chủ...", "success");
@@ -2518,7 +2523,7 @@
             }
 
             // BẬT KHOÁ ĐỒNG BỘ NGẦM
-            isPushingData = true; 
+            isPushingData = true;
 
             try {
                 const tableName = actionName.replace('sync_', '');
@@ -2545,7 +2550,7 @@
                         NgayNghi: u.NgayNghi || ""
                     }));
                 }
-                
+
                 // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
                 if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
                     processedData = payloadData.map(s => ({
@@ -2571,13 +2576,13 @@
                         TrangThaiDoiCa: tb.TrangThaiDoiCa || null
                     }));
                 }
-                
+
                 if (tableName === 'CauHinhPhep') {
                     const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
                     if (error) throw error;
                     return;
                 }
-                
+
                 const primaryKeys = {
                     'KhoaPhong': 'MaKhoa',
                     'NhanVien': 'MaNV',
@@ -2629,7 +2634,7 @@
                 showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
             } finally {
                 // TẮT KHÓA ĐỒNG BỘ NGẦM (Dùng setTimeout để đảm bảo máy chủ đã tiếp nhận xong)
-                setTimeout(() => { isPushingData = false; }, 3000); 
+                setTimeout(() => { isPushingData = false; }, 3000);
             }
         }
 
@@ -2664,81 +2669,81 @@
         }
 
         async function handleLogin(e) {
-                e.preventDefault();
+            e.preventDefault();
 
-                const btn = document.getElementById('btn-login');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang xử lý...`;
-                btn.disabled = true;
-                btn.classList.add('opacity-70', 'cursor-not-allowed');
-                lucide.createIcons();
+            const btn = document.getElementById('btn-login');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Đang xử lý...`;
+            btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            lucide.createIcons();
 
-                // DÒNG QUAN TRỌNG: Ép trình duyệt vẽ icon xoay ngay lập tức trước khi tính toán
-                await new Promise(resolve => setTimeout(resolve, 50));
+            // DÒNG QUAN TRỌNG: Ép trình duyệt vẽ icon xoay ngay lập tức trước khi tính toán
+            await new Promise(resolve => setTimeout(resolve, 50));
 
-                if (!MOCK_DB.users || MOCK_DB.users.length === 0) {
-                    showToast("Hệ thống vẫn đang tải dữ liệu. Vui lòng đợi thêm vài giây!", "warning");
+            if (!MOCK_DB.users || MOCK_DB.users.length === 0) {
+                showToast("Hệ thống vẫn đang tải dữ liệu. Vui lòng đợi thêm vài giây!", "warning");
+                resetLoginButton(btn, originalText);
+                return;
+            }
+
+            const u = document.getElementById('username').value.toLowerCase().trim();
+            const p = document.getElementById('password').value.trim();
+            const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+
+            if (user) {
+                if (user.NgayNghi) {
                     resetLoginButton(btn, originalText);
-                    return;
+                    return showToast("Tài khoản này đã nghỉ việc, không thể đăng nhập!", "error");
                 }
 
-                const u = document.getElementById('username').value.toLowerCase().trim();
-                const p = document.getElementById('password').value.trim();
-                const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+                currentUser = user;
+                currentUser.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
+                currentUser.ActiveKhoa = currentUser.KhoaList[0] || 'KHTH';
 
-                if (user) {
-                    if (user.NgayNghi) {
-                        resetLoginButton(btn, originalText);
-                        return showToast("Tài khoản này đã nghỉ việc, không thể đăng nhập!", "error");
-                    }
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-                    currentUser = user;
-                    currentUser.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
-                    currentUser.ActiveKhoa = currentUser.KhoaList[0] || 'KHTH';
+                // 1. TRUY XUẤT LIỀN: Ẩn form đăng nhập và hiện khung Main UI ngay lập tức
+                document.getElementById('login-screen').classList.add('hidden');
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
 
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                document.getElementById('user-fullname').textContent = user.HoTen;
+                document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
 
-                    // 1. TRUY XUẤT LIỀN: Ẩn form đăng nhập và hiện khung Main UI ngay lập tức
-                    document.getElementById('login-screen').classList.add('hidden');
-                    const sidebar = document.getElementById('sidebar');
-                    sidebar.classList.remove('hidden');
-                    sidebar.classList.add('flex');
-                    document.getElementById('main-content').classList.remove('hidden');
+                buildMenu();
 
-                    document.getElementById('user-fullname').textContent = user.HoTen;
-                    document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
+                // 2. KÉO DỮ LIỆU NẶNG (Lúc này Loading overlay sẽ đè lên giao diện chính, báo cho user biết đang tải)
+                await loadHeavyData();
 
-                    buildMenu();
+                // 3. Render dữ liệu vào các thẻ select
+                const sel = document.getElementById('user-khoa-selector');
+                const xemSel = document.getElementById('xem-khoa-selector');
 
-                    // 2. KÉO DỮ LIỆU NẶNG (Lúc này Loading overlay sẽ đè lên giao diện chính, báo cho user biết đang tải)
-                    await loadHeavyData();
+                if (user.Role === 'Admin_KHTH') {
+                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
+                    const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+                    if (sel) sel.innerHTML = options;
+                    if (xemSel) xemSel.innerHTML = options;
 
-                    // 3. Render dữ liệu vào các thẻ select
-                    const sel = document.getElementById('user-khoa-selector');
-                    const xemSel = document.getElementById('xem-khoa-selector');
+                    currentUser.ActiveKhoa = dsKhoa.length > 0 ? dsKhoa[0].MaKhoa : 'ALL';
+                    switchView('view-dashboard');
+                } else {
+                    const options = currentUser.KhoaList.map(k => { const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`; }).join('');
+                    if (sel) sel.innerHTML = options;
+                    if (xemSel) xemSel.innerHTML = options;
+                    switchView('view-khoa-schedule');
+                }
 
-                    if (user.Role === 'Admin_KHTH') {
-                        const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
-                        const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
-                        if (sel) sel.innerHTML = options;
-                        if (xemSel) xemSel.innerHTML = options;
+                const hasNotifs = checkAndRenderNotifications();
+                if (hasNotifs) {
+                    const panel = document.getElementById('notif-panel');
+                    panel.classList.remove('translate-x-full');
+                }
 
-                        currentUser.ActiveKhoa = dsKhoa.length > 0 ? dsKhoa[0].MaKhoa : 'ALL';
-                        switchView('view-dashboard');
-                    } else {
-                        const options = currentUser.KhoaList.map(k => { const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`; }).join('');
-                        if (sel) sel.innerHTML = options;
-                        if (xemSel) xemSel.innerHTML = options;
-                        switchView('view-khoa-schedule');
-                    }
-
-                    const hasNotifs = checkAndRenderNotifications();
-                    if (hasNotifs) {
-                        const panel = document.getElementById('notif-panel');
-                        panel.classList.remove('translate-x-full');
-                    }
-
-                    startAutoSync();
+                startAutoSync();
                 logActivity("Đăng nhập hệ thống");
 
                 // Đặt lại nút đề phòng user đăng xuất ra lại
@@ -2749,12 +2754,12 @@
             }
         }
         // Thêm hàm phụ trợ này ngay bên dưới để reset nút
-            function resetLoginButton(btn, originalText) {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-                btn.classList.remove('opacity-70', 'cursor-not-allowed');
-                lucide.createIcons();
-            }
+        function resetLoginButton(btn, originalText) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+            lucide.createIcons();
+        }
         async function logout() {
             stopAutoSync();
             await logActivity("Đăng xuất hệ thống");
@@ -3330,64 +3335,64 @@
         // ---------------------------------------------------------------------------------------
 
         function checkAndRenderNotifications() {
-                const today = new Date().toISOString().split('T')[0];
-                const validNotifs = MOCK_DB.thongBao.filter(tb => {
-                    const isTarget = tb.NguoiNhan === 'ALL' ||
-                        (currentUser.KhoaList && currentUser.KhoaList.includes(tb.NguoiNhan)) ||
-                        (currentUser.Role === 'Admin_KHTH' && tb.NguoiNhan === 'Admin_KHTH');
+            const today = new Date().toISOString().split('T')[0];
+            const validNotifs = MOCK_DB.thongBao.filter(tb => {
+                const isTarget = tb.NguoiNhan === 'ALL' ||
+                    (currentUser.KhoaList && currentUser.KhoaList.includes(tb.NguoiNhan)) ||
+                    (currentUser.Role === 'Admin_KHTH' && tb.NguoiNhan === 'Admin_KHTH');
 
-                    const isDateValid = today >= tb.NgayBatDau && today <= tb.NgayKetThuc;
+                const isDateValid = today >= tb.NgayBatDau && today <= tb.NgayKetThuc;
 
-                    // --- BỔ SUNG ĐIỀU KIỆN ẨN ---
-                    // Nếu đây là thông báo Yêu cầu đổi ca VÀ đã được xử lý (không còn là Chờ duyệt nữa) -> Ẩn đi
-                    if (tb.DataDoiCa && tb.TrangThaiDoiCa !== 'Chờ duyệt') {
-                        return false;
-                    }
+                // --- BỔ SUNG ĐIỀU KIỆN ẨN ---
+                // Nếu đây là thông báo Yêu cầu đổi ca VÀ đã được xử lý (không còn là Chờ duyệt nữa) -> Ẩn đi
+                if (tb.DataDoiCa && tb.TrangThaiDoiCa !== 'Chờ duyệt') {
+                    return false;
+                }
 
-                    return isTarget && isDateValid;
-                });
+                return isTarget && isDateValid;
+            });
 
-                const badge = document.getElementById('notif-badge');
-                if (validNotifs.length > 0) badge.classList.remove('hidden');
-                else badge.classList.add('hidden');
+            const badge = document.getElementById('notif-badge');
+            if (validNotifs.length > 0) badge.classList.remove('hidden');
+            else badge.classList.add('hidden');
 
-                const listDiv = document.getElementById('notif-list');
-                if (validNotifs.length === 0) {
-                    listDiv.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10">Không có thông báo mới</div>`;
-                } else {
-                    listDiv.innerHTML = validNotifs.map(tb => {
-                        let extraAction = '';
+            const listDiv = document.getElementById('notif-list');
+            if (validNotifs.length === 0) {
+                listDiv.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10">Không có thông báo mới</div>`;
+            } else {
+                listDiv.innerHTML = validNotifs.map(tb => {
+                    let extraAction = '';
 
-                        // Lúc này chỉ còn các yêu cầu 'Chờ duyệt' lọt qua được bộ lọc
-                        if (tb.DataDoiCa && tb.TrangThaiDoiCa === 'Chờ duyệt') {
-                            if (currentUser.Role === 'Admin_KHTH') {
-                                // Hiện 2 nút bấm cho KHTH
-                                extraAction = `
+                    // Lúc này chỉ còn các yêu cầu 'Chờ duyệt' lọt qua được bộ lọc
+                    if (tb.DataDoiCa && tb.TrangThaiDoiCa === 'Chờ duyệt') {
+                        if (currentUser.Role === 'Admin_KHTH') {
+                            // Hiện 2 nút bấm cho KHTH
+                            extraAction = `
                             <div class="mt-3 flex space-x-2 border-t border-slate-100 pt-3">
                                 <button onclick="duyetDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded hover:bg-emerald-600 shadow-sm transition">Duyệt & Đồng bộ</button>
                                 <button onclick="tuChoiDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 shadow-sm transition">Từ chối</button>
                             </div>`;
-                            } else {
-                                // Hiện tag đang chờ cho người gửi
-                                extraAction = `<div class="mt-3 border-t border-slate-100 pt-2"><span class="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold rounded">⏳ Đang chờ KHTH duyệt</span></div>`;
-                            }
+                        } else {
+                            // Hiện tag đang chờ cho người gửi
+                            extraAction = `<div class="mt-3 border-t border-slate-100 pt-2"><span class="inline-block px-2 py-1 bg-orange-100 text-orange-700 text-[10px] font-bold rounded">⏳ Đang chờ KHTH duyệt</span></div>`;
                         }
+                    }
 
-                        const borderColor = tb.DataDoiCa ? 'border-orange-500' : 'border-medical-500';
+                    const borderColor = tb.DataDoiCa ? 'border-orange-500' : 'border-medical-500';
 
-                        return `<div class="bg-white p-3 rounded-lg shadow-sm border-l-4 ${borderColor} mb-3 relative">
+                    return `<div class="bg-white p-3 rounded-lg shadow-sm border-l-4 ${borderColor} mb-3 relative">
                         <h4 class="font-bold text-sm text-slate-800">${tb.TieuDe}</h4>
                         <p class="text-xs text-slate-600 mt-1 leading-relaxed">${tb.NoiDung}</p>
                         ${extraAction}
                         <p class="text-[10px] text-slate-400 mt-2 text-right">Hết hạn: ${tb.NgayKetThuc.split('-').reverse().join('/')}</p>
                     </div>`;
-                    }).join('');
+                }).join('');
 
-                    setTimeout(() => lucide.createIcons(), 10);
-                }
-
-                return validNotifs.length > 0;
+                setTimeout(() => lucide.createIcons(), 10);
             }
+
+            return validNotifs.length > 0;
+        }
 
         function toggleNotifPanel() {
             document.getElementById('notif-panel').classList.toggle('translate-x-full');
@@ -3442,46 +3447,46 @@
             }
         }
 
-            async function tuChoiDoiCa(maTB) {
-                showGlobalLoading();
-                try {
-                    const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
-                    const swapData = JSON.parse(tb.DataDoiCa);
+        async function tuChoiDoiCa(maTB) {
+            showGlobalLoading();
+            try {
+                const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                const swapData = JSON.parse(tb.DataDoiCa);
 
-                    // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
-                    const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.sNV));
-                    const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
-                    const sName = sUser ? (sUser.TenHienThi || sUser.HoTen) : swapData.sNV;
-                    const tName = tUser ? (tUser.TenHienThi || tUser.HoTen) : swapData.tNV;
-                    const formattedDate = swapData.sDate.split('-').reverse().join('/');
-                    const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === swapData.maKhoa)?.TenKhoa || swapData.maKhoa;
+                // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
+                const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.sNV));
+                const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
+                const sName = sUser ? (sUser.TenHienThi || sUser.HoTen) : swapData.sNV;
+                const tName = tUser ? (tUser.TenHienThi || tUser.HoTen) : swapData.tNV;
+                const formattedDate = swapData.sDate.split('-').reverse().join('/');
+                const khoaName = MOCK_DB.khoa.find(k => k.MaKhoa === swapData.maKhoa)?.TenKhoa || swapData.maKhoa;
 
-                    // 1. Thay đổi nội dung của thẻ thông báo gốc mà KHTH đang xem[cite: 3]
-                    tb.TrangThaiDoiCa = 'Từ chối';
-                    tb.TieuDe = `TỪ CHỐI ĐỔI CA - ${khoaName}`;
-                    tb.NoiDung = `Đã từ chối yêu cầu: ${sName} nhờ ${tName} trực thay vào ngày ${formattedDate}.`;
+                // 1. Thay đổi nội dung của thẻ thông báo gốc mà KHTH đang xem[cite: 3]
+                tb.TrangThaiDoiCa = 'Từ chối';
+                tb.TieuDe = `TỪ CHỐI ĐỔI CA - ${khoaName}`;
+                tb.NoiDung = `Đã từ chối yêu cầu: ${sName} nhờ ${tName} trực thay vào ngày ${formattedDate}.`;
 
-                    // 2. Báo về cho Khoa[cite: 3]
-                    const today = new Date().toISOString().split('T')[0];
-                    MOCK_DB.thongBao.push({
-                        MaTB: "TB_REP_" + Date.now(),
-                        TieuDe: `❌ YÊU CẦU ĐỔI CA BỊ TỪ CHỐI`,
-                        NoiDung: `KHTH từ chối yêu cầu: ${sName} đổi ca cho ${tName} vào ngày ${formattedDate}. Vui lòng giữ nguyên lịch trực ban đầu.`,
-                        NguoiNhan: swapData.maKhoa,
-                        NgayBatDau: today,
-                        NgayKetThuc: getSundayOfWeek(today)
-                    });
+                // 2. Báo về cho Khoa[cite: 3]
+                const today = new Date().toISOString().split('T')[0];
+                MOCK_DB.thongBao.push({
+                    MaTB: "TB_REP_" + Date.now(),
+                    TieuDe: `❌ YÊU CẦU ĐỔI CA BỊ TỪ CHỐI`,
+                    NoiDung: `KHTH từ chối yêu cầu: ${sName} đổi ca cho ${tName} vào ngày ${formattedDate}. Vui lòng giữ nguyên lịch trực ban đầu.`,
+                    NguoiNhan: swapData.maKhoa,
+                    NgayBatDau: today,
+                    NgayKetThuc: getSundayOfWeek(today)
+                });
 
-                    await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-                    await logActivity("Từ chối đổi ca", `Mã ca: ${swapData.maChiTiet}`);
-                    showToast("Đã từ chối yêu cầu đổi ca.", "warning");
-                    refreshCurrentView();
-                } catch (error) {
-                    showToast("Có lỗi xảy ra khi đồng bộ!", "error");
-                } finally {
-                    hideGlobalLoading();
-                }
+                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                await logActivity("Từ chối đổi ca", `Mã ca: ${swapData.maChiTiet}`);
+                showToast("Đã từ chối yêu cầu đổi ca.", "warning");
+                refreshCurrentView();
+            } catch (error) {
+                showToast("Có lỗi xảy ra khi đồng bộ!", "error");
+            } finally {
+                hideGlobalLoading();
             }
+        }
         async function saveZaloLink() {
             const link = document.getElementById('zalo-link-input').value.trim();
             if (link) {
@@ -3598,11 +3603,11 @@
             showConfirmModal("Xác nhận Xóa", "Xóa thông báo này khỏi hệ thống?", async () => {
                 // 1. Cập nhật mảng tĩnh
                 MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
-                
+
                 // 2. Render lại Giao diện Ngay Lập Tức
-                renderAdminThongBaoTable(); 
+                renderAdminThongBaoTable();
                 checkAndRenderNotifications();
-                
+
                 // 3. Đẩy lên Máy chủ (hàm này đã được bọc isPushingData bên trên)
                 await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
                 await logActivity("Xóa thông báo", `ID: ${id}`);
