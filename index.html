@@ -1924,17 +1924,25 @@
 
         // Bắt đầu quy trình tải dữ liệu an toàn khi mở trang
             window.addEventListener('load', async () => {
-                await loadEssentialData();
+                    // 1. Kiểm tra ngay lập tức xem đã có phiên đăng nhập chưa
+                    const savedUser = localStorage.getItem('currentUser');
 
-                // Kiểm tra xem đã có dữ liệu lưu phiên đăng nhập chưa
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    await checkAutoLogin();
-                } else {
-                    // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
-                    await loadDataFromGAS();
-                }
-            });
+                    // 2. NẾU ĐÃ ĐĂNG NHẬP: Ẩn ngay form đăng nhập để tránh bị chớp/nháy màn hình
+                    if (savedUser) {
+                        document.getElementById('login-screen').classList.add('hidden');
+                    }
+
+                    // 3. Tiến hành chờ tải dữ liệu thiết yếu từ máy chủ
+                    await loadEssentialData();
+
+                    // 4. Phân luồng giao diện
+                    if (savedUser) {
+                        await checkAutoLogin();
+                    } else {
+                        // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
+                        await loadDataFromGAS();
+                    }
+                });
         // 1. TẢI DỮ LIỆU THIẾT YẾU (Chạy ngay khi mở web)
         async function loadEssentialData() {
             try {
@@ -2516,127 +2524,96 @@
         }
 
         async function syncWithGAS(actionName, payloadData) {
-            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
-                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
-                return;
-            }
-
-            // BẬT KHOÁ ĐỒNG BỘ NGẦM
-            isPushingData = true;
-
-            try {
-                const tableName = actionName.replace('sync_', '');
-
-                // --- LÀM SẠCH DỮ LIỆU BẢNG NHÂN VIÊN ---
-                let processedData = payloadData;
-                if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
-                    processedData = payloadData.map(u => ({
-                        MaNV: String(u.MaNV),
-                        HoTen: u.HoTen || "",
-                        MaKhoa: u.MaKhoa || "",
-                        ChucDanh: u.ChucDanh || "",
-                        SDT: u.SDT || "",
-                        Email: u.Email || "",
-                        Username: u.Username || "",
-                        Password: u.Password || "",
-                        Role: u.Role || "User_Khoa",
-                        CCCD: u.CCCD ? String(u.CCCD).trim() : "",
-                        ChungChiHS: u.ChungChiHS || false,
-                        NgayVaoLam: u.NgayVaoLam || "",
-                        CoTruc: u.CoTruc !== false,
-                        BHXH: u.BHXH || "",
-                        CCHN: u.CCHN || "",
-                        NgayNghi: u.NgayNghi || ""
-                    }));
-                }
-
-                // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
-                if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
-                    processedData = payloadData.map(s => ({
-                        MaChiTiet: String(s.MaChiTiet),
-                        NgayTruc: String(s.NgayTruc),
-                        MaNV: String(s.MaNV),
-                        MaKhoa: String(s.MaKhoa),
-                        ChucDanh: String(s.ChucDanh),
-                        PhanCa: s.PhanCa || '24h'
-                    }));
-                }
-
-                // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
-                if (tableName === 'ThongBao' && Array.isArray(payloadData)) {
-                    processedData = payloadData.map(tb => ({
-                        MaTB: String(tb.MaTB),
-                        TieuDe: tb.TieuDe || "",
-                        NoiDung: tb.NoiDung || "",
-                        NguoiNhan: tb.NguoiNhan || "",
-                        NgayBatDau: tb.NgayBatDau || "",
-                        NgayKetThuc: tb.NgayKetThuc || "",
-                        DataDoiCa: tb.DataDoiCa || null,
-                        TrangThaiDoiCa: tb.TrangThaiDoiCa || null
-                    }));
-                }
-
-                if (tableName === 'CauHinhPhep') {
-                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
-                    if (error) throw error;
+                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
                     return;
                 }
 
-                const primaryKeys = {
-                    'KhoaPhong': 'MaKhoa',
-                    'NhanVien': 'MaNV',
-                    'LoaiCaTruc': 'MaLoaiCa',
-                    'PhieuLichTruc': 'MaPhieu',
-                    'ChiTietLichTruc': 'MaChiTiet',
-                    'ThongBao': 'MaTB',
-                    'LichSuThaoTac': 'ID',
-                    'PhieuBoiDuong': 'MaPhieuBD',
-                    'BangChamCong': 'MaBang'
-                };
+                // BẬT KHOÁ ĐỒNG BỘ NGẦM
+                isPushingData = true;
 
-                const pk = primaryKeys[tableName];
+                try {
+                    const tableName = actionName.replace('sync_', '');
 
-                // Đẩy dữ liệu đã được làm sạch lên Supabase
-                if (Array.isArray(processedData)) {
-                    const chunkSize = 500;
-                    for (let i = 0; i < processedData.length; i += chunkSize) {
-                        const chunk = processedData.slice(i, i + chunkSize);
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                    // --- LÀM SẠCH DỮ LIỆU BẢNG NHÂN VIÊN ---
+                    let processedData = payloadData;
+                    if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                        processedData = payloadData.map(u => ({
+                            MaNV: String(u.MaNV),
+                            HoTen: u.HoTen || "",
+                            MaKhoa: u.MaKhoa || "",
+                            ChucDanh: u.ChucDanh || "",
+                            SDT: u.SDT || "",
+                            Email: u.Email || "",
+                            Username: u.Username || "",
+                            Password: u.Password || "",
+                            Role: u.Role || "User_Khoa",
+                            CCCD: u.CCCD ? String(u.CCCD).trim() : "",
+                            ChungChiHS: u.ChungChiHS || false,
+                            NgayVaoLam: u.NgayVaoLam || "",
+                            CoTruc: u.CoTruc !== false,
+                            BHXH: u.BHXH || "",
+                            CCHN: u.CCHN || "",
+                            NgayNghi: u.NgayNghi || ""
+                        }));
+                    }
+
+                    // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
+                    if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
+                        processedData = payloadData.map(s => ({
+                            MaChiTiet: String(s.MaChiTiet),
+                            NgayTruc: String(s.NgayTruc),
+                            MaNV: String(s.MaNV),
+                            MaKhoa: String(s.MaKhoa),
+                            ChucDanh: String(s.ChucDanh),
+                            PhanCa: s.PhanCa || '24h'
+                        }));
+                    }
+
+                    // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
+                    if (tableName === 'ThongBao' && Array.isArray(payloadData)) {
+                        processedData = payloadData.map(tb => ({
+                            MaTB: String(tb.MaTB),
+                            TieuDe: tb.TieuDe || "",
+                            NoiDung: tb.NoiDung || "",
+                            NguoiNhan: tb.NguoiNhan || "",
+                            NgayBatDau: tb.NgayBatDau || "",
+                            NgayKetThuc: tb.NgayKetThuc || "",
+                            DataDoiCa: tb.DataDoiCa || null,
+                            TrangThaiDoiCa: tb.TrangThaiDoiCa || null
+                        }));
+                    }
+
+                    if (tableName === 'CauHinhPhep') {
+                        const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
+                        if (error) throw error;
+                        return;
+                    }
+
+                    // Đẩy dữ liệu đã được làm sạch lên Supabase
+                    if (Array.isArray(processedData)) {
+                        const chunkSize = 500;
+                        for (let i = 0; i < processedData.length; i += chunkSize) {
+                            const chunk = processedData.slice(i, i + chunkSize);
+                            const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                            if (upsertError) throw upsertError;
+                        }
+                    } else {
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
                         if (upsertError) throw upsertError;
                     }
-                } else {
-                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
-                    if (upsertError) throw upsertError;
+
+                    // 🚨 ĐÃ LOẠI BỎ HOÀN TOÀN ĐOẠN XÓA RÁC Ở ĐÂY ĐỂ ĐẢM BẢO AN TOÀN TUYỆT ĐỐI!
+
+                } catch (e) {
+                    console.error("Lỗi đồng bộ Supabase:", e);
+                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+                } finally {
+                    // TẮT KHÓA ĐỒNG BỘ NGẦM
+                    setTimeout(() => { isPushingData = false; }, 3000);
                 }
-
-                // Xóa rác với hàm vòng lặp an toàn
-                if (pk && Array.isArray(processedData)) {
-                    const payloadIds = new Set(processedData.map(item => String(item[pk])));
-                    const { data: dbRows, error: fetchError } = await fetchAllSupabase(tableName, pk);
-
-                    if (!fetchError && dbRows) {
-                        const idsToDelete = dbRows
-                            .map(row => String(row[pk]))
-                            .filter(id => !payloadIds.has(id));
-
-                        if (idsToDelete.length > 0) {
-                            for (let i = 0; i < idsToDelete.length; i += 100) {
-                                const deleteChunk = idsToDelete.slice(i, i + 100);
-                                await _supabase.from(tableName).delete().in(pk, deleteChunk);
-                            }
-                        }
-                    }
-                }
-
-            } catch (e) {
-                console.error("Lỗi đồng bộ Supabase:", e);
-                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
-            } finally {
-                // TẮT KHÓA ĐỒNG BỘ NGẦM (Dùng setTimeout để đảm bảo máy chủ đã tiếp nhận xong)
-                setTimeout(() => { isPushingData = false; }, 3000);
             }
-        }
 
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC
         async function logActivity(actionDesc, details = "") {
