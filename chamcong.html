@@ -1451,6 +1451,162 @@
             }
 
         async function syncWithGAS(actionName, payloadData) {
+                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                    return;
+                }
+
+                try {
+                    const tableName = actionName.replace('sync_', '');
+                    let processedData = payloadData;
+
+                    if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                        processedData = payloadData.map(u => ({
+                            MaNV: String(u.MaNV),
+                            HoTen: u.HoTen || "",
+                            MaKhoa: u.MaKhoa || "",
+                            ChucDanh: u.ChucDanh || "",
+                            SDT: u.SDT || "",
+                            Email: u.Email || "",
+                            Username: u.Username || "",
+                            Password: u.Password || "",
+                            Role: u.Role || "User_Khoa",
+                            ChungChiHS: u.ChungChiHS || false,
+                            NgayVaoLam: u.NgayVaoLam || "",
+                            CoTruc: u.CoTruc !== false,
+                            BHXH: u.BHXH || "",
+                            CCHN: u.CCHN || "",
+                            NgayNghi: u.NgayNghi || ""
+                        }));
+                    }
+
+                    if (tableName === 'CauHinhPhep') {
+                        const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
+                        if (error) throw error;
+                        return;
+                    }
+
+                    if (Array.isArray(processedData)) {
+                        const chunkSize = 500;
+                        for (let i = 0; i < processedData.length; i += chunkSize) {
+                            const chunk = processedData.slice(i, i + chunkSize);
+                            const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                            if (upsertError) throw upsertError;
+                        }
+                    } else {
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                        if (upsertError) throw upsertError;
+                    }
+
+                } catch (e) {
+                    console.error("Lỗi đồng bộ Supabase:", e);
+                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+                }
+            }
+
+            async function updateBangStatus(status) {
+                if (isSaving) return;
+                isSaving = true;
+
+                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
+                document.getElementById('retry-btn-container').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('hidden');
+
+                try {
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+
+                    let latestServerDB = [];
+                    try {
+                        const { data, error } = await fetchAllSupabase('BangChamCong');
+                        if (!error && data) latestServerDB = data;
+                    } catch (e) {
+                        console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                        latestServerDB = MOCK_DB.bangChamCong;
+                    }
+
+                    let uiDataByKhoa = extractGridData();
+                    let hasMerged = false;
+                    let bangToUpsertMap = new Map();
+
+                    for (let parentMk in uiDataByKhoa) {
+                        const maBang = `BCC_${parentMk}_${month}_${year}`;
+                        let uiGrid = uiDataByKhoa[parentMk];
+                        let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+
+                        if (latestBang && latestBang.DuLieu) {
+                            try {
+                                let serverGrid = JSON.parse(latestBang.DuLieu);
+                                for (let nv in uiGrid) {
+                                    if (serverGrid[nv]) {
+                                        for (let d = 1; d <= 31; d++) {
+                                            let uiVal = uiGrid[nv].days[d] || '';
+                                            let serverVal = serverGrid[nv].days[d] || '';
+                                            let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+
+                                            if (uiVal === origVal && serverVal !== origVal) {
+                                                uiGrid[nv].days[d] = serverVal;
+                                                hasMerged = true;
+                                            }
+                                        }
+
+                                        let uiNote = uiGrid[nv].note || '';
+                                        let serverNote = serverGrid[nv].note || '';
+                                        let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                        if (uiNote === origNote && serverNote !== origNote) {
+                                            uiGrid[nv].note = serverNote;
+                                            hasMerged = true;
+                                        }
+                                    }
+                                }
+                            } catch (e) { }
+                        }
+
+                        let finalGridJson = JSON.stringify(uiGrid);
+
+                        let bangObj = {
+                            MaBang: maBang,
+                            MaKhoa: parentMk,
+                            Thang: month,
+                            Nam: year,
+                            TrangThai: status,
+                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
+                            DuLieu: finalGridJson
+                        };
+
+                        bangToUpsertMap.set(maBang, bangObj);
+                    }
+
+                    const newBangList = Array.from(bangToUpsertMap.values());
+
+                    newBangList.forEach(newBang => {
+                        const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
+                        if (index !== -1) {
+                            MOCK_DB.bangChamCong[index] = newBang;
+                        } else {
+                            MOCK_DB.bangChamCong.push(newBang);
+                        }
+                    });
+
+                    hasUnsavedChanges = false;
+                    currentOverallStatus = status;
+                    updateApprovalUI(status);
+
+                    await syncWithGAS('sync_BangChamCong', newBangList);
+
+                    originalGridData = extractGridData();
+                    if (hasMerged) {
+                        showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                        generateReport();
+                    }
+
+                } finally {
+                    isSaving = false;
+                    document.getElementById('loading-screen').classList.add('hidden');
+                }
+            }
 
         async function loadDataFromGAS() {
                 document.getElementById('loading-screen').classList.remove('hidden');
