@@ -126,6 +126,25 @@
                 border-bottom: none !important;
                 background-color: transparent !important;
             }
+
+            /* --- CODE MỚI THÊM: CSS cho chế độ in bảng trắng --- */
+            body.print-blank-mode .cell-day,
+            body.print-blank-mode .sum-ngayviec,
+            body.print-blank-mode .sum-truc24,
+            body.print-blank-mode .sum-truc12,
+            body.print-blank-mode .sum-p,
+            body.print-blank-mode .sum-nb,
+            body.print-blank-mode .sum-om,
+            body.print-blank-mode .sum-khac,
+            body.print-blank-mode .cell-ghichu {
+                color: transparent !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }
+            body.print-blank-mode td {
+                background-color: transparent !important;
+            }
+            /* --- KẾT THÚC CODE MỚI --- */
         }
 
         /* FONT STYLE CHUẨN CÔNG VĂN */
@@ -424,6 +443,14 @@
                 title="Thống kê Phép năm và Nghỉ bù">
                 <i data-lucide="calculator" class="w-4 h-4 mr-2"></i> QL Nghỉ Phép
             </button>
+
+            <!-- --- CODE MỚI THÊM: NÚT IN BẢNG TRẮNG --- -->
+            <button id="btn-print-blank" onclick="printBlankTimesheet()"
+                class="px-4 py-2 bg-slate-500 text-white rounded-lg flex items-center shadow hover:bg-slate-600 transition font-medium whitespace-nowrap shrink-0"
+                title="In biểu mẫu trống để điền tay (Không có dữ liệu)">
+                <i data-lucide="file" class="w-4 h-4 mr-2"></i> In bảng trắng
+            </button>
+            <!-- --- KẾT THÚC CODE MỚI --- -->
 
             <button id="btn-print" onclick="window.print()"
                 class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0"
@@ -3260,6 +3287,21 @@
         function closeLeaveStatsModal() {
             document.getElementById('leave-stats-modal').classList.add('hidden');
         }
+
+        // --- CODE MỚI THÊM: HÀM XỬ LÝ IN BẢNG TRẮNG ---
+        function printBlankTimesheet() {
+            // Thêm class 'print-blank-mode' vào thẻ body để kích hoạt CSS ẩn dữ liệu
+            document.body.classList.add('print-blank-mode');
+            
+            // Gọi lệnh in của trình duyệt
+            window.print();
+            
+            // Gỡ bỏ class sau khi cửa sổ in xuất hiện
+            setTimeout(() => {
+                document.body.classList.remove('print-blank-mode');
+            }, 500);
+        }
+        // --- KẾT THÚC CODE MỚI ---
 
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
