@@ -805,41 +805,41 @@
             }
 
         async function syncWithGAS(actionName, payloadData) {
-    if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
-        console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-        showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
-        return;
-    }
+                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu.", "error");
+                    return;
+                }
 
-    try {
-        const tableName = actionName.replace('sync_', '');
-        let processedData = payloadData;
+                try {
+                    const tableName = actionName.replace('sync_', '');
+                    let processedData = payloadData;
 
-        // Xử lý riêng cho Cấu hình giá (đối tượng đơn)
-        if (tableName === 'CauHinhGia') {
-            const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
-            if (upsertError) throw upsertError;
-            return;
-        }
+                    // Xử lý riêng cho Cấu hình giá (congtruc.html) - Đây là Object, không phải Array
+                    if (tableName === 'CauHinhGia') {
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                        if (upsertError) throw upsertError;
+                        return; // Thoát ra ngay để không chạy xuống block Array bên dưới
+                    }
 
-        // Đẩy dữ liệu lên Supabase theo từng block nhỏ để tránh quá tải
-        if (Array.isArray(processedData)) {
-            const chunkSize = 500;
-            for (let i = 0; i < processedData.length; i += chunkSize) {
-                const chunk = processedData.slice(i, i + chunkSize);
-                const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
-                if (upsertError) throw upsertError;
+                    // Đảm bảo processedData luôn là mảng đối với các bảng chuẩn còn lại
+                    if (!Array.isArray(processedData)) {
+                        processedData = [processedData];
+                    }
+
+                    // Đẩy dữ liệu lên Supabase theo từng block nhỏ
+                    const chunkSize = 500;
+                    for (let i = 0; i < processedData.length; i += chunkSize) {
+                        const chunk = processedData.slice(i, i + chunkSize);
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                        if (upsertError) throw upsertError;
+                    }
+
+                } catch (e) {
+                    console.error("Lỗi đồng bộ Supabase:", e);
+                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+                }
             }
-        } else {
-            const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
-            if (upsertError) throw upsertError;
-        }
-
-    } catch (e) {
-        console.error("Lỗi đồng bộ Supabase:", e);
-        showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
-    }
-}
 
         // --- HÀM TẠO TÊN VIẾT TẮT ---
         function processDisplayNames(usersList) {
@@ -1272,8 +1272,19 @@
                 }
                 generateReport();
 
-                // CHỈ GỬI LÊN 1 OBJECT DUY NHẤT
-                syncWithGAS('sync_PhieuBoiDuong', [phieu]);
+                // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
+                const payload = [{
+                    MaPhieuBD: phieu.MaPhieuBD,
+                    MaKhoa: phieu.MaKhoa,
+                    Thang: parseInt(phieu.Thang),
+                    Nam: parseInt(phieu.Nam),
+                    TrangThai: phieu.TrangThai,
+                    NguoiDuyet: phieu.NguoiDuyet || null,
+                    NgayDuyet: phieu.NgayDuyet || null,
+                    GhiChu: phieu.GhiChu
+                }];
+
+                syncWithGAS('sync_PhieuBoiDuong', payload);
             }
 
         function sendApprove() {
@@ -1436,70 +1447,73 @@
 
         // HÀM LƯU DỮ LIỆU ĐIỀU CHỈNH CHUNG (CHUỖI NGÀY, SỐ ĐÊM, ĐƠN GIÁ, LOẠI TRỰC)
         function saveData(showToastMsg = true) {
-            const month = document.getElementById('sel-month').value;
-            const year = document.getElementById('sel-year').value;
-            const maKhoa = document.getElementById('sel-khoa').value;
-            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+                const month = document.getElementById('sel-month').value;
+                const year = document.getElementById('sel-year').value;
+                const maKhoa = document.getElementById('sel-khoa').value;
+                let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
 
-            if (!phieu) {
-                // Tự động tạo bản nháp nếu lần đầu Khoa bấm lưu
-                phieu = {
-                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
-                    TrangThai: 'Nháp', NguoiDuyet: '', NgayDuyet: '', GhiChu: '{}'
-                };
-                MOCK_DB.phieuBoiDuong.push(phieu);
+                if (!phieu) {
+                    // Tự động tạo bản nháp nếu lần đầu Khoa bấm lưu
+                    phieu = {
+                        MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
+                        TrangThai: 'Nháp', NguoiDuyet: '', NgayDuyet: '', GhiChu: '{}'
+                    };
+                    MOCK_DB.phieuBoiDuong.push(phieu);
+                }
+
+                let noteData = parseGhiChu(phieu.GhiChu);
+                if (!noteData.rates) noteData.rates = {};
+
+                const daysInputs = document.querySelectorAll('.days-input');
+                const rateInputs = document.querySelectorAll('.rate-input');
+
+                // Chỉ lưu Chuỗi Ngày, Số đêm, Loại Trực nếu Admin Khoa đang mở chế độ Edit (có thẻ input)
+                if (daysInputs.length > 0) {
+                    daysInputs.forEach(daysInput => {
+                        const id = daysInput.getAttribute('data-id');
+                        noteData.rates[id] = daysInput.value.trim();
+                    });
+
+                    document.querySelectorAll('.nights-input').forEach(nightsInput => {
+                        const id = nightsInput.getAttribute('data-id');
+                        const nights = nightsInput.value;
+                        if (nights !== null && nights !== "") noteData.rates[id] = nights;
+                    });
+
+                    document.querySelectorAll('.shift-type-select').forEach(sel => {
+                        const id = sel.getAttribute('data-id');
+                        noteData.rates[id] = sel.value;
+                    });
+                }
+
+                // Chỉ lưu Đơn giá nếu TCKT đang thao tác (các thẻ input không bị ẩn)
+                if (rateInputs.length > 0) {
+                    rateInputs.forEach(rateInput => {
+                        if (!rateInput.classList.contains('hidden')) {
+                            const id = rateInput.getAttribute('data-id');
+                            const rate = rateInput.value;
+                            if (rate) noteData.rates[id] = rate;
+                        }
+                    });
+                }
+
+                phieu.GhiChu = JSON.stringify(noteData);
+
+                // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN TRÁNH LỖI ON CONFLICT
+                const payload = [{
+                    MaPhieuBD: phieu.MaPhieuBD,
+                    MaKhoa: phieu.MaKhoa,
+                    Thang: parseInt(phieu.Thang),
+                    Nam: parseInt(phieu.Nam),
+                    TrangThai: phieu.TrangThai,
+                    NguoiDuyet: phieu.NguoiDuyet || null,
+                    NgayDuyet: phieu.NgayDuyet || null,
+                    GhiChu: phieu.GhiChu
+                }];
+
+                syncWithGAS('sync_PhieuBoiDuong', payload);
+                if (showToastMsg) showToast("Đã lưu dữ liệu thành công!", "success");
             }
-
-            let noteData = parseGhiChu(phieu.GhiChu);
-            if (!noteData.rates) noteData.rates = {};
-
-            const daysInputs = document.querySelectorAll('.days-input');
-            const rateInputs = document.querySelectorAll('.rate-input');
-
-            // Chỉ lưu Chuỗi Ngày, Số đêm, Loại Trực nếu Admin Khoa đang mở chế độ Edit (có thẻ input)
-            if (daysInputs.length > 0) {
-                daysInputs.forEach(daysInput => {
-                    const id = daysInput.getAttribute('data-id');
-                    noteData.rates[id] = daysInput.value.trim();
-                });
-
-                document.querySelectorAll('.nights-input').forEach(nightsInput => {
-                    const id = nightsInput.getAttribute('data-id');
-                    const nights = nightsInput.value;
-                    if (nights !== null && nights !== "") noteData.rates[id] = nights;
-                });
-
-                document.querySelectorAll('.shift-type-select').forEach(sel => {
-                    const id = sel.getAttribute('data-id');
-                    noteData.rates[id] = sel.value;
-                });
-            }
-
-            // Chỉ lưu Đơn giá nếu TCKT đang thao tác (các thẻ input không bị ẩn)
-            if (rateInputs.length > 0) {
-                rateInputs.forEach(rateInput => {
-                    if (!rateInput.classList.contains('hidden')) {
-                        const id = rateInput.getAttribute('data-id');
-                        const rate = rateInput.value;
-                        if (rate) noteData.rates[id] = rate;
-                    }
-                });
-            }
-            phieu.GhiChu = JSON.stringify(noteData);
-
-            const payload = [{
-                MaPhieuBD: phieu.MaPhieuBD,
-                MaKhoa: phieu.MaKhoa,
-                Thang: parseInt(phieu.Thang),
-                Nam: parseInt(phieu.Nam),
-                TrangThai: phieu.TrangThai,
-                NguoiDuyet: phieu.NguoiDuyet || null,
-                NgayDuyet: phieu.NgayDuyet || null,
-                GhiChu: phieu.GhiChu
-            }];
-            syncWithGAS('sync_PhieuBoiDuong', payload);
-            if (showToastMsg) showToast("Đã lưu dữ liệu thành công!", "success");
-        }
 
         // HÀM ĐỒNG BỘ LẠI DỮ LIỆU LỊCH TRỰC (KHẮC PHỤC LỖI KHÔNG TỰ UPDATE DATA MỚI)
         function resetShiftData() {
@@ -1523,23 +1537,22 @@
                             }
                             phieu.GhiChu = JSON.stringify(noteData);
 
-                            // CHỈ GỬI LÊN 1 OBJECT DUY NHẤT
-                            syncWithGAS('sync_PhieuBoiDuong', [phieu]);
+                            // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
+                            const payload = [{
+                                MaPhieuBD: phieu.MaPhieuBD,
+                                MaKhoa: phieu.MaKhoa,
+                                Thang: parseInt(phieu.Thang),
+                                Nam: parseInt(phieu.Nam),
+                                TrangThai: phieu.TrangThai,
+                                NguoiDuyet: phieu.NguoiDuyet || null,
+                                NgayDuyet: phieu.NgayDuyet || null,
+                                GhiChu: phieu.GhiChu
+                            }];
+
+                            syncWithGAS('sync_PhieuBoiDuong', payload);
                         }
                         generateReport();
-
-                        const payload = [{
-                            MaPhieuBD: phieu.MaPhieuBD,
-                            MaKhoa: phieu.MaKhoa,
-                            Thang: parseInt(phieu.Thang),
-                            Nam: parseInt(phieu.Nam),
-                            TrangThai: phieu.TrangThai,
-                            NguoiDuyet: phieu.NguoiDuyet || null,
-                            NgayDuyet: phieu.NgayDuyet || null,
-                            GhiChu: phieu.GhiChu
-                        }];
-
-                        syncWithGAS('sync_PhieuBoiDuong', payload);
+                        showToast("Đã đồng bộ lại dữ liệu thành công!", "success");
                     }
                 );
             }
