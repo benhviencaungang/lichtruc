@@ -1535,6 +1535,7 @@
             async function updateBangStatus(status) {
                 if (isSaving) return;
                 isSaving = true;
+                window.isSavingData = true; // Khóa cờ đồng bộ ngầm ngay lập tức
 
                 document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
                 document.getElementById('retry-btn-container').classList.add('hidden');
@@ -2070,19 +2071,28 @@
 
                     hasUnsavedChanges = false;
                     currentOverallStatus = status;
-                    updateApprovalUI(status);
-
-                    // 4. Chỉ gửi những bảng vừa thay đổi (newBangList) lên Supabase thay vì gửi toàn bộ MOCK_DB
+                    
+                    // Lệnh đẩy dữ liệu lên máy chủ
                     await syncWithGAS('sync_BangChamCong', newBangList);
 
-                    originalGridData = extractGridData();
-                    if (hasMerged) {
-                        showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                    // CHỜ ĐỢI 1 CHÚT CHO SERVER TIÊU HÓA RỒI MỚI RENDER LẠI UI
+                    setTimeout(() => {
+                        originalGridData = extractGridData();
+                        if (hasMerged) {
+                            showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                        }
+                        updateApprovalUI(status);
                         generateReport();
-                    }
+                        
+                        isSaving = false;
+                        window.isSavingData = false; // Mở lại cờ đồng bộ
+                        document.getElementById('loading-screen').classList.add('hidden');
+                    }, 1000); 
 
-                } finally {
+                } catch (err) {
+                    console.error("Lỗi khi lưu bảng chấm công:", err);
                     isSaving = false;
+                    window.isSavingData = false;
                     document.getElementById('loading-screen').classList.add('hidden');
                 }
             }
