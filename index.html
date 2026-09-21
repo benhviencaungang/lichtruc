@@ -2601,14 +2601,19 @@
 
                     // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
                     if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
-                        processedData = payloadData.map(s => ({
-                            MaChiTiet: String(s.MaChiTiet),
-                            NgayTruc: String(s.NgayTruc),
-                            MaNV: String(s.MaNV),
-                            MaKhoa: String(s.MaKhoa),
-                            ChucDanh: String(s.ChucDanh),
-                            PhanCa: s.PhanCa || '24h'
-                        }));
+                        // Dùng Map để tự động loại bỏ các ca trực có trùng ID trước khi đẩy lên server
+                        const uniqueMap = new Map();
+                        payloadData.forEach(s => {
+                            uniqueMap.set(String(s.MaChiTiet), {
+                                MaChiTiet: String(s.MaChiTiet),
+                                NgayTruc: String(s.NgayTruc),
+                                MaNV: String(s.MaNV),
+                                MaKhoa: String(s.MaKhoa),
+                                ChucDanh: String(s.ChucDanh),
+                                PhanCa: s.PhanCa || '24h'
+                            });
+                        });
+                        processedData = Array.from(uniqueMap.values());
                     }
 
                     // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
@@ -4178,14 +4183,21 @@
         }
 
         function assignToSelectedCell(maNV, chucDanh) {
-            if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
+        if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
 
-            if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
-                return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
-            }
+        if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
+            return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
+        }
 
-            if (selectedCell.role === 'CHAO_CO') {
-                const dSelect = new Date(selectedCell.date + "T12:00:00");
+        // ===== ĐOẠN MÃ CẦN THÊM VÀO =====
+        // Kiểm tra xem nhân sự này đã được xếp trực trong ngày đang chọn chưa
+        const isAlreadyAssigned = localShifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date);
+        if (isAlreadyAssigned) {
+            return showToast("Nhân sự này đã được xếp lịch trực trong ngày hôm nay!", "warning");
+        }
+
+        if (selectedCell.role === 'CHAO_CO') {
+        const dSelect = new Date(selectedCell.date + "T12:00:00");
                 if (dSelect.getDay() !== 1) return showToast("Lịch chào cờ chỉ được xếp vào Thứ 2!", "error");
                 const countChaoCo = localShifts.filter(s => s.NgayTruc === selectedCell.date && s.ChucDanh === 'CHAO_CO').length;
                 if (countChaoCo >= 4) return showToast("Chỉ xếp 4 người chào cờ vào Thứ 2!", "error");
@@ -4353,12 +4365,23 @@
         }
 
         async function luuLichNhaps() {
-            const tuan = forceMonday('tuan-bat-dau');
-            if (!tuan) return;
-            const weekDates = getDatesInWeek(tuan);
-            MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
-            MOCK_DB.shifts.push(...localShifts);
-            await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
+        const tuan = forceMonday('tuan-bat-dau');
+        if (!tuan) return;
+        const weekDates = getDatesInWeek(tuan);
+
+        // --- ĐOẠN MÃ CẦN THÊM VÀO ĐỂ XÓA DỮ LIỆU THỪA TRÊN SERVER ---
+        const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
+        const localShiftIds = localShifts.map(s => s.MaChiTiet);
+        const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
+
+        if (idsToDelete.length > 0) {
+            await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
+        }
+        // -------------------------------------------------------------
+
+        MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
+        MOCK_DB.shifts.push(...localShifts);
+        await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
             await logActivity("Lưu nháp lịch");
             showToast("Đã lưu nháp an toàn.", "success");
             clearUnsaved(); // Xóa mác chưa lưu sau khi save
@@ -4366,28 +4389,50 @@
         }
 
         function nopLichKHTH() {
-            const tuan = forceMonday('tuan-bat-dau');
-            if (!tuan) return;
+        const tuan = forceMonday('tuan-bat-dau');
+        if (!tuan) return;
 
-            showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
-                showGlobalLoading(); // Bật màn hình chờ
-                try {
-                    let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
-                    if (phieu) { phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; } else { MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); }
-                    const weekDates = getDatesInWeek(tuan);
-                    MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); MOCK_DB.shifts.push(...localShifts);
+        showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
+            showGlobalLoading(); 
+            try {
+                // CHỈ KHAI BÁO MỘT LẦN Ở ĐÂY
+                const weekDates = getDatesInWeek(tuan);
 
-                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
-                    await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-                    await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`);
+                // --- ĐOẠN MÃ XÓA DỮ LIỆU THỪA ---
+                const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
+                const localShiftIds = localShifts.map(s => s.MaChiTiet);
+                const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
 
-                    showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
-                    clearUnsaved();
-                    checkWeeklyStatus();
-                } finally {
-                    hideGlobalLoading(); // Tắt màn hình chờ khi xong (hoặc có lỗi)
+                if (idsToDelete.length > 0) {
+                    await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
                 }
-            });
+                // ---------------------------------
+
+                let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
+                if (phieu) { 
+                    phieu.TrangThai = "Chờ duyệt"; 
+                    phieu.GhiChu = ""; 
+                } else { 
+                    MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); 
+                }
+                
+                // XÓA DÒNG KHAI BÁO BỊ TRÙNG Ở ĐÂY:
+                // const weekDates = getDatesInWeek(tuan); // DÒNG NÀY CẦN XÓA BỎ
+
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); 
+                MOCK_DB.shifts.push(...localShifts);
+
+                await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
+                await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
+                await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`);
+
+                showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
+                clearUnsaved();
+                checkWeeklyStatus();
+            } finally {
+                hideGlobalLoading(); 
+            }
+        });
         }
 
         // ---------------------------------------------------------------------------------------
@@ -4495,11 +4540,23 @@
 
             if (chotRecord && chotRecord.TrangThai === 'Chốt') {
                 showConfirmModal("Xác nhận Mở chốt", "Bạn muốn MỞ CHỐT lịch tuần này? User các Khoa sẽ KHÔNG XEM ĐƯỢC lịch tổng hợp nữa.", async () => {
-                    MOCK_DB.phieu = MOCK_DB.phieu.filter(p => p.MaPhieu !== chotRecord.MaPhieu);
-                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
-                    await logActivity("Mở chốt lịch toàn viện", `Tuần: ${tuan}`);
-                    showToast("Đã mở chốt. Đã thu hồi quyền xem lịch tổng hợp của User Khoa.", "success");
-                    renderAdminApprovalTable();
+                    showGlobalLoading(); // 1. BẬT MÀN HÌNH CHỜ
+                    try {
+                        // 2. GỬI LỆNH XÓA TRỰC TIẾP TRÊN SUPABASE ĐỂ TRÁNH BỊ NHẢY LẠI
+                        await _supabase.from('PhieuLichTruc').delete().eq('MaPhieu', chotRecord.MaPhieu);
+                        
+                        // 3. XÓA Ở BỘ NHỚ LOCAL ĐỂ CẬP NHẬT GIAO DIỆN
+                        MOCK_DB.phieu = MOCK_DB.phieu.filter(p => p.MaPhieu !== chotRecord.MaPhieu);
+                        
+                        await logActivity("Mở chốt lịch toàn viện", `Tuần: ${tuan}`);
+                        showToast("Đã mở chốt. Đã thu hồi quyền xem lịch tổng hợp của User Khoa.", "success");
+                        renderAdminApprovalTable();
+                    } catch (error) {
+                        showToast("Lỗi hệ thống khi mở chốt!", "error");
+                        console.error(error);
+                    } finally {
+                        hideGlobalLoading(); // 4. TẮT MÀN HÌNH CHỜ KHI HOÀN TẤT
+                    }
                 });
             } else {
                 let hasUnapproved = false;
@@ -4511,19 +4568,32 @@
                 });
 
                 const proceedToChot = async () => {
-                    MOCK_DB.phieu.push({
-                        MaPhieu: `P_ALL_${tuan}`,
-                        MaKhoa: 'ALL',
-                        TuanTruc: tuan,
-                        TrangThai: 'Chốt',
-                        NguoiDuyet: currentUser.MaNV,
-                        NgayDuyet: new Date().toISOString().split('T')[0],
-                        GhiChu: ""
-                    });
-                    await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
-                    await logActivity("Chốt lịch toàn viện", `Tuần: ${tuan}`);
-                    showToast("Đã chốt lịch! User các Khoa hiện đã có thể xem lịch tổng hợp.", "success");
-                    renderAdminApprovalTable();
+                    showGlobalLoading(); // 1. BẬT MÀN HÌNH CHỜ
+                    try {
+                        const newPhieu = {
+                            MaPhieu: `P_ALL_${tuan}`,
+                            MaKhoa: 'ALL',
+                            TuanTruc: tuan,
+                            TrangThai: 'Chốt',
+                            NguoiDuyet: currentUser.MaNV,
+                            NgayDuyet: new Date().toISOString().split('T')[0],
+                            GhiChu: ""
+                        };
+
+                        // 2. LƯU TRỰC TIẾP LÊN MÁY CHỦ BẢO ĐẢM NHẬN LIỀN
+                        await _supabase.from('PhieuLichTruc').upsert([newPhieu]);
+                        
+                        // 3. LƯU VÀO LOCAL VÀ RENDER
+                        MOCK_DB.phieu.push(newPhieu);
+                        await logActivity("Chốt lịch toàn viện", `Tuần: ${tuan}`);
+                        showToast("Đã chốt lịch! User các Khoa hiện đã có thể xem lịch tổng hợp.", "success");
+                        renderAdminApprovalTable();
+                    } catch (error) {
+                        showToast("Lỗi hệ thống khi chốt lịch!", "error");
+                        console.error(error);
+                    } finally {
+                        hideGlobalLoading(); // 4. TẮT MÀN HÌNH CHỜ
+                    }
                 };
 
                 if (hasUnapproved) {
