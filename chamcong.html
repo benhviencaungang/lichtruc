@@ -1320,12 +1320,64 @@
         }
 
         async function handleFilterChange() {
-            if (hasUnsavedChanges) {
-                await updateBangStatus('Nháp');
-                showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
+                if (hasUnsavedChanges) {
+                    await updateBangStatus('Nháp');
+                    showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
+                }
+
+                const month = parseInt(document.getElementById('sel-month').value);
+                const year = parseInt(document.getElementById('sel-year').value);
+
+                // Bật loading để người dùng biết hệ thống đang lấy dữ liệu tháng mới
+                document.getElementById('loading-screen').classList.remove('hidden');
+
+                try {
+                    // Xác định khung ngày của tháng được chọn
+                    const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
+                    const endOfMonth = `${year}-${String(month).padStart(2, '0')}-31`;
+
+                    // Gọi API lấy đúng dữ liệu của tháng đó
+                    const [
+                        { data: shiftsFast },
+                        { data: bangChamCongFast }
+                    ] = await Promise.all([
+                        _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                            .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
+                        _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                            .eq('Nam', year).eq('Thang', month)
+                    ]);
+
+                    // Xóa lịch trực của tháng này trong bộ nhớ tạm (nếu có) và đè dữ liệu mới vào
+                    MOCK_DB.shifts = MOCK_DB.shifts.filter(s => {
+                        const parts = s.NgayTruc.split('-');
+                        return !(parseInt(parts[0]) === year && parseInt(parts[1]) === month);
+                    });
+
+                    if (shiftsFast) {
+                        const newShifts = shiftsFast.map(s => {
+                            let parsedDate = String(s.NgayTruc || "").trim();
+                            if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
+                            return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
+                        });
+                        MOCK_DB.shifts.push(...newShifts);
+                    }
+
+                    // Xóa bảng chấm công của tháng này trong bộ nhớ và đè dữ liệu mới vào
+                    MOCK_DB.bangChamCong = MOCK_DB.bangChamCong.filter(b => !(b.Nam == year && b.Thang == month));
+                    if (bangChamCongFast) {
+                        MOCK_DB.bangChamCong.push(...bangChamCongFast);
+                    }
+
+                    // Vẽ lại giao diện
+                    generateReport();
+                } catch (e) {
+                    console.error(e);
+                    showToast("Lỗi khi tải dữ liệu tháng này từ máy chủ", "error");
+                } finally {
+                    // Tắt loading
+                    document.getElementById('loading-screen').classList.add('hidden');
+                }
             }
-            generateReport();
-        }
 
         function markUnsaved() {
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
@@ -1445,37 +1497,6 @@
                 lucide.createIcons();
             }
         });
-
-        // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
-        // --- HÀM LẤY DỮ LIỆU TỐI ƯU TỪ SUPABASE ---
-            async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
-                let allData = [];
-                let from = 0;
-                const step = 1000;
-                while (true) {
-                    let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
-
-                    // THÊM BỘ LỌC ĐỂ GIẢM TẢI (Tăng tốc độ tải trang)
-                    if (filter) {
-                        if (filter.type === 'date_range') {
-                            query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
-                        } else if (filter.type === 'eq') {
-                            query = query.eq(filter.column, filter.value);
-                        }
-                    }
-
-                    const { data, error } = await query;
-                    if (error) return { data: allData, error };
-                    if (data && data.length > 0) {
-                        allData.push(...data);
-                        if (data.length < step) break;
-                        from += step;
-                    } else {
-                        break;
-                    }
-                }
-                return { data: allData, error: null };
-            }
 
         async function syncWithGAS(actionName, payloadData) {
                 if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
@@ -1654,11 +1675,15 @@
                         { data: khoa }, { data: users }, { data: cauHinhPhep },
                         { data: shiftsFast }, { data: bangChamCongFast }
                     ] = await Promise.all([
-                        fetchAllSupabase('KhoaPhong'),
-                        fetchAllSupabase('NhanVien'),
-                        fetchAllSupabase('CauHinhPhep'),
-                        fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startOfMonth, endDate: endOfMonth }),
-                        fetchAllSupabase('BangChamCong', '*', { type: 'eq', column: 'Nam', value: currentYear }) // Lấy bảng năm nay là đủ nhanh
+                        _supabase.from('KhoaPhong').select('*'),
+                        _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc'),
+                        _supabase.from('CauHinhPhep').select('*'),
+                        // Chỉ tải ca trực trong đúng 1 tháng
+                        _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                            .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
+                        // Chỉ tải bảng chấm công của đúng tháng này, năm này
+                        _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                            .eq('Nam', currentYear).eq('Thang', currentMonth)
                     ]);
 
                     MOCK_DB.khoa = khoa || [];
@@ -1680,10 +1705,7 @@
                     initUI();
                     document.getElementById('loading-screen').classList.add('hidden');
                     document.getElementById('control-panel').classList.remove('hidden');
-                    document.getElementById('print-workspace').classList.remove('hidden');
-
-                    // Bắt đầu tải ngầm các dữ liệu còn lại
-                    loadRemainingDataInBackground(currentYear, currentMonth);
+                    document.getElementById('print-workspace').classList.remove('hidden');  
 
                 } catch (e) {
                     document.getElementById('retry-btn-container').classList.remove('hidden');
@@ -1692,45 +1714,6 @@
                     lucide.createIcons();
                 }
             }
-            async function loadRemainingDataInBackground(currentYear, currentMonth) {
-                    try {
-                        const startDate = `${currentYear - 1}-01-01`;
-                        const endDate = `${currentYear + 1}-12-31`;
-
-                        // Tải ngầm lịch trực toàn bộ và bảng chấm công năm trước/năm sau
-                        const [
-                            { data: shiftsAll },
-                            { data: bangChamCongAll }
-                        ] = await Promise.all([
-                            fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startDate, endDate: endDate }),
-                            fetchAllSupabase('BangChamCong')
-                        ]);
-
-                        // Lọc bỏ những dữ liệu của tháng hiện tại (vì đã tải trước đó và có thể người dùng đang sửa chữa trên UI)
-                        if (shiftsAll) {
-                            const formattedShiftsAll = shiftsAll.map(s => {
-                                let parsedDate = String(s.NgayTruc || "").trim();
-                                if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
-                                return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
-                            });
-
-                            // Gộp dữ liệu: Giữ nguyên tháng này, thêm các tháng khác
-                            const otherMonthsShifts = formattedShiftsAll.filter(s => {
-                                const parts = s.NgayTruc.split('-');
-                                return !(parseInt(parts[0]) === currentYear && parseInt(parts[1]) === currentMonth);
-                            });
-                            MOCK_DB.shifts = [...MOCK_DB.shifts, ...otherMonthsShifts];
-                        }
-
-                        if (bangChamCongAll) {
-                            const otherBCC = bangChamCongAll.filter(b => b.Nam !== currentYear);
-                            MOCK_DB.bangChamCong = [...MOCK_DB.bangChamCong, ...otherBCC];
-                        }
-
-                    } catch (e) {
-                        console.warn("Lỗi tải ngầm dữ liệu:", e);
-                    }
-                }
         function initUI() {
             const today = getVNTime();
 
@@ -2059,7 +2042,6 @@
 
                     // 3. Cập nhật vào MOCK_DB (xóa cũ thêm mới để tránh trùng lặp)
                     const newBangList = Array.from(bangToUpsertMap.values());
-
                     newBangList.forEach(newBang => {
                         const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
                         if (index !== -1) {
@@ -2068,6 +2050,24 @@
                             MOCK_DB.bangChamCong.push(newBang);
                         }
                     });
+
+                    hasUnsavedChanges = false;
+                    currentOverallStatus = status;
+
+                    // 4. CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (Không dùng setTimeout chờ đợi)
+                    originalGridData = extractGridData();
+                    updateApprovalUI(status);
+                    generateReport();
+
+                    isSaving = false;
+                    window.isSavingData = false;
+                    document.getElementById('loading-screen').classList.add('hidden'); // Tắt loading ngay
+
+                    // 5. ĐẨY LÊN SERVER CHẠY NGẦM
+                    if (hasMerged) {
+                        showToast("Đã gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                    }
+                    syncWithGAS('sync_BangChamCong', newBangList); // Chạy ngầm, không await để tránh nghẽn
 
                     hasUnsavedChanges = false;
                     currentOverallStatus = status;
