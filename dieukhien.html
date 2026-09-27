@@ -277,93 +277,102 @@
         }
 
         async function loadRealDatabase() {
-            try {
-                document.getElementById('loading-text').textContent = "Đang tải dữ liệu Khoa, Nhân sự & Chấm công...";
-                
-                // Tải song song để tăng tốc độ
-                const [khoaData, usersData, shiftsData, bangChamCongData, cauHinhPhepData] = await Promise.all([
-                    fetchAllSupabase('KhoaPhong'),
-                    fetchAllSupabase('NhanVien'),
-                    fetchAllSupabase('ChiTietLichTruc'),
-                    fetchAllSupabase('BangChamCong'),
-                    fetchAllSupabase('CauHinhPhep')
-                ]);
+                try {
+                    document.getElementById('loading-text').textContent = "Đang tải dữ liệu Khoa, Nhân sự & Chấm công...";
 
-                // KIỂM SOÁT QUYỀN TRUY CẬP DỮ LIỆU
-                const isAdminKHTH = currentUser.Role === 'Admin_KHTH';
-                const managedKhoas = currentUser.KhoaList || []; // Mảng chứa mã các khoa đang quản lý
+                    // Tính toán để chỉ lấy dữ liệu của tháng trước và tháng này nhằm tối ưu hóa
+                    const now = new Date();
+                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-                // 1. Lọc Khoa/Phòng
-                if (isAdminKHTH) {
-                    realDB.khoa = khoaData.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                } else {
-                    realDB.khoa = khoaData
-                        .map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }))
-                        .filter(k => managedKhoas.includes(k.MaKhoa));
+                    const startDate = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}-01`;
+                    const endDate = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-${String(nextMonth.getDate()).padStart(2, '0')}`;
+
+
+                    // Tải song song để tăng tốc độ (ĐÃ TỐI ƯU CÁC CỘT VÀ THÊM BỘ LỌC THỜI GIAN)
+                    const [khoaData, usersData, shiftsData, bangChamCongData, cauHinhPhepData] = await Promise.all([
+                        _supabase.from('KhoaPhong').select('*'),
+                        _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password'),
+                        _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', startDate).lte('NgayTruc', endDate),
+                        _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu').gte('Nam', lastMonth.getFullYear()),
+                        _supabase.from('CauHinhPhep').select('*')
+                    ]);
+
+                    // KIỂM SOÁT QUYỀN TRUY CẬP DỮ LIỆU
+                    const isAdminKHTH = currentUser.Role === 'Admin_KHTH';
+                    const managedKhoas = currentUser.KhoaList || []; // Mảng chứa mã các khoa đang quản lý
+
+                    // 1. Lọc Khoa/Phòng
+                    if (isAdminKHTH) {
+                        realDB.khoa = khoaData.data.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                    } else {
+                        realDB.khoa = khoaData.data
+                            .map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }))
+                            .filter(k => managedKhoas.includes(k.MaKhoa));
+                    }
+
+                    // 2. Lọc Nhân viên
+                    let rawUsers = usersData.data.map(u => ({
+                        ...u,
+                        MaNV: String(u.MaNV).trim(),
+                        NgayVaoLam: u.NgayVaoLam ? String(u.NgayVaoLam).substring(0, 10) : "",
+                        NgayNghi: u.NgayNghi ? String(u.NgayNghi).substring(0, 10) : ""
+                    }));
+
+                    if (!isAdminKHTH) {
+                        rawUsers = rawUsers.filter(u => {
+                            if (!u.MaKhoa) return false;
+                            const uKhoas = u.MaKhoa.split(',').map(s => s.trim());
+                            return uKhoas.some(k => managedKhoas.includes(k));
+                        });
+                    }
+                    realDB.users = rawUsers;
+
+                    // 3. Lọc Lịch trực
+                    let rawShifts = shiftsData.data.map(s => ({
+                        ...s,
+                        MaNV: String(s.MaNV).trim(),
+                        MaKhoa: String(s.MaKhoa).trim(),
+                        NgayTruc: s.NgayTruc.substring(0, 10)
+                    }));
+
+                    if (!isAdminKHTH) {
+                        // Chỉ lấy các ca trực mà Khoa mình phân công HOẶC do Nhân viên khoa mình đi trực
+                        const validUserIds = rawUsers.map(u => u.MaNV);
+                        rawShifts = rawShifts.filter(s =>
+                            managedKhoas.includes(s.MaKhoa) || validUserIds.includes(s.MaNV)
+                        );
+                    }
+                    realDB.shifts = rawShifts;
+
+                    // 4. Lọc Bảng chấm công
+                    if (isAdminKHTH) {
+                        realDB.bangChamCong = bangChamCongData.data || [];
+                    } else {
+                        realDB.bangChamCong = (bangChamCongData.data || []).filter(b =>
+                            managedKhoas.includes(String(b.MaKhoa).trim())
+                        );
+                    }
+
+                    // Parse cấu hình phép
+                    if (cauHinhPhepData.data && cauHinhPhepData.data.length > 0) {
+                        let raw = cauHinhPhepData.data[0].data;
+                        realDB.cauHinhPhep = {
+                            khoa: Array.isArray(raw?.khoa) ? raw.khoa : [],
+                            caNhan: raw?.caNhan || {}
+                        };
+                    } else {
+                        realDB.cauHinhPhep = { khoa: [], caNhan: {} };
+                    }
+
+                    document.getElementById('auth-loading').classList.add('hidden');
+
+                } catch (error) {
+                    console.error("Lỗi tải Database:", error);
+                    document.getElementById('loading-text').textContent = "Lỗi kết nối máy chủ! Đang thử lại...";
+                    setTimeout(() => window.location.href = 'index.html', 3000);
                 }
-                
-                // 2. Lọc Nhân viên
-                let rawUsers = usersData.map(u => ({ 
-                    ...u, 
-                    MaNV: String(u.MaNV).trim(),
-                    NgayVaoLam: u.NgayVaoLam ? String(u.NgayVaoLam).substring(0,10) : "",
-                    NgayNghi: u.NgayNghi ? String(u.NgayNghi).substring(0,10) : "" 
-                }));
-
-                if (!isAdminKHTH) {
-                    rawUsers = rawUsers.filter(u => {
-                        if (!u.MaKhoa) return false;
-                        const uKhoas = u.MaKhoa.split(',').map(s => s.trim());
-                        return uKhoas.some(k => managedKhoas.includes(k));
-                    });
-                }
-                realDB.users = rawUsers;
-                
-                // 3. Lọc Lịch trực
-                let rawShifts = shiftsData.map(s => ({
-                    ...s,
-                    MaNV: String(s.MaNV).trim(),
-                    MaKhoa: String(s.MaKhoa).trim(),
-                    NgayTruc: s.NgayTruc.substring(0, 10)
-                }));
-
-                if (!isAdminKHTH) {
-                    // Chỉ lấy các ca trực mà Khoa mình phân công HOẶC do Nhân viên khoa mình đi trực
-                    const validUserIds = rawUsers.map(u => u.MaNV);
-                    rawShifts = rawShifts.filter(s => 
-                        managedKhoas.includes(s.MaKhoa) || validUserIds.includes(s.MaNV)
-                    );
-                }
-                realDB.shifts = rawShifts;
-
-                // 4. Lọc Bảng chấm công
-                if (isAdminKHTH) {
-                    realDB.bangChamCong = bangChamCongData || [];
-                } else {
-                    realDB.bangChamCong = (bangChamCongData || []).filter(b => 
-                        managedKhoas.includes(String(b.MaKhoa).trim())
-                    );
-                }
-                
-                // Parse cấu hình phép
-                if (cauHinhPhepData && cauHinhPhepData.length > 0) {
-                    let raw = cauHinhPhepData[0].data;
-                    realDB.cauHinhPhep = {
-                        khoa: Array.isArray(raw?.khoa) ? raw.khoa : [],
-                        caNhan: raw?.caNhan || {}
-                    };
-                } else {
-                    realDB.cauHinhPhep = { khoa: [], caNhan: {} };
-                }
-
-                document.getElementById('auth-loading').classList.add('hidden');
-                
-            } catch (error) {
-                console.error("Lỗi tải Database:", error);
-                document.getElementById('loading-text').textContent = "Lỗi kết nối máy chủ! Đang thử lại...";
-                setTimeout(() => window.location.href = 'index.html', 3000);
             }
-        }
 
         // ---------------------------------------------------------
         // 3. XỬ LÝ GIAO DIỆN CHAT
