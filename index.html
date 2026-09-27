@@ -657,7 +657,8 @@
                             class="w-full sm:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
                             <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Thêm Nhân viên
                         </button>
-                        <button onclick="openTransferModal()" class="w-full sm:w-auto px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 flex items-center justify-center shadow whitespace-nowrap ml-0 sm:ml-2 mt-2 sm:mt-0">
+                        <button onclick="openTransferModal()"
+                            class="w-full sm:w-auto px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 flex items-center justify-center shadow whitespace-nowrap ml-0 sm:ml-2 mt-2 sm:mt-0">
                             <i data-lucide="arrow-right-left" class="w-4 h-4 mr-2"></i> Chuyển Khoa
                         </button>
                     </div>
@@ -1544,39 +1545,53 @@
         </div>
     </div>
     <!-- ================= START: MODAL CHUYỂN NHÂN VIÊN ================= -->
-    <div id="transfer-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
+    <div id="transfer-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
             <div class="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800">Yêu cầu Chuyển Khoa</h3>
-                <button onclick="closeTransferModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeTransferModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
             </div>
             <form onsubmit="submitTransferRequest(event)" class="p-6 space-y-4">
                 <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Chọn nhân viên <span class="text-red-500">*</span></label>
-                <!-- Thêm ô gõ tìm kiếm -->
-                <input type="text" id="transfer-nv-search" placeholder="🔍 Gõ tên hoặc mã NV để tìm nhanh..." class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-orange-500 transition" oninput="filterTransferNv()">
-                <!-- Danh sách chọn (Sẽ tự động lọc theo ô tìm kiếm) -->
-                <select id="transfer-nv" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-500" required></select>
-            </div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Chọn nhân viên <span
+                            class="text-red-500">*</span></label>
+                    <!-- Thêm ô gõ tìm kiếm -->
+                    <input type="text" id="transfer-nv-search" placeholder="🔍 Gõ tên hoặc mã NV để tìm nhanh..."
+                        class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-orange-500 transition"
+                        oninput="filterTransferNv()">
+                    <!-- Danh sách chọn (Sẽ tự động lọc theo ô tìm kiếm) -->
+                    <select id="transfer-nv"
+                        class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-orange-500"
+                        required></select>
+                </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Khoa hiện tại</label>
-                    <input type="text" id="transfer-from-khoa" class="w-full px-3 py-2 border bg-slate-50 rounded-lg text-sm font-bold text-slate-600 cursor-not-allowed" readonly>
+                    <input type="text" id="transfer-from-khoa"
+                        class="w-full px-3 py-2 border bg-slate-50 rounded-lg text-sm font-bold text-slate-600 cursor-not-allowed"
+                        readonly>
                     <input type="hidden" id="transfer-from-khoa-code">
                 </div>
                 <div class="flex items-center justify-center py-0 text-orange-500">
                     <i data-lucide="arrow-down" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Chuyển đến khoa <span class="text-red-500">*</span></label>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Chuyển đến khoa <span
+                            class="text-red-500">*</span></label>
                     <select id="transfer-to-khoa" class="w-full px-3 py-2 border rounded-lg text-sm" required></select>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Lý do chuyển</label>
-                    <textarea id="transfer-reason" class="w-full px-3 py-2 border rounded-lg text-sm" rows="2" placeholder="Ví dụ: Theo quyết định điều động..."></textarea>
+                    <textarea id="transfer-reason" class="w-full px-3 py-2 border rounded-lg text-sm" rows="2"
+                        placeholder="Ví dụ: Theo quyết định điều động..."></textarea>
                 </div>
                 <div class="flex justify-end space-x-3 pt-4 border-t mt-4">
-                    <button type="button" onclick="closeTransferModal()" class="px-4 py-2 text-sm bg-slate-100 rounded-lg">Hủy</button>
-                    <button type="submit" class="px-4 py-2 text-sm text-white bg-orange-600 rounded-lg flex items-center shadow hover:bg-orange-700">Gửi yêu cầu</button>
+                    <button type="button" onclick="closeTransferModal()"
+                        class="px-4 py-2 text-sm bg-slate-100 rounded-lg">Hủy</button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm text-white bg-orange-600 rounded-lg flex items-center shadow hover:bg-orange-700">Gửi
+                        yêu cầu</button>
                 </div>
             </form>
         </div>
@@ -1871,7 +1886,18 @@
             const diff = today.getDate() - day + (day === 0 ? -6 : 1);
             return new Date(today.setDate(diff));
         }
-
+        function getCurrentWeekDates() {
+            const today = new Date();
+            const day = today.getDay();
+            const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+            const monday = new Date(today.setDate(diff));
+            const sunday = new Date(monday.getTime());
+            sunday.setDate(monday.getDate() + 6);
+            return {
+                start: monday.toISOString().split('T')[0],
+                end: sunday.toISOString().split('T')[0]
+            };
+        }
         const currentMondayStr = normalizeDateStr(getMondayOfCurrentWeek());
         document.getElementById('tuan-bat-dau').value = currentMondayStr;
         document.getElementById('admin-tuan-bat-dau').value = currentMondayStr;
@@ -1963,26 +1989,26 @@
         }
 
         // Bắt đầu quy trình tải dữ liệu an toàn khi mở trang
-            window.addEventListener('load', async () => {
-                    // 1. Kiểm tra ngay lập tức xem đã có phiên đăng nhập chưa
-                    const savedUser = localStorage.getItem('currentUser');
+        window.addEventListener('load', async () => {
+            // 1. Kiểm tra ngay lập tức xem đã có phiên đăng nhập chưa
+            const savedUser = localStorage.getItem('currentUser');
 
-                    // 2. NẾU ĐÃ ĐĂNG NHẬP: Ẩn ngay form đăng nhập để tránh bị chớp/nháy màn hình
-                    if (savedUser) {
-                        document.getElementById('login-screen').classList.add('hidden');
-                    }
+            // 2. NẾU ĐÃ ĐĂNG NHẬP: Ẩn ngay form đăng nhập để tránh bị chớp/nháy màn hình
+            if (savedUser) {
+                document.getElementById('login-screen').classList.add('hidden');
+            }
 
-                    // 3. Tiến hành chờ tải dữ liệu thiết yếu từ máy chủ
-                    await loadEssentialData();
+            // 3. Tiến hành chờ tải dữ liệu thiết yếu từ máy chủ
+            await loadEssentialData();
 
-                    // 4. Phân luồng giao diện
-                    if (savedUser) {
-                        await checkAutoLogin();
-                    } else {
-                        // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
-                        await loadDataFromGAS();
-                    }
-                });
+            // 4. Phân luồng giao diện
+            if (savedUser) {
+                await checkAutoLogin();
+            } else {
+                // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
+                await loadDataFromGAS();
+            }
+        });
         // 1. TẢI DỮ LIỆU THIẾT YẾU (Chạy ngay khi mở web)
         async function loadEssentialData() {
             try {
@@ -1991,7 +2017,7 @@
 
                 const responses = await Promise.all([
                     fetchAllSupabase('KhoaPhong'),
-                    fetchAllSupabase('NhanVien'),
+                    fetchAllSupabase('NhanVien', 'MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password'),
                     fetchAllSupabase('LoaiCaTruc'),
                     fetchAllSupabase('CauHinhKySo')
                 ]);
@@ -2043,12 +2069,11 @@
         async function loadHeavyData() {
             try {
                 showGlobalLoading();
-                const range = getActiveDateRange();
-
+                const week = getCurrentWeekDates();
                 const responses = await Promise.all([
-                    fetchAllSupabase('PhieuLichTruc', '*', { column: 'TuanTruc', startDate: range.startDate, endDate: range.endDate }),
-                    fetchAllSupabase('ChiTietLichTruc', '*', { column: 'NgayTruc', startDate: range.startDate, endDate: range.endDate }),
-                    fetchAllSupabase('ThongBao'),
+                    _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', week.start).lte('TuanTruc', week.end),
+                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', week.start).lte('NgayTruc', week.end),
+                    _supabase.from('ThongBao').select('*').limit(500),
                     _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(50)
                 ]);
 
@@ -2180,14 +2205,16 @@
 
             try {
                 const responses = await Promise.all([
-                    _supabase.from('KhoaPhong').select('*').limit(10000),
-                    _supabase.from('NhanVien').select('*').limit(10000),
-                    _supabase.from('LoaiCaTruc').select('*').limit(10000),
-                    _supabase.from('PhieuLichTruc').select('*').limit(10000),
-                    _supabase.from('ChiTietLichTruc').select('*').limit(50000),
-                    _supabase.from('ThongBao').select('*').limit(10000),
+                    _supabase.from('KhoaPhong').select('*').limit(1000),
+                    _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password').limit(5000),
+                    _supabase.from('LoaiCaTruc').select('*').limit(100),
+                    // KHÔNG tải ngầm PhieuLichTruc ở đây nữa
+                    { data: [] },
+                    // KHÔNG tải ngầm 50000 ChiTietLichTruc ở đây nữa để tránh sập Database
+                    { data: [] },
+                    _supabase.from('ThongBao').select('*').limit(1000),
                     _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(200),
-                    _supabase.from('CauHinhKySo').select('*').limit(10000)
+                    _supabase.from('CauHinhKySo').select('*').limit(100)
                 ]);
 
                 // Ngăn chặn việc làm trống dữ liệu nếu gặp lỗi kết nối
@@ -2293,16 +2320,16 @@
 
         async function loadDataFromGAS() {
             try {
-                // ÁP DỤNG HÀM TẢI FULL DỮ LIỆU MỚI
+                const week = getCurrentWeekDates();
                 const responses = await Promise.all([
-                    fetchAllSupabase('KhoaPhong'),
-                    fetchAllSupabase('NhanVien'),
-                    fetchAllSupabase('LoaiCaTruc'),
-                    fetchAllSupabase('PhieuLichTruc'),
-                    fetchAllSupabase('ChiTietLichTruc'), // Sẽ lấy sạch toàn bộ ngàn dòng ca trực
-                    fetchAllSupabase('ThongBao'),
-                    _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(200),
-                    fetchAllSupabase('CauHinhKySo')
+                    _supabase.from('KhoaPhong').select('*'),
+                    _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password'),
+                    _supabase.from('LoaiCaTruc').select('*'),
+                    _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', week.start).lte('TuanTruc', week.end),
+                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', week.start).lte('NgayTruc', week.end),
+                    _supabase.from('ThongBao').select('*').limit(500),
+                    _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(100),
+                    _supabase.from('CauHinhKySo').select('*')
                 ]);
 
                 let hasError = false;
@@ -2564,101 +2591,101 @@
         }
 
         async function syncWithGAS(actionName, payloadData) {
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
+            // BẬT KHOÁ ĐỒNG BỘ NGẦM
+            isPushingData = true;
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+
+                // --- LÀM SẠCH DỮ LIỆU BẢNG NHÂN VIÊN ---
+                let processedData = payloadData;
+                if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(u => ({
+                        MaNV: String(u.MaNV),
+                        HoTen: u.HoTen || "",
+                        MaKhoa: u.MaKhoa || "",
+                        ChucDanh: u.ChucDanh || "",
+                        SDT: u.SDT || "",
+                        Email: u.Email || "",
+                        Username: u.Username || "",
+                        Password: u.Password || "",
+                        Role: u.Role || "User_Khoa",
+                        CCCD: u.CCCD ? String(u.CCCD).trim() : "",
+                        ChungChiHS: u.ChungChiHS || false,
+                        NgayVaoLam: u.NgayVaoLam || "",
+                        CoTruc: u.CoTruc !== false,
+                        BHXH: u.BHXH || "",
+                        CCHN: u.CCHN || "",
+                        NgayNghi: u.NgayNghi || ""
+                    }));
+                }
+
+                // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
+                if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
+                    // Dùng Map để tự động loại bỏ các ca trực có trùng ID trước khi đẩy lên server
+                    const uniqueMap = new Map();
+                    payloadData.forEach(s => {
+                        uniqueMap.set(String(s.MaChiTiet), {
+                            MaChiTiet: String(s.MaChiTiet),
+                            NgayTruc: String(s.NgayTruc),
+                            MaNV: String(s.MaNV),
+                            MaKhoa: String(s.MaKhoa),
+                            ChucDanh: String(s.ChucDanh),
+                            PhanCa: s.PhanCa || '24h'
+                        });
+                    });
+                    processedData = Array.from(uniqueMap.values());
+                }
+
+                // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
+                if (tableName === 'ThongBao' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(tb => ({
+                        MaTB: String(tb.MaTB),
+                        TieuDe: tb.TieuDe || "",
+                        NoiDung: tb.NoiDung || "",
+                        NguoiNhan: tb.NguoiNhan || "",
+                        NgayBatDau: tb.NgayBatDau || "",
+                        NgayKetThuc: tb.NgayKetThuc || "",
+                        DataDoiCa: tb.DataDoiCa || null,
+                        TrangThaiDoiCa: tb.TrangThaiDoiCa || null
+                    }));
+                }
+
+                if (tableName === 'CauHinhPhep') {
+                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
+                    if (error) throw error;
                     return;
                 }
 
-                // BẬT KHOÁ ĐỒNG BỘ NGẦM
-                isPushingData = true;
-
-                try {
-                    const tableName = actionName.replace('sync_', '');
-
-                    // --- LÀM SẠCH DỮ LIỆU BẢNG NHÂN VIÊN ---
-                    let processedData = payloadData;
-                    if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
-                        processedData = payloadData.map(u => ({
-                            MaNV: String(u.MaNV),
-                            HoTen: u.HoTen || "",
-                            MaKhoa: u.MaKhoa || "",
-                            ChucDanh: u.ChucDanh || "",
-                            SDT: u.SDT || "",
-                            Email: u.Email || "",
-                            Username: u.Username || "",
-                            Password: u.Password || "",
-                            Role: u.Role || "User_Khoa",
-                            CCCD: u.CCCD ? String(u.CCCD).trim() : "",
-                            ChungChiHS: u.ChungChiHS || false,
-                            NgayVaoLam: u.NgayVaoLam || "",
-                            CoTruc: u.CoTruc !== false,
-                            BHXH: u.BHXH || "",
-                            CCHN: u.CCHN || "",
-                            NgayNghi: u.NgayNghi || ""
-                        }));
-                    }
-
-                    // --- LÀM SẠCH DỮ LIỆU CA TRỰC ---
-                    if (tableName === 'ChiTietLichTruc' && Array.isArray(payloadData)) {
-                        // Dùng Map để tự động loại bỏ các ca trực có trùng ID trước khi đẩy lên server
-                        const uniqueMap = new Map();
-                        payloadData.forEach(s => {
-                            uniqueMap.set(String(s.MaChiTiet), {
-                                MaChiTiet: String(s.MaChiTiet),
-                                NgayTruc: String(s.NgayTruc),
-                                MaNV: String(s.MaNV),
-                                MaKhoa: String(s.MaKhoa),
-                                ChucDanh: String(s.ChucDanh),
-                                PhanCa: s.PhanCa || '24h'
-                            });
-                        });
-                        processedData = Array.from(uniqueMap.values());
-                    }
-
-                    // --- LÀM SẠCH DỮ LIỆU THÔNG BÁO ĐỂ TRÁNH LỖI 400 BAD REQUEST ---
-                    if (tableName === 'ThongBao' && Array.isArray(payloadData)) {
-                        processedData = payloadData.map(tb => ({
-                            MaTB: String(tb.MaTB),
-                            TieuDe: tb.TieuDe || "",
-                            NoiDung: tb.NoiDung || "",
-                            NguoiNhan: tb.NguoiNhan || "",
-                            NgayBatDau: tb.NgayBatDau || "",
-                            NgayKetThuc: tb.NgayKetThuc || "",
-                            DataDoiCa: tb.DataDoiCa || null,
-                            TrangThaiDoiCa: tb.TrangThaiDoiCa || null
-                        }));
-                    }
-
-                    if (tableName === 'CauHinhPhep') {
-                        const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
-                        if (error) throw error;
-                        return;
-                    }
-
-                    // Đẩy dữ liệu đã được làm sạch lên Supabase
-                    if (Array.isArray(processedData)) {
-                        const chunkSize = 500;
-                        for (let i = 0; i < processedData.length; i += chunkSize) {
-                            const chunk = processedData.slice(i, i + chunkSize);
-                            const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
-                            if (upsertError) throw upsertError;
-                        }
-                    } else {
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                // Đẩy dữ liệu đã được làm sạch lên Supabase
+                if (Array.isArray(processedData)) {
+                    const chunkSize = 500;
+                    for (let i = 0; i < processedData.length; i += chunkSize) {
+                        const chunk = processedData.slice(i, i + chunkSize);
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
                         if (upsertError) throw upsertError;
                     }
-
-                    // 🚨 ĐÃ LOẠI BỎ HOÀN TOÀN ĐOẠN XÓA RÁC Ở ĐÂY ĐỂ ĐẢM BẢO AN TOÀN TUYỆT ĐỐI!
-
-                } catch (e) {
-                    console.error("Lỗi đồng bộ Supabase:", e);
-                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
-                } finally {
-                    // TẮT KHÓA ĐỒNG BỘ NGẦM
-                    setTimeout(() => { isPushingData = false; }, 3000);
+                } else {
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                    if (upsertError) throw upsertError;
                 }
+
+                // 🚨 ĐÃ LOẠI BỎ HOÀN TOÀN ĐOẠN XÓA RÁC Ở ĐÂY ĐỂ ĐẢM BẢO AN TOÀN TUYỆT ĐỐI!
+
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+            } finally {
+                // TẮT KHÓA ĐỒNG BỘ NGẦM
+                setTimeout(() => { isPushingData = false; }, 3000);
             }
+        }
 
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC
         async function logActivity(actionDesc, details = "") {
@@ -2703,15 +2730,43 @@
             // DÒNG QUAN TRỌNG: Ép trình duyệt vẽ icon xoay ngay lập tức trước khi tính toán
             await new Promise(resolve => setTimeout(resolve, 50));
 
+            // NẾU MOCK_DB.users chưa kịp tải, thử gọi lại DB một lần nữa để chắc chắn
             if (!MOCK_DB.users || MOCK_DB.users.length === 0) {
-                showToast("Hệ thống vẫn đang tải dữ liệu. Vui lòng đợi thêm vài giây!", "warning");
-                resetLoginButton(btn, originalText);
-                return;
+                try {
+                    const { data } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password');
+                    if (data && data.length > 0) {
+                        let rawUsers = data.map(u => ({
+                            ...u,
+                            MaNV: String(u.MaNV).trim(),
+                            MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
+                            ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
+                            ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
+                            CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
+                            NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
+                            NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
+                        }));
+                        MOCK_DB.users = processDisplayNames(rawUsers);
+                    } else {
+                        showToast("Hệ thống vẫn đang tải dữ liệu. Vui lòng đợi thêm vài giây!", "warning");
+                        resetLoginButton(btn, originalText);
+                        return;
+                    }
+                } catch (err) {
+                    showToast("Lỗi kết nối máy chủ! Vui lòng thử lại.", "error");
+                    resetLoginButton(btn, originalText);
+                    return;
+                }
             }
 
             const u = document.getElementById('username').value.toLowerCase().trim();
+
+            // XỬ LÝ SO SÁNH PASSWORD AN TOÀN (Kể cả khi Password trong DB bị trống/null)
             const p = document.getElementById('password').value.trim();
-            const user = MOCK_DB.users.find(x => String(x.Username).toLowerCase() === u && String(x.Password) === p);
+            const user = MOCK_DB.users.find(x => {
+                const dbUser = String(x.Username || "").toLowerCase().trim();
+                const dbPass = String(x.Password || "").trim();
+                return dbUser === u && dbPass === p;
+            });
 
             if (user) {
                 if (user.NgayNghi) {
@@ -2736,9 +2791,6 @@
                 document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
 
                 buildMenu();
-
-                // 2. KÉO DỮ LIỆU NẶNG (Lúc này Loading overlay sẽ đè lên giao diện chính, báo cho user biết đang tải)
-                await loadHeavyData();
 
                 // 3. Render dữ liệu vào các thẻ select
                 const sel = document.getElementById('user-khoa-selector');
@@ -3375,6 +3427,7 @@
             });
 
             const badge = document.getElementById('notif-badge');
+            // Cập nhật trạng thái chuông
             if (validNotifs.length > 0) badge.classList.remove('hidden');
             else badge.classList.add('hidden');
 
@@ -3391,7 +3444,7 @@
                         let dataParsed = {};
                         try {
                             dataParsed = JSON.parse(tb.DataDoiCa);
-                        } catch(e) {}
+                        } catch (e) { }
 
                         if (currentUser.Role === 'Admin_KHTH' && dataParsed.type !== 'ChuyenKhoa') {
                             // Hiện 2 nút bấm cho KHTH (Duyệt đổi ca)
@@ -3400,7 +3453,7 @@
                                 <button onclick="duyetDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded hover:bg-emerald-600 shadow-sm transition">Duyệt & Đồng bộ</button>
                                 <button onclick="tuChoiDoiCa('${tb.MaTB}')" class="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded hover:bg-red-600 shadow-sm transition">Từ chối</button>
                             </div>`;
-                        } 
+                        }
                         // ĐÃ SỬA LẠI ĐIỀU KIỆN Ở ĐÂY: Kiểm tra trong danh sách Khoa của user có chứa TOCHUCHANHCHANH không
                         else if (currentUser.KhoaList && currentUser.KhoaList.includes('TOCHUCHANHCHANH') && dataParsed.type === 'ChuyenKhoa') {
                             extraAction = `
@@ -3629,26 +3682,33 @@
             const newTB = { MaTB: "TB_" + Date.now(), TieuDe: document.getElementById('tb-tieude').value.trim(), NoiDung: document.getElementById('tb-noidung').value.trim(), NguoiNhan: document.getElementById('tb-nguoinhan').value, NgayBatDau: document.getElementById('tb-ngaybd').value, NgayKetThuc: document.getElementById('tb-ngaykt').value };
             if (newTB.NgayBatDau > newTB.NgayKetThuc) return showToast("Ngày kết thúc phải sau ngày bắt đầu!", "error");
 
-            MOCK_DB.thongBao.push(newTB); closeThongBaoModal(); renderAdminThongBaoTable(); checkAndRenderNotifications();
-
-            await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-            await logActivity("Tạo thông báo mới", `Gửi: ${newTB.NguoiNhan}`);
-            showToast("Đã ban hành thông báo!", "success");
+            syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
         }
 
         function deleteThongBao(id) {
             showConfirmModal("Xác nhận Xóa", "Xóa thông báo này khỏi hệ thống?", async () => {
-                // 1. Cập nhật mảng tĩnh
-                MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
+                showGlobalLoading(); // Bật màn hình chờ để khóa thao tác
+                try {
+                    // 1. XÓA TRỰC TIẾP TRÊN SUPABASE (Rất quan trọng)
+                    const { error } = await _supabase.from('ThongBao').delete().eq('MaTB', id);
+                    if (error) throw error;
 
-                // 2. Render lại Giao diện Ngay Lập Tức
-                renderAdminThongBaoTable();
-                checkAndRenderNotifications();
+                    // 2. Cập nhật mảng tĩnh local
+                    MOCK_DB.thongBao = MOCK_DB.thongBao.filter(t => t.MaTB !== id);
 
-                // 3. Đẩy lên Máy chủ (hàm này đã được bọc isPushingData bên trên)
-                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-                await logActivity("Xóa thông báo", `ID: ${id}`);
-                showToast("Đã xóa thông báo!", "success");
+                    // 3. Render lại Giao diện
+                    renderAdminThongBaoTable();
+                    checkAndRenderNotifications();
+
+                    // 4. Ghi log
+                    await logActivity("Xóa thông báo", `ID: ${id}`);
+                    showToast("Đã xóa thông báo!", "success");
+                } catch (e) {
+                    console.error("Lỗi xóa thông báo:", e);
+                    showToast("Lỗi khi xóa thông báo trên máy chủ!", "error");
+                } finally {
+                    hideGlobalLoading(); // Tắt màn hình chờ
+                }
             });
         }
 
@@ -3995,9 +4055,13 @@
         // KHỐI 7: XẾP LỊCH KHOA VÀ CÁC TÍNH NĂNG NÂNG CAO (ĐỔI CA, AUTO-SCHEDULE)
         // ---------------------------------------------------------------------------------------
 
-        function checkWeeklyStatus() {
+        async function checkWeeklyStatus() {
             const tuan = forceMonday('tuan-bat-dau');
             if (!tuan) return;
+
+            // THÊM DÒNG NÀY:
+            await fetchDataForWeek(tuan);
+
             const weekDates = getDatesInWeek(tuan);
             localShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
             currentPhieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
@@ -4183,21 +4247,21 @@
         }
 
         function assignToSelectedCell(maNV, chucDanh) {
-        if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
+            if (!selectedCell) return showToast("Click 1 ô trống bên lưới lịch trước!", "warning");
 
-        if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
-            return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
-        }
+            if (chucDanh !== selectedCell.role && selectedCell.role !== 'CHAO_CO' && selectedCell.role !== 'DONG_DAU') {
+                return showToast("Không thể xếp nhân viên này vào cột chức danh khác!", "error");
+            }
 
-        // ===== ĐOẠN MÃ CẦN THÊM VÀO =====
-        // Kiểm tra xem nhân sự này đã được xếp trực trong ngày đang chọn chưa
-        const isAlreadyAssigned = localShifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date);
-        if (isAlreadyAssigned) {
-            return showToast("Nhân sự này đã được xếp lịch trực trong ngày hôm nay!", "warning");
-        }
+            // ===== ĐOẠN MÃ CẦN THÊM VÀO =====
+            // Kiểm tra xem nhân sự này đã được xếp trực trong ngày đang chọn chưa
+            const isAlreadyAssigned = localShifts.some(s => String(s.MaNV) === String(maNV) && s.NgayTruc === selectedCell.date);
+            if (isAlreadyAssigned) {
+                return showToast("Nhân sự này đã được xếp lịch trực trong ngày hôm nay!", "warning");
+            }
 
-        if (selectedCell.role === 'CHAO_CO') {
-        const dSelect = new Date(selectedCell.date + "T12:00:00");
+            if (selectedCell.role === 'CHAO_CO') {
+                const dSelect = new Date(selectedCell.date + "T12:00:00");
                 if (dSelect.getDay() !== 1) return showToast("Lịch chào cờ chỉ được xếp vào Thứ 2!", "error");
                 const countChaoCo = localShifts.filter(s => s.NgayTruc === selectedCell.date && s.ChucDanh === 'CHAO_CO').length;
                 if (countChaoCo >= 4) return showToast("Chỉ xếp 4 người chào cờ vào Thứ 2!", "error");
@@ -4365,23 +4429,23 @@
         }
 
         async function luuLichNhaps() {
-        const tuan = forceMonday('tuan-bat-dau');
-        if (!tuan) return;
-        const weekDates = getDatesInWeek(tuan);
+            const tuan = forceMonday('tuan-bat-dau');
+            if (!tuan) return;
+            const weekDates = getDatesInWeek(tuan);
 
-        // --- ĐOẠN MÃ CẦN THÊM VÀO ĐỂ XÓA DỮ LIỆU THỪA TRÊN SERVER ---
-        const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
-        const localShiftIds = localShifts.map(s => s.MaChiTiet);
-        const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
+            // --- ĐOẠN MÃ CẦN THÊM VÀO ĐỂ XÓA DỮ LIỆU THỪA TRÊN SERVER ---
+            const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
+            const localShiftIds = localShifts.map(s => s.MaChiTiet);
+            const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
 
-        if (idsToDelete.length > 0) {
-            await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
-        }
-        // -------------------------------------------------------------
+            if (idsToDelete.length > 0) {
+                await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
+            }
+            // -------------------------------------------------------------
 
-        MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
-        MOCK_DB.shifts.push(...localShifts);
-        await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
+            MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
+            MOCK_DB.shifts.push(...localShifts);
+            await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
             await logActivity("Lưu nháp lịch");
             showToast("Đã lưu nháp an toàn.", "success");
             clearUnsaved(); // Xóa mác chưa lưu sau khi save
@@ -4389,50 +4453,41 @@
         }
 
         function nopLichKHTH() {
-        const tuan = forceMonday('tuan-bat-dau');
-        if (!tuan) return;
+            const tuan = forceMonday('tuan-bat-dau');
+            if (!tuan) return;
 
-        showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
-            showGlobalLoading(); 
-            try {
-                // CHỈ KHAI BÁO MỘT LẦN Ở ĐÂY
+            showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
+                // 1. CẬP NHẬT LOCAL NGAY LẬP TỨC
                 const weekDates = getDatesInWeek(tuan);
+                let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
+                let newPhieu;
+                if (phieu) {
+                    phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; newPhieu = phieu;
+                } else {
+                    newPhieu = { MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" };
+                    MOCK_DB.phieu.push(newPhieu);
+                }
 
-                // --- ĐOẠN MÃ XÓA DỮ LIỆU THỪA ---
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
+                MOCK_DB.shifts.push(...localShifts);
+
+                // 2. CẬP NHẬT GIAO DIỆN NGAY CHO NGƯỜI DÙNG (Không bắt chờ)
+                showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
+                clearUnsaved();
+                checkWeeklyStatus();
+
+                // 3. XỬ LÝ LƯU LÊN SUPABASE CHẠY NGẦM Ở BACKROUND
                 const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
                 const localShiftIds = localShifts.map(s => s.MaChiTiet);
                 const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
 
                 if (idsToDelete.length > 0) {
-                    await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
+                    _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete).then(); // Chạy ngầm, không await
                 }
-                // ---------------------------------
-
-                let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
-                if (phieu) { 
-                    phieu.TrangThai = "Chờ duyệt"; 
-                    phieu.GhiChu = ""; 
-                } else { 
-                    MOCK_DB.phieu.push({ MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" }); 
-                }
-                
-                // XÓA DÒNG KHAI BÁO BỊ TRÙNG Ở ĐÂY:
-                // const weekDates = getDatesInWeek(tuan); // DÒNG NÀY CẦN XÓA BỎ
-
-                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc))); 
-                MOCK_DB.shifts.push(...localShifts);
-
-                await syncWithGAS('sync_PhieuLichTruc', MOCK_DB.phieu);
-                await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-                await logActivity("Nộp lịch lên KHTH", `Tuần: ${tuan}`);
-
-                showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
-                clearUnsaved();
-                checkWeeklyStatus();
-            } finally {
-                hideGlobalLoading(); 
-            }
-        });
+                syncWithGAS('sync_PhieuLichTruc', [newPhieu]); // Chạy ngầm
+                if (localShifts.length > 0) syncWithGAS('sync_ChiTietLichTruc', localShifts); // Chạy ngầm
+                logActivity("Nộp lịch", `Tuần: ${tuan}`);
+            });
         }
 
         // ---------------------------------------------------------------------------------------
@@ -4544,10 +4599,10 @@
                     try {
                         // 2. GỬI LỆNH XÓA TRỰC TIẾP TRÊN SUPABASE ĐỂ TRÁNH BỊ NHẢY LẠI
                         await _supabase.from('PhieuLichTruc').delete().eq('MaPhieu', chotRecord.MaPhieu);
-                        
+
                         // 3. XÓA Ở BỘ NHỚ LOCAL ĐỂ CẬP NHẬT GIAO DIỆN
                         MOCK_DB.phieu = MOCK_DB.phieu.filter(p => p.MaPhieu !== chotRecord.MaPhieu);
-                        
+
                         await logActivity("Mở chốt lịch toàn viện", `Tuần: ${tuan}`);
                         showToast("Đã mở chốt. Đã thu hồi quyền xem lịch tổng hợp của User Khoa.", "success");
                         renderAdminApprovalTable();
@@ -4582,7 +4637,7 @@
 
                         // 2. LƯU TRỰC TIẾP LÊN MÁY CHỦ BẢO ĐẢM NHẬN LIỀN
                         await _supabase.from('PhieuLichTruc').upsert([newPhieu]);
-                        
+
                         // 3. LƯU VÀO LOCAL VÀ RENDER
                         MOCK_DB.phieu.push(newPhieu);
                         await logActivity("Chốt lịch toàn viện", `Tuần: ${tuan}`);
@@ -4604,9 +4659,12 @@
             }
         }
 
-        function renderAdminApprovalTable() {
+        async function renderAdminApprovalTable() {
             const tuan = forceMonday('admin-tuan-bat-dau');
             if (!tuan) return;
+
+            await fetchDataForWeek(tuan); // Thêm dòng này vào
+
             const allViolations = getAllViolations(tuan, MOCK_DB.shifts);
             const tbody = document.getElementById('admin-approval-body');
 
@@ -4729,9 +4787,11 @@
         // KHỐI 9: DANH BẠ NHÂN SỰ TRỰC & XUẤT LỊCH IN
         // ---------------------------------------------------------------------------------------
 
-        function renderContactsTable() {
+        async function renderContactsTable() {
             const tuan = forceMonday('contacts-tuan-bat-dau');
             if (!tuan) return;
+
+            await fetchDataForWeek(tuan); // Thêm dòng này vào
 
             const container = document.getElementById('contacts-container');
             const alertBox = document.getElementById('contacts-alert');
@@ -4959,9 +5019,11 @@
             if (extraInfoEl) extraInfoEl.innerHTML = renderDuocExtra(tuan);
         }
 
-        function renderUserMasterTable() {
+        async function renderUserMasterTable() {
             const tuan = forceMonday('user-master-tuan');
             if (!tuan) return;
+
+            await fetchDataForWeek(tuan); // Thêm dòng này vào
 
             const container = document.getElementById('user-master-container');
             const alertBox = document.getElementById('user-master-alert');
@@ -4984,9 +5046,12 @@
             }
         }
 
-        function renderXemLichKhoaTable() {
+        async function renderXemLichKhoaTable() {
             const tuan = forceMonday('xem-tuan-bat-dau');
             if (!tuan) return;
+
+            await fetchDataForWeek(tuan); // Thêm dòng này vào
+
             const weekDates = getDatesInWeek(tuan);
             const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'CN'];
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
@@ -5167,169 +5232,193 @@
             document.getElementById('print-khoa-modal').classList.remove('hidden');
         }
         // --- LOGIC XỬ LÝ CHUYỂN KHOA ---
-let currentManagedNvs = []; // Biến lưu danh sách nhân sự để dùng cho tính năng tìm kiếm
+        let currentManagedNvs = []; // Biến lưu danh sách nhân sự để dùng cho tính năng tìm kiếm
 
-function openTransferModal() {
-    const toKhoaSelect = document.getElementById('transfer-to-khoa');
-    const searchInput = document.getElementById('transfer-nv-search');
-    
-    // 1. Lấy nhân viên thuộc quyền quản lý của Admin đang thao tác
-    let managedNvs = MOCK_DB.users;
-    if (currentUser.Role === 'Admin_Khoa') {
-        managedNvs = MOCK_DB.users.filter(u => {
-            const uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
-            return uKhoas.some(k => currentUser.KhoaList.includes(k));
-        });
-    }
-    
-    // 2. Gán vào biến cục bộ và reset ô tìm kiếm
-    currentManagedNvs = managedNvs; 
-    searchInput.value = ''; 
-    
-    // 3. Render danh sách khoa chuyển đến
-    toKhoaSelect.innerHTML = MOCK_DB.khoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
-    
-    // 4. Khai báo sự kiện thay đổi nhân viên -> cập nhật khoa hiện tại
-    document.getElementById('transfer-nv').onchange = function() {
-        const selectedNv = MOCK_DB.users.find(u => u.MaNV === this.value);
-        if (selectedNv) {
-            document.getElementById('transfer-from-khoa').value = selectedNv.MaKhoa;
-            document.getElementById('transfer-from-khoa-code').value = selectedNv.MaKhoa;
+        function openTransferModal() {
+            const toKhoaSelect = document.getElementById('transfer-to-khoa');
+            const searchInput = document.getElementById('transfer-nv-search');
+
+            // 1. Lấy nhân viên thuộc quyền quản lý của Admin đang thao tác
+            let managedNvs = MOCK_DB.users;
+            if (currentUser.Role === 'Admin_Khoa') {
+                managedNvs = MOCK_DB.users.filter(u => {
+                    const uKhoas = (u.MaKhoa || "").split(',').map(s => s.trim());
+                    return uKhoas.some(k => currentUser.KhoaList.includes(k));
+                });
+            }
+
+            // 2. Gán vào biến cục bộ và reset ô tìm kiếm
+            currentManagedNvs = managedNvs;
+            searchInput.value = '';
+
+            // 3. Render danh sách khoa chuyển đến
+            toKhoaSelect.innerHTML = MOCK_DB.khoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+
+            // 4. Khai báo sự kiện thay đổi nhân viên -> cập nhật khoa hiện tại
+            document.getElementById('transfer-nv').onchange = function () {
+                const selectedNv = MOCK_DB.users.find(u => u.MaNV === this.value);
+                if (selectedNv) {
+                    document.getElementById('transfer-from-khoa').value = selectedNv.MaKhoa;
+                    document.getElementById('transfer-from-khoa-code').value = selectedNv.MaKhoa;
+                }
+            };
+
+            // 5. Render danh sách nhân viên ban đầu
+            renderTransferNvSelect(currentManagedNvs);
+
+            document.getElementById('transfer-reason').value = '';
+            document.getElementById('transfer-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
-    };
-    
-    // 5. Render danh sách nhân viên ban đầu
-    renderTransferNvSelect(currentManagedNvs);
-    
-    document.getElementById('transfer-reason').value = '';
-    document.getElementById('transfer-modal').classList.remove('hidden');
-    lucide.createIcons();
-}
 
-// Hàm phụ: Render danh sách đổ xuống
-function renderTransferNvSelect(list) {
-    const nvSelect = document.getElementById('transfer-nv');
-    nvSelect.innerHTML = list.map(u => `<option value="${u.MaNV}">${u.HoTen} - ${u.ChucDanh}</option>`).join('');
-    
-    // Tự động chọn người đầu tiên trong danh sách vừa lọc và cập nhật Khoa hiện tại
-    if (list.length > 0) {
-        nvSelect.value = list[0].MaNV;
-        if (nvSelect.onchange) nvSelect.onchange(); 
-    } else {
-        document.getElementById('transfer-from-khoa').value = '';
-        document.getElementById('transfer-from-khoa-code').value = '';
-    }
-}
+        // Hàm phụ: Render danh sách đổ xuống
+        function renderTransferNvSelect(list) {
+            const nvSelect = document.getElementById('transfer-nv');
+            nvSelect.innerHTML = list.map(u => `<option value="${u.MaNV}">${u.HoTen} - ${u.ChucDanh}</option>`).join('');
 
-// Hàm phụ: Lọc nhân viên khi gõ vào ô tìm kiếm
-function filterTransferNv() {
-    const keyword = document.getElementById('transfer-nv-search').value.toLowerCase().trim();
-    
-    // Tìm trong Họ tên, Mã NV hoặc Chức danh
-    const filteredList = currentManagedNvs.filter(u => {
-        const searchStr = `${u.MaNV} ${u.HoTen} ${u.ChucDanh}`.toLowerCase();
-        return searchStr.includes(keyword);
-    });
-    
-    renderTransferNvSelect(filteredList);
-}
-
-function closeTransferModal() {
-    document.getElementById('transfer-modal').classList.add('hidden');
-}
-
-async function submitTransferRequest(e) {
-    e.preventDefault();
-    const maNV = document.getElementById('transfer-nv').value;
-    const tuKhoa = document.getElementById('transfer-from-khoa-code').value;
-    const denKhoa = document.getElementById('transfer-to-khoa').value;
-    const lyDo = document.getElementById('transfer-reason').value;
-    
-    if (tuKhoa.includes(denKhoa)) {
-        return showToast("Nhân viên hiện đang thuộc khoa này!", "error");
-    }
-    
-    showGlobalLoading();
-    try {
-        const yeuCauId = "YCCK_" + Date.now();
-        
-        // 1. Lưu vào bảng YeuCauChuyenKhoa
-        const { error } = await _supabase.from('YeuCauChuyenKhoa').insert([{
-            MaYeuCau: yeuCauId, MaNV: maNV, TuKhoa: tuKhoa, DenKhoa: denKhoa,
-            TrangThai: 'Chờ duyệt', LyDo: lyDo
-        }]);
-        if (error) throw error;
-        
-        // 2. Tạo thông báo cho TOCHUCHANHCHANH (để duyệt) và Khoa nhận (để biết)
-        const nvInfo = MOCK_DB.users.find(u => u.MaNV === maNV);
-        const tenNV = nvInfo ? nvInfo.HoTen : maNV;
-        const today = new Date().toISOString().split('T')[0];
-        const sunday = getSundayOfWeek(today);
-        
-        MOCK_DB.thongBao.push({
-            MaTB: "TB_CK_TCCB_" + Date.now(),
-            TieuDe: `YÊU CẦU CHUYỂN KHOA: ${tenNV}`,
-            NoiDung: `Có yêu cầu chuyển NV ${tenNV} sang khoa ${denKhoa}. Lý do: ${lyDo}.`,
-            NguoiNhan: "TOCHUCHANHCHANH", // Chỉ TOCHUCHANHCHANH mới nhận và duyệt
-            NgayBatDau: today, NgayKetThuc: sunday,
-            DataDoiCa: JSON.stringify({ type: 'ChuyenKhoa', maNV: maNV, denKhoa: denKhoa }),
-            TrangThaiDoiCa: 'Chờ duyệt'
-        });
-        
-        MOCK_DB.thongBao.push({
-            MaTB: "TB_CK_NHAN_" + Date.now(),
-            TieuDe: `THÔNG BÁO TIẾP NHẬN NHÂN SỰ`,
-            NoiDung: `Khoa của bạn sắp tiếp nhận NV ${tenNV}. Yêu cầu đang chờ Tổ chức hành chính phê duyệt.`,
-            NguoiNhan: denKhoa, // Khoa nhận chỉ xem
-            NgayBatDau: today, NgayKetThuc: sunday
-        });
-        
-        await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-        await logActivity("Yêu cầu chuyển khoa", `Chuyển ${tenNV} sang ${denKhoa}`);
-        
-        closeTransferModal();
-        showToast("Đã gửi yêu cầu đến Tổ chức hành chính!", "success");
-    } catch (err) {
-        showToast("Có lỗi xảy ra khi lưu yêu cầu!", "error");
-    } finally {
-        hideGlobalLoading();
-    }
-}
-
-// --- ADMIN TỔ CHỨC HÀNH CHÍNH DUYỆT CHUYỂN KHOA ---
-async function duyetChuyenKhoa(maTB, action) {
-    showGlobalLoading();
-    try {
-        const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
-        const reqData = JSON.parse(tb.DataDoiCa);
-        const nv = MOCK_DB.users.find(u => u.MaNV === reqData.maNV);
-        
-        if (action === 'Duyệt') {
-            // Thay đổi khoa của nhân viên trên bộ nhớ
-            nv.MaKhoa = reqData.denKhoa; 
-            await syncWithGAS('sync_NhanVien', MOCK_DB.users); // Đồng bộ lưu user
-            
-            tb.TrangThaiDoiCa = 'Đã duyệt';
-            tb.TieuDe = `✅ ĐÃ DUYỆT CHUYỂN KHOA`;
-            tb.NoiDung = `Tổ chức hành chính đã DUYỆT chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
-            
-            showToast("Đã duyệt chuyển khoa thành công!", "success");
-        } else {
-            tb.TrangThaiDoiCa = 'Từ chối';
-            tb.TieuDe = `❌ TỪ CHỐI CHUYỂN KHOA`;
-            tb.NoiDung = `Tổ chức hành chính đã TỪ CHỐI yêu cầu chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
-            
-            showToast("Đã từ chối chuyển khoa!", "warning");
+            // Tự động chọn người đầu tiên trong danh sách vừa lọc và cập nhật Khoa hiện tại
+            if (list.length > 0) {
+                nvSelect.value = list[0].MaNV;
+                if (nvSelect.onchange) nvSelect.onchange();
+            } else {
+                document.getElementById('transfer-from-khoa').value = '';
+                document.getElementById('transfer-from-khoa-code').value = '';
+            }
         }
-        
-        await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-        refreshCurrentView();
-    } catch (err) {
-        showToast("Có lỗi hệ thống khi duyệt!", "error");
-    } finally {
-        hideGlobalLoading();
-    }
-}
+
+        // Hàm phụ: Lọc nhân viên khi gõ vào ô tìm kiếm
+        function filterTransferNv() {
+            const keyword = document.getElementById('transfer-nv-search').value.toLowerCase().trim();
+
+            // Tìm trong Họ tên, Mã NV hoặc Chức danh
+            const filteredList = currentManagedNvs.filter(u => {
+                const searchStr = `${u.MaNV} ${u.HoTen} ${u.ChucDanh}`.toLowerCase();
+                return searchStr.includes(keyword);
+            });
+
+            renderTransferNvSelect(filteredList);
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transfer-modal').classList.add('hidden');
+        }
+
+        async function submitTransferRequest(e) {
+            e.preventDefault();
+            const maNV = document.getElementById('transfer-nv').value;
+            const tuKhoa = document.getElementById('transfer-from-khoa-code').value;
+            const denKhoa = document.getElementById('transfer-to-khoa').value;
+            const lyDo = document.getElementById('transfer-reason').value;
+
+            if (tuKhoa.includes(denKhoa)) {
+                return showToast("Nhân viên hiện đang thuộc khoa này!", "error");
+            }
+
+            showGlobalLoading();
+            try {
+                const yeuCauId = "YCCK_" + Date.now();
+
+                // 1. Lưu vào bảng YeuCauChuyenKhoa
+                const { error } = await _supabase.from('YeuCauChuyenKhoa').insert([{
+                    MaYeuCau: yeuCauId, MaNV: maNV, TuKhoa: tuKhoa, DenKhoa: denKhoa,
+                    TrangThai: 'Chờ duyệt', LyDo: lyDo
+                }]);
+                if (error) throw error;
+
+                // 2. Tạo thông báo cho TOCHUCHANHCHANH (để duyệt) và Khoa nhận (để biết)
+                const nvInfo = MOCK_DB.users.find(u => u.MaNV === maNV);
+                const tenNV = nvInfo ? nvInfo.HoTen : maNV;
+                const today = new Date().toISOString().split('T')[0];
+                const sunday = getSundayOfWeek(today);
+
+                MOCK_DB.thongBao.push({
+                    MaTB: "TB_CK_TCCB_" + Date.now(),
+                    TieuDe: `YÊU CẦU CHUYỂN KHOA: ${tenNV}`,
+                    NoiDung: `Có yêu cầu chuyển NV ${tenNV} sang khoa ${denKhoa}. Lý do: ${lyDo}.`,
+                    NguoiNhan: "TOCHUCHANHCHANH", // Chỉ TOCHUCHANHCHANH mới nhận và duyệt
+                    NgayBatDau: today, NgayKetThuc: sunday,
+                    DataDoiCa: JSON.stringify({ type: 'ChuyenKhoa', maNV: maNV, denKhoa: denKhoa }),
+                    TrangThaiDoiCa: 'Chờ duyệt'
+                });
+
+                MOCK_DB.thongBao.push({
+                    MaTB: "TB_CK_NHAN_" + Date.now(),
+                    TieuDe: `THÔNG BÁO TIẾP NHẬN NHÂN SỰ`,
+                    NoiDung: `Khoa của bạn sắp tiếp nhận NV ${tenNV}. Yêu cầu đang chờ Tổ chức hành chính phê duyệt.`,
+                    NguoiNhan: denKhoa, // Khoa nhận chỉ xem
+                    NgayBatDau: today, NgayKetThuc: sunday
+                });
+
+                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                await logActivity("Yêu cầu chuyển khoa", `Chuyển ${tenNV} sang ${denKhoa}`);
+
+                closeTransferModal();
+                showToast("Đã gửi yêu cầu đến Tổ chức hành chính!", "success");
+            } catch (err) {
+                showToast("Có lỗi xảy ra khi lưu yêu cầu!", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+
+        // --- ADMIN TỔ CHỨC HÀNH CHÍNH DUYỆT CHUYỂN KHOA ---
+        async function duyetChuyenKhoa(maTB, action) {
+            showGlobalLoading();
+            try {
+                const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                const reqData = JSON.parse(tb.DataDoiCa);
+                const nv = MOCK_DB.users.find(u => u.MaNV === reqData.maNV);
+
+                if (action === 'Duyệt') {
+                    // Thay đổi khoa của nhân viên trên bộ nhớ
+                    nv.MaKhoa = reqData.denKhoa;
+                    await syncWithGAS('sync_NhanVien', MOCK_DB.users); // Đồng bộ lưu user
+
+                    tb.TrangThaiDoiCa = 'Đã duyệt';
+                    tb.TieuDe = `✅ ĐÃ DUYỆT CHUYỂN KHOA`;
+                    tb.NoiDung = `Tổ chức hành chính đã DUYỆT chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
+
+                    showToast("Đã duyệt chuyển khoa thành công!", "success");
+                } else {
+                    tb.TrangThaiDoiCa = 'Từ chối';
+                    tb.TieuDe = `❌ TỪ CHỐI CHUYỂN KHOA`;
+                    tb.NoiDung = `Tổ chức hành chính đã TỪ CHỐI yêu cầu chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
+
+                    showToast("Đã từ chối chuyển khoa!", "warning");
+                }
+
+                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                refreshCurrentView();
+            } catch (err) {
+                showToast("Có lỗi hệ thống khi duyệt!", "error");
+            } finally {
+                hideGlobalLoading();
+            }
+        }
+        async function fetchDataForWeek(mondayStr) {
+            showGlobalLoading();
+            try {
+                const dates = getDatesInWeek(mondayStr);
+                const startOfWeek = dates[0];
+                const endOfWeek = dates[6];
+
+                const [{ data: phieu }, { data: shifts }] = await Promise.all([
+                    _supabase.from('PhieuLichTruc').select('*').eq('TuanTruc', mondayStr),
+                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', startOfWeek).lte('NgayTruc', endOfWeek)
+                ]);
+
+                // Xóa data cũ của tuần này (nếu có) và nạp data mới từ server
+                MOCK_DB.phieu = MOCK_DB.phieu.filter(p => p.TuanTruc !== mondayStr);
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !dates.includes(s.NgayTruc));
+
+                if (phieu) MOCK_DB.phieu.push(...phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) })));
+                if (shifts) MOCK_DB.shifts.push(...shifts.map(s => ({ ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(), ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc), PhanCa: s.PhanCa || '24h' })));
+            } catch (e) {
+                console.error("Lỗi tải động:", e);
+            } finally {
+                hideGlobalLoading();
+            }
+        }
     </script>
 </body>
 
