@@ -4429,66 +4429,79 @@
         }
 
         async function luuLichNhaps() {
-            const tuan = forceMonday('tuan-bat-dau');
-            if (!tuan) return;
-            const weekDates = getDatesInWeek(tuan);
-
-            // --- ĐOẠN MÃ CẦN THÊM VÀO ĐỂ XÓA DỮ LIỆU THỪA TRÊN SERVER ---
-            const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
-            const localShiftIds = localShifts.map(s => s.MaChiTiet);
-            const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
-
-            if (idsToDelete.length > 0) {
-                await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
-            }
-            // -------------------------------------------------------------
-
-            MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
-            MOCK_DB.shifts.push(...localShifts);
-            await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts);
-            await logActivity("Lưu nháp lịch");
-            showToast("Đã lưu nháp an toàn.", "success");
-            clearUnsaved(); // Xóa mác chưa lưu sau khi save
-            checkWeeklyStatus();
-        }
-
-        function nopLichKHTH() {
-            const tuan = forceMonday('tuan-bat-dau');
-            if (!tuan) return;
-
-            showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
-                // 1. CẬP NHẬT LOCAL NGAY LẬP TỨC
+                const tuan = forceMonday('tuan-bat-dau');
+                if (!tuan) return;
                 const weekDates = getDatesInWeek(tuan);
-                let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
-                let newPhieu;
-                if (phieu) {
-                    phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; newPhieu = phieu;
-                } else {
-                    newPhieu = { MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" };
-                    MOCK_DB.phieu.push(newPhieu);
-                }
 
-                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
-                MOCK_DB.shifts.push(...localShifts);
-
-                // 2. CẬP NHẬT GIAO DIỆN NGAY CHO NGƯỜI DÙNG (Không bắt chờ)
-                showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
-                clearUnsaved();
-                checkWeeklyStatus();
-
-                // 3. XỬ LÝ LƯU LÊN SUPABASE CHẠY NGẦM Ở BACKROUND
+                // 1. TÌM CÁC ID CẦN XÓA *TRƯỚC KHI* CẬP NHẬT BỘ NHỚ LOCAL
                 const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
                 const localShiftIds = localShifts.map(s => s.MaChiTiet);
                 const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
 
+                // 2. Thực hiện lệnh xóa vật lý trên Supabase
                 if (idsToDelete.length > 0) {
-                    _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete).then(); // Chạy ngầm, không await
+                    await _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete);
                 }
-                syncWithGAS('sync_PhieuLichTruc', [newPhieu]); // Chạy ngầm
-                if (localShifts.length > 0) syncWithGAS('sync_ChiTietLichTruc', localShifts); // Chạy ngầm
-                logActivity("Nộp lịch", `Tuần: ${tuan}`);
-            });
-        }
+
+                // 3. Sau khi tìm xong mới Cập nhật MOCK_DB
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
+                MOCK_DB.shifts.push(...localShifts);
+
+                // 4. CHỈ ĐẨY LOCAL SHIFTS LÊN SUPABASE (Tối ưu tốc độ cực nhanh, thay vì đẩy toàn bộ DB)
+                if (localShifts.length > 0) {
+                    await syncWithGAS('sync_ChiTietLichTruc', localShifts);
+                }
+
+                await logActivity("Lưu nháp lịch");
+                showToast("Đã lưu nháp an toàn.", "success");
+                clearUnsaved();
+                checkWeeklyStatus();
+            }
+
+            function nopLichKHTH() {
+                const tuan = forceMonday('tuan-bat-dau');
+                if (!tuan) return;
+
+                showConfirmModal("Xác nhận Gửi Lịch", "Bạn có chắc chắn muốn nộp lịch tuần này lên KHTH duyệt?", async () => {
+                    const weekDates = getDatesInWeek(tuan);
+
+                    // 1. TÌM CÁC ID CẦN XÓA *TRƯỚC KHI* CẬP NHẬT BỘ NHỚ LOCAL
+                    const currentDbShifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc));
+                    const localShiftIds = localShifts.map(s => s.MaChiTiet);
+                    const idsToDelete = currentDbShifts.map(s => s.MaChiTiet).filter(id => !localShiftIds.includes(id));
+
+                    // 2. Cập nhật phiếu
+                    let phieu = MOCK_DB.phieu.find(p => p.MaKhoa === currentUser.ActiveKhoa && p.TuanTruc === tuan);
+                    let newPhieu;
+                    if (phieu) {
+                        phieu.TrangThai = "Chờ duyệt"; phieu.GhiChu = ""; newPhieu = phieu;
+                    } else {
+                        newPhieu = { MaPhieu: `P_${currentUser.ActiveKhoa}_${tuan}`, MaKhoa: currentUser.ActiveKhoa, TuanTruc: tuan, TrangThai: "Chờ duyệt", NguoiDuyet: "", NgayDuyet: "", GhiChu: "" };
+                        MOCK_DB.phieu.push(newPhieu);
+                    }
+
+                    // 3. Cập nhật MOCK_DB
+                    MOCK_DB.shifts = MOCK_DB.shifts.filter(s => !(s.MaKhoa === currentUser.ActiveKhoa && weekDates.includes(s.NgayTruc)));
+                    MOCK_DB.shifts.push(...localShifts);
+
+                    // 4. CẬP NHẬT GIAO DIỆN NGAY CHO NGƯỜI DÙNG (Không bắt chờ)
+                    showToast("Đã Gửi Lịch lên KHTH Phê Duyệt!", "success");
+                    clearUnsaved();
+                    checkWeeklyStatus();
+
+                    // 5. XỬ LÝ LƯU LÊN SUPABASE CHẠY NGẦM Ở BACKGROUND
+                    if (idsToDelete.length > 0) {
+                        _supabase.from('ChiTietLichTruc').delete().in('MaChiTiet', idsToDelete).then(); // Chạy ngầm, không await
+                    }
+                    syncWithGAS('sync_PhieuLichTruc', [newPhieu]); // Chạy ngầm
+
+                    if (localShifts.length > 0) {
+                        syncWithGAS('sync_ChiTietLichTruc', localShifts); // Chạy ngầm
+                    }
+
+                    logActivity("Nộp lịch", `Tuần: ${tuan}`);
+                });
+            }
 
         // ---------------------------------------------------------------------------------------
         // KHỐI 8: KHTH DUYỆT LỊCH VÀ XEM NHẬT KÝ (AUDIT LOG)
