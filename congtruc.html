@@ -941,37 +941,6 @@
                 }
             }
 
-            async function loadRemainingDataInBackground(currentYear, currentMonth) {
-                try {
-                    const startDate = `${currentYear - 1}-01-01`;
-                    const endDate = `${currentYear + 1}-12-31`;
-
-                    const [{ data: shiftsAll }, { data: phieuAll }] = await Promise.all([
-                        fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startDate, endDate: endDate }),
-                        fetchAllSupabase('PhieuBoiDuong')
-                    ]);
-
-                    if (shiftsAll) {
-                        const formattedShiftsAll = shiftsAll.map(s => ({
-                            ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(),
-                            ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc)
-                        }));
-
-                        const otherMonthsShifts = formattedShiftsAll.filter(s => {
-                            const parts = s.NgayTruc.split('-');
-                            return !(parseInt(parts[0]) === currentYear && parseInt(parts[1]) === currentMonth);
-                        });
-                        MOCK_DB.shifts = [...MOCK_DB.shifts, ...otherMonthsShifts];
-                    }
-
-                    if (phieuAll) {
-                        const otherPhieu = phieuAll.filter(p => p.Nam !== currentYear);
-                        MOCK_DB.phieuBoiDuong = [...MOCK_DB.phieuBoiDuong, ...otherPhieu];
-                    }
-                } catch (e) {
-                    console.warn("Lỗi tải ngầm:", e);
-                }
-            }
 
         function initUI() {
             const today = new Date();
