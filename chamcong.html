@@ -141,9 +141,11 @@
                 background-color: transparent !important;
                 box-shadow: none !important;
             }
+
             body.print-blank-mode td {
                 background-color: transparent !important;
             }
+
             /* --- KẾT THÚC CODE MỚI --- */
         }
 
@@ -1118,7 +1120,7 @@
         async function getRemainingLeaveBalance(maNV, currentYear, currentMonth, excludeIndices = []) {
             let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
             if (!userObj) return 0;
-            
+
             const baseP = getBaseAnnualLeave(maNV, currentYear);
             let usedP = 0, usedNb = 0, earnedNb = 0;
             let isBccHSCC = userObj.MaKhoa.toUpperCase().includes('HSCC');
@@ -1132,7 +1134,7 @@
                             for (let day in data[maNV].days) {
                                 // Bỏ qua các ô đang được bôi đen thao tác để không bị cộng/trừ sai số dư
                                 if (parseInt(b.Thang) === currentMonth && excludeIndices.includes(parseInt(day) - 1)) continue;
-                                
+
                                 let valStr = data[maNV].days[day];
                                 if (!valStr) continue;
 
@@ -1163,7 +1165,7 @@
             if (tr) {
                 // Tránh cộng đúp nếu tháng này đã có trong MOCK_DB.bangChamCong
                 const isMonthSaved = MOCK_DB.bangChamCong.some(b => b.MaKhoa === tr.getAttribute('data-khoa') && parseInt(b.Thang) === currentMonth && parseInt(b.Nam) === currentYear);
-                
+
                 if (!isMonthSaved) {
                     const cells = tr.querySelectorAll('.cell-day');
                     cells.forEach((cell, idx) => {
@@ -1232,9 +1234,9 @@
                         if (otherTr !== tr) {
                             const otherCell = otherTr.children[cellIndex];
                             if (otherCell) {
-                                 otherCell.innerText = finalVal;
-                                 updateCellStyles(otherCell, finalVal);
-                                 recalcRow(otherTr);
+                                otherCell.innerText = finalVal;
+                                updateCellStyles(otherCell, finalVal);
+                                recalcRow(otherTr);
                             }
                         }
                     });
@@ -1311,10 +1313,10 @@
             if (hasLeaveRequest) {
                 document.getElementById('loading-screen').classList.remove('hidden');
                 document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
-                
+
                 const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
                 const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-                
+
                 let leavePerCell = 0;
                 let parts = parseShifts(copiedShiftValue);
                 parts.forEach(v => {
@@ -1329,7 +1331,7 @@
                     const tr = cell.closest('tr');
                     if (tr) {
                         const maNV = tr.getAttribute('data-id');
-                        const cellIndex = Array.from(tr.children).indexOf(cell) - 2; 
+                        const cellIndex = Array.from(tr.children).indexOf(cell) - 2;
                         if (!requestsByNV[maNV]) {
                             requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
                         }
@@ -1543,64 +1545,64 @@
         }
 
         async function handleFilterChange() {
-                if (hasUnsavedChanges) {
-                    await updateBangStatus('Nháp');
-                    showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
-                }
-
-                const month = parseInt(document.getElementById('sel-month').value);
-                const year = parseInt(document.getElementById('sel-year').value);
-
-                // Bật loading để người dùng biết hệ thống đang lấy dữ liệu tháng mới
-                document.getElementById('loading-screen').classList.remove('hidden');
-
-                try {
-                    // Xác định khung ngày của tháng được chọn
-                    const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
-                    const endOfMonth = `${year}-${String(month).padStart(2, '0')}-31`;
-
-                    // Gọi API lấy đúng dữ liệu của tháng đó
-                    const [
-                        { data: shiftsFast },
-                        { data: bangChamCongFast }
-                    ] = await Promise.all([
-                        _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
-                            .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
-                        _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
-                            .eq('Nam', year).eq('Thang', month)
-                    ]);
-
-                    // Xóa lịch trực của tháng này trong bộ nhớ tạm (nếu có) và đè dữ liệu mới vào
-                    MOCK_DB.shifts = MOCK_DB.shifts.filter(s => {
-                        const parts = s.NgayTruc.split('-');
-                        return !(parseInt(parts[0]) === year && parseInt(parts[1]) === month);
-                    });
-
-                    if (shiftsFast) {
-                        const newShifts = shiftsFast.map(s => {
-                            let parsedDate = String(s.NgayTruc || "").trim();
-                            if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
-                            return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
-                        });
-                        MOCK_DB.shifts.push(...newShifts);
-                    }
-
-                    // Xóa bảng chấm công của tháng này trong bộ nhớ và đè dữ liệu mới vào
-                    MOCK_DB.bangChamCong = MOCK_DB.bangChamCong.filter(b => !(b.Nam == year && b.Thang == month));
-                    if (bangChamCongFast) {
-                        MOCK_DB.bangChamCong.push(...bangChamCongFast);
-                    }
-
-                    // Vẽ lại giao diện
-                    generateReport();
-                } catch (e) {
-                    console.error(e);
-                    showToast("Lỗi khi tải dữ liệu tháng này từ máy chủ", "error");
-                } finally {
-                    // Tắt loading
-                    document.getElementById('loading-screen').classList.add('hidden');
-                }
+            if (hasUnsavedChanges) {
+                await updateBangStatus('Nháp');
+                showToast("Đã tự động lưu nháp dữ liệu thay đổi.", "success");
             }
+
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
+
+            // Bật loading để người dùng biết hệ thống đang lấy dữ liệu tháng mới
+            document.getElementById('loading-screen').classList.remove('hidden');
+
+            try {
+                // Xác định khung ngày của tháng được chọn
+                const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
+                const endOfMonth = `${year}-${String(month).padStart(2, '0')}-31`;
+
+                // Gọi API lấy đúng dữ liệu của tháng đó
+                const [
+                    { data: shiftsFast },
+                    { data: bangChamCongFast }
+                ] = await Promise.all([
+                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
+                    _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                        .eq('Nam', year).eq('Thang', month)
+                ]);
+
+                // Xóa lịch trực của tháng này trong bộ nhớ tạm (nếu có) và đè dữ liệu mới vào
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => {
+                    const parts = s.NgayTruc.split('-');
+                    return !(parseInt(parts[0]) === year && parseInt(parts[1]) === month);
+                });
+
+                if (shiftsFast) {
+                    const newShifts = shiftsFast.map(s => {
+                        let parsedDate = String(s.NgayTruc || "").trim();
+                        if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
+                        return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
+                    });
+                    MOCK_DB.shifts.push(...newShifts);
+                }
+
+                // Xóa bảng chấm công của tháng này trong bộ nhớ và đè dữ liệu mới vào
+                MOCK_DB.bangChamCong = MOCK_DB.bangChamCong.filter(b => !(b.Nam == year && b.Thang == month));
+                if (bangChamCongFast) {
+                    MOCK_DB.bangChamCong.push(...bangChamCongFast);
+                }
+
+                // Vẽ lại giao diện
+                generateReport();
+            } catch (e) {
+                console.error(e);
+                showToast("Lỗi khi tải dữ liệu tháng này từ máy chủ", "error");
+            } finally {
+                // Tắt loading
+                document.getElementById('loading-screen').classList.add('hidden');
+            }
+        }
 
         function markUnsaved() {
             if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
@@ -1722,186 +1724,466 @@
         });
 
         async function syncWithGAS(actionName, payloadData) {
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+                let processedData = payloadData;
+
+                if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
+                    processedData = payloadData.map(u => ({
+                        MaNV: String(u.MaNV),
+                        HoTen: u.HoTen || "",
+                        MaKhoa: u.MaKhoa || "",
+                        ChucDanh: u.ChucDanh || "",
+                        SDT: u.SDT || "",
+                        Email: u.Email || "",
+                        Username: u.Username || "",
+                        Password: u.Password || "",
+                        Role: u.Role || "User_Khoa",
+                        ChungChiHS: u.ChungChiHS || false,
+                        NgayVaoLam: u.NgayVaoLam || "",
+                        CoTruc: u.CoTruc !== false,
+                        BHXH: u.BHXH || "",
+                        CCHN: u.CCHN || "",
+                        NgayNghi: u.NgayNghi || ""
+                    }));
+                }
+
+                if (tableName === 'CauHinhPhep') {
+                    const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
+                    if (error) throw error;
                     return;
                 }
 
-                try {
-                    const tableName = actionName.replace('sync_', '');
-                    let processedData = payloadData;
-
-                    if (tableName === 'NhanVien' && Array.isArray(payloadData)) {
-                        processedData = payloadData.map(u => ({
-                            MaNV: String(u.MaNV),
-                            HoTen: u.HoTen || "",
-                            MaKhoa: u.MaKhoa || "",
-                            ChucDanh: u.ChucDanh || "",
-                            SDT: u.SDT || "",
-                            Email: u.Email || "",
-                            Username: u.Username || "",
-                            Password: u.Password || "",
-                            Role: u.Role || "User_Khoa",
-                            ChungChiHS: u.ChungChiHS || false,
-                            NgayVaoLam: u.NgayVaoLam || "",
-                            CoTruc: u.CoTruc !== false,
-                            BHXH: u.BHXH || "",
-                            CCHN: u.CCHN || "",
-                            NgayNghi: u.NgayNghi || ""
-                        }));
-                    }
-
-                    if (tableName === 'CauHinhPhep') {
-                        const { error } = await _supabase.from(tableName).upsert({ id: 'config_14ngay', data: processedData });
-                        if (error) throw error;
-                        return;
-                    }
-
-                    if (Array.isArray(processedData)) {
-                        const chunkSize = 500;
-                        for (let i = 0; i < processedData.length; i += chunkSize) {
-                            const chunk = processedData.slice(i, i + chunkSize);
-                            const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
-                            if (upsertError) throw upsertError;
-                        }
-                    } else {
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                if (Array.isArray(processedData)) {
+                    const chunkSize = 500;
+                    for (let i = 0; i < processedData.length; i += chunkSize) {
+                        const chunk = processedData.slice(i, i + chunkSize);
+                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
                         if (upsertError) throw upsertError;
                     }
+                } else {
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                    if (upsertError) throw upsertError;
+                }
 
-                } catch (e) {
-                    console.error("Lỗi đồng bộ Supabase:", e);
-                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+            }
+        }
+
+        async function updateBangStatus(status) {
+                if (isSaving) return;
+                isSaving = true;
+                window.isSavingData = true;
+
+                document.getElementById('loading-text').innerText = "Đang tải...";
+                document.getElementById('retry-btn-container').classList.add('hidden');
+                document.getElementById('loading-screen').classList.remove('hidden');
+
+                try {
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                    const daysInMonth = new Date(year, month, 0).getDate();
+
+                    let uiDataByKhoa = extractGridData();
+
+                    let hasLeaveInUI = false;
+                    for (let parentMk in uiDataByKhoa) {
+                        let uiGrid = uiDataByKhoa[parentMk];
+                        for (let maNV in uiGrid) {
+                            for (let day = 1; day <= daysInMonth; day++) {
+                                let valStr = uiGrid[maNV].days[day] || '';
+                                let parts = parseShifts(valStr);
+                                for (let v of parts) {
+                                    let upperV = v.toUpperCase();
+                                    if (upperV === 'P' || upperV === 'P/2' || upperV === 'NB' || upperV === 'NB/2') {
+                                        hasLeaveInUI = true;
+                                        break;
+                                    }
+                                }
+                                if (hasLeaveInUI) break;
+                            }
+                            if (hasLeaveInUI) break;
+                        }
+                        if (hasLeaveInUI) break;
+                    }
+
+                    if (hasLeaveInUI) {
+                        let dbYearlyStats = {};
+                        const initUserStat = (nv) => {
+                            if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                        };
+
+                        let rpcSuccess = false;
+                        try {
+                            const { data: dbYearlyStatsRaw, error: rpcError } = await _supabase.rpc('get_yearly_leave_stats', { p_year: year });
+                            if (!rpcError && dbYearlyStatsRaw) {
+                                dbYearlyStatsRaw.forEach(stat => {
+                                    dbYearlyStats[stat.ma_nv] = {
+                                        usedP: parseFloat(stat.used_p) || 0,
+                                        usedNb: parseFloat(stat.used_nb) || 0,
+                                        earnedNb: parseFloat(stat.earned_nb) || 0
+                                    };
+                                });
+                                rpcSuccess = true;
+                            } else {
+                                console.warn("RPC lỗi hoặc không tồn tại (404), chuyển sang tính toán cục bộ...");
+                            }
+                        } catch (e) {
+                            console.warn("Exception khi gọi RPC, chuyển sang tính toán cục bộ...");
+                        }
+
+                        if (!rpcSuccess) {
+                            const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                            const yearBcc = yearBccRaw || [];
+                            for (let m = 1; m <= 12; m++) {
+                                if (m === month) continue;
+                                let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                                if (savedBccs.length > 0) {
+                                    savedBccs.forEach(b => {
+                                        let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                        try {
+                                            let data = JSON.parse(b.DuLieu);
+                                            for (let nv in data) {
+                                                initUserStat(nv);
+                                                for (let day in data[nv].days) {
+                                                    let valStr = data[nv].days[day];
+                                                    if (!valStr) continue;
+
+                                                    let parts = parseShifts(valStr);
+                                                    parts.forEach(v => {
+                                                        v = v.toUpperCase();
+                                                        if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                                        else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                                        else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                                        else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                                        else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                                        else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                                        const dw = new Date(year, m - 1, parseInt(day)).getDay();
+                                                        if (dw === 5 || dw === 6) {
+                                                            if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                            else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        } catch (e) { }
+                                    });
+                                }
+                            }
+                        }
+
+                        let errorUsers = [];
+                        const rows = document.querySelectorAll('#report-tbody tr.data-row');
+
+                        rows.forEach(tr => {
+                            const maNV = tr.getAttribute('data-id');
+                            const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                            const isRowHSCC = maKhoa === 'HSCC';
+                            const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+
+                            initUserStat(maNV);
+                            const baseP = getBaseAnnualLeave(maNV, year);
+
+                            let currentUsedP = 0, currentUsedNb = 0, currentEarnedNb = 0;
+                            let isRequestingLeaveThisMonth = false;
+
+                            const cells = tr.querySelectorAll('.cell-day');
+                            cells.forEach((cell, idx) => {
+                                const day = idx + 1;
+                                if (day > daysInMonth) return;
+
+                                const dw = new Date(year, month - 1, day).getDay();
+                                const rawVal = cell.innerText.trim().toUpperCase();
+                                if (!rawVal) return;
+
+                                let parts = parseShifts(rawVal);
+                                parts.forEach(v => {
+                                    v = v.toUpperCase();
+
+                                    if (v === 'P') { currentUsedP += 1; isRequestingLeaveThisMonth = true; }
+                                    else if (v === 'P/2') { currentUsedP += 0.5; isRequestingLeaveThisMonth = true; }
+                                    else if (v === 'NB') { currentUsedNb += 1; isRequestingLeaveThisMonth = true; }
+                                    else if (v === 'NB/2') { currentUsedNb += 0.5; isRequestingLeaveThisMonth = true; }
+
+                                    else if (v === 'LT') currentEarnedNb += 1;
+                                    else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                                    if (dw === 5 || dw === 6) {
+                                        if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
+                                        else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
+                                    }
+                                });
+                            });
+
+                            let oldUsedP = 0, oldUsedNb = 0, oldEarnedNb = 0;
+                            let savedBcc = MOCK_DB.bangChamCong.find(b => b.MaKhoa === maKhoa && b.Thang == month && b.Nam == year);
+                            if (savedBcc && savedBcc.DuLieu) {
+                                try {
+                                    let oldData = JSON.parse(savedBcc.DuLieu);
+                                    if (oldData[maNV]) {
+                                        for (let d in oldData[maNV].days) {
+                                            let p = parseShifts(oldData[maNV].days[d]);
+                                            p.forEach(v => {
+                                                v = v.toUpperCase();
+                                                if (v === 'P') oldUsedP += 1; else if (v === 'P/2') oldUsedP += 0.5;
+                                                else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
+                                                else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
+
+                                                const dayOfWeek = new Date(year, month - 1, parseInt(d)).getDay();
+                                                if (dayOfWeek === 5 || dayOfWeek === 6) {
+                                                    if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
+                                                    else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
+                                                }
+                                            });
+                                        }
+                                    }
+                                } catch (e) { }
+                            }
+
+                            let totalUsedP = (dbYearlyStats[maNV].usedP - oldUsedP) + currentUsedP;
+                            let totalUsedNb = (dbYearlyStats[maNV].usedNb - oldUsedNb) + currentUsedNb;
+                            let totalEarnedNb = (dbYearlyStats[maNV].earnedNb - oldEarnedNb) + currentEarnedNb;
+
+                            let totalRemaining = (baseP - totalUsedP) + (totalEarnedNb - totalUsedNb);
+
+                            if (totalRemaining < 0 && isRequestingLeaveThisMonth) {
+                                errorUsers.push(`${hoTenText} (Âm ${Math.abs(totalRemaining)} ngày)`);
+                            }
+                        });
+
+                        if (errorUsers.length > 0) {
+                            showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ: ${errorUsers.join(', ')}.`, "error");
+                            isSaving = false;
+                            window.isSavingData = false;
+                            document.getElementById('loading-screen').classList.add('hidden');
+                            return; // CHẶN LƯU
+                        }
+                    }
+
+                    document.getElementById('loading-text').innerText = "Dữ liệu hợp lệ. Đang lưu lên máy chủ...";
+
+                    let latestServerDB = [];
+                    try {
+                        const { data, error } = await fetchAllSupabase('BangChamCong');
+                        if (!error && data) latestServerDB = data;
+                    } catch (e) {
+                        console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                        latestServerDB = MOCK_DB.bangChamCong;
+                    }
+
+                    let hasMerged = false;
+                    let bangToUpsertMap = new Map();
+
+                    for (let parentMk in uiDataByKhoa) {
+                        const maBang = `BCC_${parentMk}_${month}_${year}`;
+                        let uiGrid = uiDataByKhoa[parentMk];
+                        let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+
+                        if (latestBang && latestBang.DuLieu) {
+                            try {
+                                let serverGrid = JSON.parse(latestBang.DuLieu);
+                                for (let nv in uiGrid) {
+                                    if (serverGrid[nv]) {
+                                        for (let d = 1; d <= 31; d++) {
+                                            let uiVal = uiGrid[nv].days[d] || '';
+                                            let serverVal = serverGrid[nv].days[d] || '';
+                                            let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+
+                                            if (uiVal === origVal && serverVal !== origVal) {
+                                                uiGrid[nv].days[d] = serverVal;
+                                                hasMerged = true;
+                                            }
+                                        }
+
+                                        let uiNote = uiGrid[nv].note || '';
+                                        let serverNote = serverGrid[nv].note || '';
+                                        let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                        if (uiNote === origNote && serverNote !== origNote) {
+                                            uiGrid[nv].note = serverNote;
+                                            hasMerged = true;
+                                        }
+                                    }
+                                }
+                            } catch (e) { }
+                        }
+
+                        let finalGridJson = JSON.stringify(uiGrid);
+
+                        let bangObj = {
+                            MaBang: maBang,
+                            MaKhoa: parentMk,
+                            Thang: month,
+                            Nam: year,
+                            TrangThai: status,
+                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
+                            DuLieu: finalGridJson
+                        };
+
+                        bangToUpsertMap.set(maBang, bangObj);
+                    }
+
+                    const newBangList = Array.from(bangToUpsertMap.values());
+
+                    newBangList.forEach(newBang => {
+                        const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
+                        if (index !== -1) {
+                            MOCK_DB.bangChamCong[index] = newBang;
+                        } else {
+                            MOCK_DB.bangChamCong.push(newBang);
+                        }
+                    });
+
+                    hasUnsavedChanges = false;
+                    currentOverallStatus = status;
+
+                    originalGridData = extractGridData();
+                    updateApprovalUI(status);
+                    generateReport();
+
+                    isSaving = false;
+                    window.isSavingData = false;
+                    document.getElementById('loading-screen').classList.add('hidden');
+
+                    if (hasMerged) {
+                        showToast("Đã gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                    }
+                    syncWithGAS('sync_BangChamCong', newBangList);
+
+                } catch (err) {
+                    console.error("Lỗi khi lưu bảng chấm công:", err);
+                    isSaving = false;
+                    window.isSavingData = false;
+                    document.getElementById('loading-screen').classList.add('hidden');
                 }
             }
 
-            async function updateBangStatus(status) {
-            if (isSaving) return;
-            isSaving = true;
-            window.isSavingData = true; // Khóa cờ đồng bộ ngầm ngay lập tức
+            async function openLeaveStatsModal() {
+                const rows = document.querySelectorAll('#report-tbody tr.data-row');
+                if (rows.length === 0) return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
 
-            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư phép...";
-            document.getElementById('retry-btn-container').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
-
-            try {
                 const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
                 const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
                 const daysInMonth = new Date(year, month, 0).getDate();
 
-                // ==========================================
-                // KIỂM TRA PHÉP ÂM TRƯỚC KHI LƯU
-                // ==========================================
-                const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
-                const yearBcc = yearBccRaw || [];
-                
-                const startOfYear = `${year}-01-01`;
-                const endOfYear = `${year}-12-31`;
-                const { data: yearShiftsRaw } = await fetchAllSupabase('ChiTietLichTruc', 'MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa', { type: 'date_range', column: 'NgayTruc', startDate: startOfYear, endDate: endOfYear });
-                const yearShifts = yearShiftsRaw || [];
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = `Đang tổng hợp dữ liệu thống kê năm ${year}...`;
 
-                let dbYearlyStats = {};
-                const initUserStat = (nv) => {
-                    if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
-                };
+                try {
+                    let dbYearlyStats = {};
+                    const initUserStat = (nv) => {
+                        if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                    };
 
-                // Lấy dữ liệu 11 tháng còn lại
-                for (let m = 1; m <= 12; m++) {
-                    if (m === month) continue; // Bỏ qua tháng hiện tại vì sẽ lấy từ UI
-
-                    let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
-                    if (savedBccs.length > 0) {
-                        savedBccs.forEach(b => {
-                            let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
-                            try {
-                                let data = JSON.parse(b.DuLieu);
-                                for (let nv in data) {
-                                    initUserStat(nv);
-                                    for (let day in data[nv].days) {
-                                        let valStr = data[nv].days[day];
-                                        if (!valStr) continue;
-
-                                        let parts = parseShifts(valStr);
-                                        parts.forEach(v => {
-                                            v = v.toUpperCase();
-                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
-                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
-                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
-                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-                                            else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
-                                            else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
-
-                                            const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
-                                            if (dw === 5 || dw === 6) {
-                                                if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
-                                                else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
-                                            }
-                                        });
-                                    }
-                                }
-                            } catch (e) { }
-                        });
-                    } else {
-                        let shiftsInMonth = yearShifts.filter(s => {
-                            if (!s.NgayTruc) return false;
-                            const parts = s.NgayTruc.split('-');
-                            return parts.length === 3 && parseInt(parts[0]) === year && parseInt(parts[1]) === m;
-                        });
-
-                        shiftsInMonth.forEach(s => {
-                            const parts = s.NgayTruc.split('-');
-                            if (parts.length === 3) {
-                                const dw = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay();
-                                if (dw === 5 || dw === 6) {
-                                    let isBccHSCC = String(s.MaKhoa).trim().toUpperCase() === 'HSCC';
-                                    let v = 'T24';
-                                    if (s.PhanCa) {
-                                        let pc = s.PhanCa.toLowerCase().trim();
-                                        if (pc === 'ngày' || pc === 'ngay') v = 'T12N';
-                                        else if (pc === 'đêm' || pc === 'dem') v = 'T12D';
-                                    }
-                                    
-                                    if (isBccHSCC && v === 'T24') {
-                                        initUserStat(s.MaNV);
-                                        dbYearlyStats[s.MaNV].earnedNb += 1;
-                                    } else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) {
-                                        initUserStat(s.MaNV);
-                                        dbYearlyStats[s.MaNV].earnedNb += 1;
-                                    }
-                                }
-                            }
-                        });
+                    let rpcSuccess = false;
+                    try {
+                        const { data: dbYearlyStatsRaw, error: rpcError } = await _supabase.rpc('get_yearly_leave_stats', { p_year: year });
+                        if (!rpcError && dbYearlyStatsRaw) {
+                            dbYearlyStatsRaw.forEach(stat => {
+                                dbYearlyStats[stat.ma_nv] = {
+                                    usedP: parseFloat(stat.used_p) || 0,
+                                    usedNb: parseFloat(stat.used_nb) || 0,
+                                    earnedNb: parseFloat(stat.earned_nb) || 0
+                                };
+                            });
+                            rpcSuccess = true;
+                        } else {
+                            console.warn("RPC lỗi hoặc 404, chuyển tính toán cục bộ...");
+                        }
+                    } catch (e) {
+                        console.warn("Lỗi Exception gọi RPC, chuyển tính toán cục bộ...");
                     }
-                }
 
-                let uiDataByKhoa = extractGridData();
-                let errorUsers = [];
+                    if (!rpcSuccess) {
+                        const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                        const yearBcc = yearBccRaw || [];
 
-                // Lấy dữ liệu tháng hiện tại từ UI và cộng dồn
-                for (let parentMk in uiDataByKhoa) {
-                    let uiGrid = uiDataByKhoa[parentMk];
-                    for (let maNV in uiGrid) {
-                        initUserStat(maNV);
+                        for (let m = 1; m <= 12; m++) {
+                            if (m === month) continue;
+                            let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                            if (savedBccs.length > 0) {
+                                savedBccs.forEach(b => {
+                                    let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                    try {
+                                        let data = JSON.parse(b.DuLieu);
+                                        for (let nv in data) {
+                                            initUserStat(nv);
+                                            for (let day in data[nv].days) {
+                                                let valStr = data[nv].days[day];
+                                                if (!valStr) continue;
+
+                                                let parts = parseShifts(valStr);
+                                                parts.forEach(v => {
+                                                    v = v.toUpperCase();
+                                                    if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                                    else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                                    else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                                    else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                                    else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                                    else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                                    const dw = new Date(year, m - 1, parseInt(day)).getDay();
+                                                    if (dw === 5 || dw === 6) {
+                                                        if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                        else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    } catch (e) { }
+                                });
+                            }
+                        }
+                    }
+
+                    let tbodyHtml = '';
+
+                    rows.forEach(tr => {
+                        const maNV = tr.getAttribute('data-id');
+                        const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                        const isRowHSCC = maKhoa === 'HSCC';
+
+                        const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+                        const hoTen = hoTenText || tr.cells[1].innerText.trim();
+
                         let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-                        let isRowHSCC = userObj && userObj.MaKhoa.toUpperCase().includes('HSCC');
+                        let tenKhoaHienThi = maKhoa;
+                        if (userObj) {
+                            let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
+                            tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                        }
+
+                        initUserStat(maNV);
                         const baseP = getBaseAnnualLeave(maNV, year);
 
-                        let currentUsedP = 0, currentUsedNb = 0, currentEarnedNb = 0;
+                        let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                        let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                        let currentEarnedNb = 0;
 
-                        for (let day = 1; day <= daysInMonth; day++) {
-                            let valStr = uiGrid[maNV].days[day] || '';
-                            if (!valStr) continue;
+                        const cells = tr.querySelectorAll('.cell-day');
+                        cells.forEach((cell, idx) => {
+                            const day = idx + 1;
+                            if (day > daysInMonth) return;
 
-                            const dw = new Date(year, month - 1, day).getDay(); 
-                            let parts = parseShifts(valStr);
+                            const dw = new Date(year, month - 1, day).getDay();
+
+                            const rawVal = cell.innerText.trim().toUpperCase();
+                            if (!rawVal) return;
+
+                            let parts = parseShifts(rawVal);
                             parts.forEach(v => {
                                 v = v.toUpperCase();
-                                if (v === 'P') currentUsedP += 1;
-                                else if (v === 'P/2') currentUsedP += 0.5;
-                                else if (v === 'NB') currentUsedNb += 1;
-                                else if (v === 'NB/2') currentUsedNb += 0.5;
-                                else if (v === 'LT') currentEarnedNb += 1;
+
+                                if (v === 'LT') currentEarnedNb += 1;
                                 else if (v === 'LT/2') currentEarnedNb += 0.5;
 
                                 if (dw === 5 || dw === 6) {
@@ -1909,183 +2191,317 @@
                                     else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
                                 }
                             });
-                        }
+                        });
 
-                        let totalUsedP = currentUsedP + dbYearlyStats[maNV].usedP;
-                        let totalUsedNb = currentUsedNb + dbYearlyStats[maNV].usedNb;
-                        let totalEarnedNb = currentEarnedNb + dbYearlyStats[maNV].earnedNb;
+                        // Khấu trừ phần trùng lặp giữa UI tháng này và Dữ liệu đã lưu
+                        let oldUsedP = 0, oldUsedNb = 0, oldEarnedNb = 0;
+                        let savedBcc = MOCK_DB.bangChamCong.find(b => b.MaKhoa === maKhoa && b.Thang == month && b.Nam == year);
+                        if (savedBcc && savedBcc.DuLieu) {
+                            try {
+                                let oldData = JSON.parse(savedBcc.DuLieu);
+                                if (oldData[maNV]) {
+                                    for (let d in oldData[maNV].days) {
+                                        let p = parseShifts(oldData[maNV].days[d]);
+                                        p.forEach(v => {
+                                            v = v.toUpperCase();
+                                            if (v === 'P') oldUsedP += 1; else if (v === 'P/2') oldUsedP += 0.5;
+                                            else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
+                                            else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
 
-                        let totalRemaining = (baseP - totalUsedP) + (totalEarnedNb - totalUsedNb);
-
-                        if (totalRemaining < 0) {
-                            let name = userObj ? userObj.HoTen : maNV;
-                            errorUsers.push(`${name} (Âm ${Math.abs(totalRemaining)} ngày)`);
-                        }
-                    }
-                }
-
-                if (errorUsers.length > 0) {
-                    showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ (phép/bù): ${errorUsers.join(', ')}`, "error");
-                    isSaving = false;
-                    window.isSavingData = false;
-                    document.getElementById('loading-screen').classList.add('hidden');
-                    return; // Chặn lưu
-                }
-                // ==========================================
-
-                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
-
-                let latestServerDB = [];
-                try {
-                    const { data, error } = await fetchAllSupabase('BangChamCong');
-                    if (!error && data) latestServerDB = data;
-                } catch (e) {
-                    console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
-                    latestServerDB = MOCK_DB.bangChamCong;
-                }
-
-                let hasMerged = false;
-                let bangToUpsertMap = new Map();
-
-                for (let parentMk in uiDataByKhoa) {
-                    const maBang = `BCC_${parentMk}_${month}_${year}`;
-                    let uiGrid = uiDataByKhoa[parentMk];
-                    let latestBang = latestServerDB.find(b => b.MaBang === maBang);
-
-                    if (latestBang && latestBang.DuLieu) {
-                        try {
-                            let serverGrid = JSON.parse(latestBang.DuLieu);
-                            for (let nv in uiGrid) {
-                                if (serverGrid[nv]) {
-                                    for (let d = 1; d <= 31; d++) {
-                                        let uiVal = uiGrid[nv].days[d] || '';
-                                        let serverVal = serverGrid[nv].days[d] || '';
-                                        let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
-
-                                        if (uiVal === origVal && serverVal !== origVal) {
-                                            uiGrid[nv].days[d] = serverVal;
-                                            hasMerged = true;
-                                        }
-                                    }
-
-                                    let uiNote = uiGrid[nv].note || '';
-                                    let serverNote = serverGrid[nv].note || '';
-                                    let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
-                                    if (uiNote === origNote && serverNote !== origNote) {
-                                        uiGrid[nv].note = serverNote;
-                                        hasMerged = true;
+                                            const dayOfWeek = new Date(year, month - 1, parseInt(d)).getDay();
+                                            if (dayOfWeek === 5 || dayOfWeek === 6) {
+                                                if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
+                                                else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
+                                            }
+                                        });
                                     }
                                 }
-                            }
-                        } catch (e) { }
-                    }
+                            } catch (e) { }
+                        }
 
-                    let finalGridJson = JSON.stringify(uiGrid);
+                        let totalUsedP = (dbYearlyStats[maNV].usedP - oldUsedP) + currentUsedP;
+                        let totalUsedNb = (dbYearlyStats[maNV].usedNb - oldUsedNb) + currentUsedNb;
+                        let totalEarnedNb = (dbYearlyStats[maNV].earnedNb - oldEarnedNb) + currentEarnedNb;
 
-                    let bangObj = {
-                        MaBang: maBang,
-                        MaKhoa: parentMk,
-                        Thang: month,
-                        Nam: year,
-                        TrangThai: status,
-                        NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
-                        NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
-                        DuLieu: finalGridJson
-                    };
+                        const remainingP = baseP - totalUsedP;
+                        const remainNb = totalEarnedNb - totalUsedNb;
+                        const totalRemaining = remainingP + remainNb;
 
-                    bangToUpsertMap.set(maBang, bangObj);
-                }
+                        const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
+                        const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
 
-                const newBangList = Array.from(bangToUpsertMap.values());
-
-                newBangList.forEach(newBang => {
-                    const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
-                    if (index !== -1) {
-                        MOCK_DB.bangChamCong[index] = newBang;
-                    } else {
-                        MOCK_DB.bangChamCong.push(newBang);
-                    }
-                });
-
-                hasUnsavedChanges = false;
-                currentOverallStatus = status;
-                updateApprovalUI(status);
-
-                await syncWithGAS('sync_BangChamCong', newBangList);
-
-                originalGridData = extractGridData();
-                if (hasMerged) {
-                    showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
-                    generateReport();
-                }
-
-            } catch (err) {
-                console.error("Lỗi khi lưu bảng chấm công:", err);
-            } finally {
-                isSaving = false;
-                window.isSavingData = false;
-                document.getElementById('loading-screen').classList.add('hidden');
-            }
-        }
-
-        async function loadDataFromGAS() {
-                document.getElementById('loading-screen').classList.remove('hidden');
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                hasUnsavedChanges = false;
-
-                try {
-                    const today = getVNTime();
-                    const currentYear = today.getFullYear();
-                    const currentMonth = today.getMonth() + 1;
-
-                    // Chỉ lấy khung thời gian của tháng hiện tại để quét cực nhanh
-                    const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-                    const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
-
-                    const [
-                        { data: khoa }, { data: users }, { data: cauHinhPhep },
-                        { data: shiftsFast }, { data: bangChamCongFast }
-                    ] = await Promise.all([
-                        _supabase.from('KhoaPhong').select('*'),
-                        // SỬA TẠI ĐÂY: Đổi select() lấy toàn bộ (*) thay vì select danh sách thiếu NgayVaoLam
-                        _supabase.from('NhanVien').select('*'),
-                        _supabase.from('CauHinhPhep').select('*'),
-                        // Chỉ tải ca trực trong đúng 1 tháng
-                        _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
-                            .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
-                        // Chỉ tải bảng chấm công của đúng tháng này, năm này
-                        _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
-                            .eq('Nam', currentYear).eq('Thang', currentMonth)
-                    ]);
-
-                    MOCK_DB.khoa = khoa || [];
-                    MOCK_DB.users = users || [];
-                    if (cauHinhPhep && cauHinhPhep.length > 0) MOCK_DB.cauHinhPhep = cauHinhPhep[0].data || null;
-
-                    // Chuẩn hóa dữ liệu lịch trực tải nhanh
-                    MOCK_DB.shifts = (shiftsFast || []).map(s => {
-                        let parsedDate = String(s.NgayTruc || "").trim();
-                        if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
-                        return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
+                        tbodyHtml += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
+                            <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-emerald-700">${totalEarnedNb > 0 ? totalEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedNb > 0 ? totalUsedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
+                        </tr>
+                    `;
                     });
 
-                    MOCK_DB.bangChamCong = bangChamCongFast || [];
-
-                    showToast("Đã tải dữ liệu tháng hiện tại, hệ thống đang đồng bộ nền...", "success");
-
-                    // Kích hoạt UI ngay lập tức
-                    initUI();
-                    document.getElementById('loading-screen').classList.add('hidden');
-                    document.getElementById('control-panel').classList.remove('hidden');
-                    document.getElementById('print-workspace').classList.remove('hidden');  
-
-                } catch (e) {
-                    document.getElementById('retry-btn-container').classList.remove('hidden');
-                    document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
-                    document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                    document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
+                    document.getElementById('leave-stats-modal').classList.remove('hidden');
                     lucide.createIcons();
+
+                } catch (error) {
+                    console.error("Lỗi thống kê phép:", error);
+                    showToast("Có lỗi xảy ra khi tải dữ liệu cả năm!", "error");
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
                 }
             }
+
+            async function openLeaveStatsModal() {
+                    const rows = document.querySelectorAll('#report-tbody tr.data-row');
+                    if (rows.length === 0) return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
+
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                    const daysInMonth = new Date(year, month, 0).getDate();
+
+                    document.getElementById('loading-screen').classList.remove('hidden');
+                    document.getElementById('loading-text').innerText = `Đang tổng hợp dữ liệu thống kê năm ${year}...`;
+
+                    try {
+                        let dbYearlyStats = {};
+                        const initUserStat = (nv) => {
+                            if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                        };
+
+                        let rpcSuccess = false;
+                        // THỬ GỌI RPC TRƯỚC (NẾU ĐÃ TẠO HÀM TRÊN SUPABASE)
+                        try {
+                            const { data: dbYearlyStatsRaw, error: rpcError } = await _supabase.rpc('get_yearly_leave_stats', { p_year: year });
+                            if (!rpcError && dbYearlyStatsRaw) {
+                                dbYearlyStatsRaw.forEach(stat => {
+                                    dbYearlyStats[stat.ma_nv] = {
+                                        usedP: parseFloat(stat.used_p) || 0,
+                                        usedNb: parseFloat(stat.used_nb) || 0,
+                                        earnedNb: parseFloat(stat.earned_nb) || 0
+                                    };
+                                });
+                                rpcSuccess = true;
+                            }
+                        } catch (e) {
+                            console.warn("Chưa tìm thấy RPC 'get_yearly_leave_stats', chuyển sang tính toán cục bộ...");
+                        }
+
+                        // FALLBACK: QUÉT BẰNG JAVASCRIPT NẾU RPC THẤT BẠI HOẶC CHƯA CÀI
+                        if (!rpcSuccess) {
+                            const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                            const yearBcc = yearBccRaw || [];
+
+                            for (let m = 1; m <= 12; m++) {
+                                let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                                if (savedBccs.length > 0) {
+                                    savedBccs.forEach(b => {
+                                        let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                        try {
+                                            let data = JSON.parse(b.DuLieu);
+                                            for (let nv in data) {
+                                                initUserStat(nv);
+                                                for (let day in data[nv].days) {
+                                                    let valStr = data[nv].days[day];
+                                                    if (!valStr) continue;
+
+                                                    let parts = parseShifts(valStr);
+                                                    parts.forEach(v => {
+                                                        v = v.toUpperCase();
+                                                        if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                                        else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                                        else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                                        else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                                        else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                                        else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                                        const dw = new Date(year, m - 1, parseInt(day)).getDay();
+                                                        if (dw === 5 || dw === 6) {
+                                                            if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                            else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        } catch (e) { }
+                                    });
+                                }
+                            }
+                        }
+
+                        let tbodyHtml = '';
+
+                        rows.forEach(tr => {
+                            const maNV = tr.getAttribute('data-id');
+                            const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                            const isRowHSCC = maKhoa === 'HSCC';
+
+                            const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+                            const hoTen = hoTenText || tr.cells[1].innerText.trim();
+
+                            let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                            let tenKhoaHienThi = maKhoa;
+                            if (userObj) {
+                                let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
+                                tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                            }
+
+                            initUserStat(maNV);
+                            const baseP = getBaseAnnualLeave(maNV, year);
+
+                            let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                            let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                            let currentEarnedNb = 0;
+
+                            const cells = tr.querySelectorAll('.cell-day');
+                            cells.forEach((cell, idx) => {
+                                const day = idx + 1;
+                                if (day > daysInMonth) return;
+
+                                const dw = new Date(year, month - 1, day).getDay();
+
+                                const rawVal = cell.innerText.trim().toUpperCase();
+                                if (!rawVal) return;
+
+                                let parts = parseShifts(rawVal);
+                                parts.forEach(v => {
+                                    v = v.toUpperCase();
+
+                                    if (v === 'LT') currentEarnedNb += 1;
+                                    else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                                    if (dw === 5 || dw === 6) {
+                                        if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
+                                        else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
+                                    }
+                                });
+                            });
+
+                            // Khấu trừ phần trùng lặp giữa UI tháng này và Dữ liệu đã lưu
+                            let oldUsedP = 0, oldUsedNb = 0, oldEarnedNb = 0;
+                            let savedBcc = MOCK_DB.bangChamCong.find(b => b.MaKhoa === maKhoa && b.Thang == month && b.Nam == year);
+                            if (savedBcc && savedBcc.DuLieu) {
+                                try {
+                                    let oldData = JSON.parse(savedBcc.DuLieu);
+                                    if (oldData[maNV]) {
+                                        for (let d in oldData[maNV].days) {
+                                            let p = parseShifts(oldData[maNV].days[d]);
+                                            p.forEach(v => {
+                                                v = v.toUpperCase();
+                                                if (v === 'P') oldUsedP += 1; else if (v === 'P/2') oldUsedP += 0.5;
+                                                else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
+                                                else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
+
+                                                const dayOfWeek = new Date(year, month - 1, parseInt(d)).getDay();
+                                                if (dayOfWeek === 5 || dayOfWeek === 6) {
+                                                    if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
+                                                    else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
+                                                }
+                                            });
+                                        }
+                                    }
+                                } catch (e) { }
+                            }
+
+                            let totalUsedP = (dbYearlyStats[maNV].usedP - oldUsedP) + currentUsedP;
+                            let totalUsedNb = (dbYearlyStats[maNV].usedNb - oldUsedNb) + currentUsedNb;
+                            let totalEarnedNb = (dbYearlyStats[maNV].earnedNb - oldEarnedNb) + currentEarnedNb;
+
+                            const remainingP = baseP - totalUsedP;
+                            const remainNb = totalEarnedNb - totalUsedNb;
+                            const totalRemaining = remainingP + remainNb;
+
+                            const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
+                            const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
+
+                            tbodyHtml += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
+                            <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-emerald-700">${totalEarnedNb > 0 ? totalEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedNb > 0 ? totalUsedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
+                        </tr>
+                    `;
+                        });
+
+                        document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
+                        document.getElementById('leave-stats-modal').classList.remove('hidden');
+                        lucide.createIcons();
+
+                    } catch (error) {
+                        console.error("Lỗi thống kê phép:", error);
+                        showToast("Có lỗi xảy ra khi tải dữ liệu cả năm!", "error");
+                    } finally {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                    }
+                }
+
+        async function loadDataFromGAS() {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            hasUnsavedChanges = false;
+
+            try {
+                const today = getVNTime();
+                const currentYear = today.getFullYear();
+                const currentMonth = today.getMonth() + 1;
+
+                // Chỉ lấy khung thời gian của tháng hiện tại để quét cực nhanh
+                const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+                const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
+
+                const [
+                    { data: khoa }, { data: users }, { data: cauHinhPhep },
+                    { data: shiftsFast }, { data: bangChamCongFast }
+                ] = await Promise.all([
+                    _supabase.from('KhoaPhong').select('*'),
+                    // SỬA TẠI ĐÂY: Đổi select() lấy toàn bộ (*) thay vì select danh sách thiếu NgayVaoLam
+                    _supabase.from('NhanVien').select('*'),
+                    _supabase.from('CauHinhPhep').select('*'),
+                    // Chỉ tải ca trực trong đúng 1 tháng
+                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
+                    // Chỉ tải bảng chấm công của đúng tháng này, năm này
+                    _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                        .eq('Nam', currentYear).eq('Thang', currentMonth)
+                ]);
+
+                MOCK_DB.khoa = khoa || [];
+                MOCK_DB.users = users || [];
+                if (cauHinhPhep && cauHinhPhep.length > 0) MOCK_DB.cauHinhPhep = cauHinhPhep[0].data || null;
+
+                // Chuẩn hóa dữ liệu lịch trực tải nhanh
+                MOCK_DB.shifts = (shiftsFast || []).map(s => {
+                    let parsedDate = String(s.NgayTruc || "").trim();
+                    if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
+                    return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
+                });
+
+                MOCK_DB.bangChamCong = bangChamCongFast || [];
+
+                showToast("Đã tải dữ liệu tháng hiện tại, hệ thống đang đồng bộ nền...", "success");
+
+                // Kích hoạt UI ngay lập tức
+                initUI();
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('control-panel').classList.remove('hidden');
+                document.getElementById('print-workspace').classList.remove('hidden');
+
+            } catch (e) {
+                document.getElementById('retry-btn-container').classList.remove('hidden');
+                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
+                document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                lucide.createIcons();
+            }
+        }
         function initUI() {
             const today = getVNTime();
 
@@ -2335,7 +2751,7 @@
             isSaving = true;
             window.isSavingData = true;
 
-            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày nghỉ...";
+            document.getElementById('loading-text').innerText = "Đang tải...";
             document.getElementById('retry-btn-container').classList.add('hidden');
             document.getElementById('loading-screen').classList.remove('hidden');
 
@@ -2373,90 +2789,34 @@
                 }
 
                 if (hasLeaveInUI) {
-                    const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
-                    const yearBcc = yearBccRaw || [];
-                    
-                    const startOfYear = `${year}-01-01`;
-                    const endOfYear = `${year}-12-31`;
-                    const { data: yearShiftsRaw } = await fetchAllSupabase('ChiTietLichTruc', 'MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa', { type: 'date_range', column: 'NgayTruc', startDate: startOfYear, endDate: endOfYear });
-                    const yearShifts = yearShiftsRaw || [];
+                    // GỌI HÀM RPC ĐỂ TÍNH TOÁN CỰC NHANH TỪ SERVER
+                    const { data: dbYearlyStatsRaw, error } = await _supabase.rpc('get_yearly_leave_stats', { p_year: year });
 
+                    if (error) {
+                        console.error("Lỗi RPC:", error);
+                        showToast("Lỗi kiểm tra phép từ máy chủ!", "error");
+                        isSaving = false;
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        return;
+                    }
+
+                    // Map dữ liệu từ RPC trả về
                     let dbYearlyStats = {};
                     const initUserStat = (nv) => {
                         if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
                     };
 
-                    for (let m = 1; m <= 12; m++) {
-                        if (m === month) continue; 
-
-                        let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
-                        if (savedBccs.length > 0) {
-                            savedBccs.forEach(b => {
-                                let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
-                                try {
-                                    let data = JSON.parse(b.DuLieu);
-                                    for (let nv in data) {
-                                        initUserStat(nv);
-                                        for (let day in data[nv].days) {
-                                            let valStr = data[nv].days[day];
-                                            if (!valStr) continue;
-
-                                            let parts = parseShifts(valStr);
-                                            parts.forEach(v => {
-                                                v = v.toUpperCase();
-                                                if (v === 'P') dbYearlyStats[nv].usedP += 1;
-                                                else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
-                                                else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
-                                                else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-                                                else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
-                                                else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
-
-                                                const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
-                                                if (dw === 5 || dw === 6) {
-                                                    if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
-                                                    else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
-                                                }
-                                            });
-                                        }
-                                    }
-                                } catch (e) { }
-                            });
-                        } else {
-                            let shiftsInMonth = yearShifts.filter(s => {
-                                if (!s.NgayTruc) return false;
-                                const parts = s.NgayTruc.split('-');
-                                return parts.length === 3 && parseInt(parts[0]) === year && parseInt(parts[1]) === m;
-                            });
-
-                            shiftsInMonth.forEach(s => {
-                                const parts = s.NgayTruc.split('-');
-                                if (parts.length === 3) {
-                                    const dw = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay();
-                                    if (dw === 5 || dw === 6) {
-                                        let isBccHSCC = String(s.MaKhoa).trim().toUpperCase() === 'HSCC';
-                                        let v = 'T24';
-                                        if (s.PhanCa) {
-                                            let pc = s.PhanCa.toLowerCase().trim();
-                                            if (pc === 'ngày' || pc === 'ngay') v = 'T12N';
-                                            else if (pc === 'đêm' || pc === 'dem') v = 'T12D';
-                                        }
-                                        
-                                        if (isBccHSCC && v === 'T24') {
-                                            initUserStat(s.MaNV);
-                                            dbYearlyStats[s.MaNV].earnedNb += 1;
-                                        } else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) {
-                                            initUserStat(s.MaNV);
-                                            dbYearlyStats[s.MaNV].earnedNb += 1;
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }
+                    (dbYearlyStatsRaw || []).forEach(stat => {
+                        dbYearlyStats[stat.ma_nv] = {
+                            usedP: parseFloat(stat.used_p) || 0,
+                            usedNb: parseFloat(stat.used_nb) || 0,
+                            earnedNb: parseFloat(stat.earned_nb) || 0
+                        };
+                    });
 
                     let errorUsers = [];
                     const rows = document.querySelectorAll('#report-tbody tr.data-row');
-                    
+
                     rows.forEach(tr => {
                         const maNV = tr.getAttribute('data-id');
                         const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
@@ -2474,19 +2834,18 @@
                             const day = idx + 1;
                             if (day > daysInMonth) return;
 
-                            const dw = new Date(year, month - 1, day).getDay(); 
+                            const dw = new Date(year, month - 1, day).getDay();
                             const rawVal = cell.innerText.trim().toUpperCase();
                             if (!rawVal) return;
 
                             let parts = parseShifts(rawVal);
                             parts.forEach(v => {
                                 v = v.toUpperCase();
-                                
+
                                 if (v === 'P') { currentUsedP += 1; isRequestingLeaveThisMonth = true; }
                                 else if (v === 'P/2') { currentUsedP += 0.5; isRequestingLeaveThisMonth = true; }
                                 else if (v === 'NB') { currentUsedNb += 1; isRequestingLeaveThisMonth = true; }
                                 else if (v === 'NB/2') { currentUsedNb += 0.5; isRequestingLeaveThisMonth = true; }
-                                // Các mã NBL không trừ vào quỹ nghỉ
 
                                 else if (v === 'LT') currentEarnedNb += 1;
                                 else if (v === 'LT/2') currentEarnedNb += 0.5;
@@ -2498,24 +2857,50 @@
                             });
                         });
 
-                        let totalUsedP = currentUsedP + dbYearlyStats[maNV].usedP;
-                        let totalUsedNb = currentUsedNb + dbYearlyStats[maNV].usedNb;
-                        let totalEarnedNb = currentEarnedNb + dbYearlyStats[maNV].earnedNb;
+                        // Vì RPC đã trả về tổng cộng của CẢ NĂM (Bao gồm tháng này nếu đã từng lưu),
+                        // Ta cần TRỪ đi giá trị cũ của tháng này trước khi cộng giá trị mới từ UI để không bị tính đúp.
+                        let oldUsedP = 0, oldUsedNb = 0, oldEarnedNb = 0;
+                        let savedBcc = MOCK_DB.bangChamCong.find(b => b.MaKhoa === maKhoa && b.Thang == month && b.Nam == year);
+                        if (savedBcc && savedBcc.DuLieu) {
+                            try {
+                                let oldData = JSON.parse(savedBcc.DuLieu);
+                                if (oldData[maNV]) {
+                                    for (let d in oldData[maNV].days) {
+                                        let p = parseShifts(oldData[maNV].days[d]);
+                                        p.forEach(v => {
+                                            v = v.toUpperCase();
+                                            if (v === 'P') oldUsedP += 1; else if (v === 'P/2') oldUsedP += 0.5;
+                                            else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
+                                            else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
+
+                                            const dayOfWeek = new Date(year, month - 1, parseInt(d)).getDay();
+                                            if (dayOfWeek === 5 || dayOfWeek === 6) {
+                                                if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
+                                                else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
+                                            }
+                                        });
+                                    }
+                                }
+                            } catch (e) { }
+                        }
+
+                        let totalUsedP = (dbYearlyStats[maNV].usedP - oldUsedP) + currentUsedP;
+                        let totalUsedNb = (dbYearlyStats[maNV].usedNb - oldUsedNb) + currentUsedNb;
+                        let totalEarnedNb = (dbYearlyStats[maNV].earnedNb - oldEarnedNb) + currentEarnedNb;
 
                         let totalRemaining = (baseP - totalUsedP) + (totalEarnedNb - totalUsedNb);
 
-                        // CHỈ BÁO LỖI NẾU BỊ ÂM VÀ ĐỒNG THỜI ĐANG CỐ TÌNH CHẤM THÊM P / NB VÀO BẢNG
                         if (totalRemaining < 0 && isRequestingLeaveThisMonth) {
                             errorUsers.push(`${hoTenText} (Âm ${Math.abs(totalRemaining)} ngày)`);
                         }
                     });
 
                     if (errorUsers.length > 0) {
-                        showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ: ${errorUsers.join(', ')}. Hãy xóa ký hiệu (P) hoặc (NB) của người này để tiếp tục.`, "error");
+                        showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ: ${errorUsers.join(', ')}.`, "error");
                         isSaving = false;
                         window.isSavingData = false;
                         document.getElementById('loading-screen').classList.add('hidden');
-                        return; // CHẶN KHÔNG CHO LƯU
+                        return; // CHẶN LƯU
                     }
                 }
                 // ==========================================================
@@ -2603,12 +2988,12 @@
 
                 isSaving = false;
                 window.isSavingData = false;
-                document.getElementById('loading-screen').classList.add('hidden'); 
+                document.getElementById('loading-screen').classList.add('hidden');
 
                 if (hasMerged) {
                     showToast("Đã gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
                 }
-                syncWithGAS('sync_BangChamCong', newBangList); 
+                syncWithGAS('sync_BangChamCong', newBangList);
 
             } catch (err) {
                 console.error("Lỗi khi lưu bảng chấm công:", err);
@@ -3620,7 +4005,7 @@
 
             if (currentLeaveConfig.caNhan && currentLeaveConfig.caNhan[maNV] !== undefined) {
                 let adjPhep = parseFloat(currentLeaveConfig.caNhan[maNV]);
-                if (!isNaN(adjPhep)) baseP += adjPhep; 
+                if (!isNaN(adjPhep)) baseP += adjPhep;
             }
 
             // ĐÃ SỬA: Tính Thâm niên an toàn (5 năm = +1 ngày phép)
@@ -3628,7 +4013,7 @@
                 try {
                     let dateStr = String(user.NgayVaoLam).trim();
                     let startYear = null;
-                    
+
                     // Xử lý trực tiếp chuỗi YYYY-MM-DD
                     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
                         startYear = parseInt(dateStr.substring(0, 4));
@@ -3637,13 +4022,13 @@
                         let joinDateObj = parseEmployeeDate(dateStr, false);
                         startYear = joinDateObj.getFullYear();
                     }
-                    
+
                     if (startYear > 1900 && startYear <= currentYear) {
                         let yearsWorked = currentYear - startYear;
                         let extraDays = Math.floor(yearsWorked / 5);
                         baseP += extraDays;
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
             return baseP;
         }
@@ -3668,7 +4053,7 @@
                     console.error("Lỗi fetchAllSupabase:", error);
                     return { data: allData, error };
                 }
-                
+
                 if (data && data.length > 0) {
                     allData.push(...data);
                     if (data.length < step) break;
@@ -3700,7 +4085,7 @@
                     console.error("Lỗi fetchAllSupabase:", error);
                     return { data: allData, error };
                 }
-                
+
                 if (data && data.length > 0) {
                     allData.push(...data);
                     if (data.length < step) break;
@@ -3712,148 +4097,120 @@
             return { data: allData, error: null };
         }
         async function openLeaveStatsModal() {
-            const rows = document.querySelectorAll('#report-tbody tr.data-row');
-            if (rows.length === 0) return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
+                const rows = document.querySelectorAll('#report-tbody tr.data-row');
+                if (rows.length === 0) return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
 
-            const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-            const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-            const daysInMonth = new Date(year, month, 0).getDate();
+                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                const daysInMonth = new Date(year, month, 0).getDate();
 
-            document.getElementById('loading-screen').classList.remove('hidden');
-            document.getElementById('loading-text').innerText = `Đang tổng hợp dữ liệu thống kê năm ${year}...`;
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = `Đang tổng hợp dữ liệu thống kê năm ${year}...`;
 
-            try {
-                // TỐI ƯU TỐC ĐỘ: Chỉ tải Bảng Chấm Công đã lưu.
-                const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
-                const yearBcc = yearBccRaw || [];
+                try {
+                    // TỐI ƯU TỐC ĐỘ BẰNG RPC
+                    const { data: dbYearlyStatsRaw, error } = await _supabase.rpc('get_yearly_leave_stats', { p_year: year });
+                    if (error) throw error;
 
-                let tbodyHtml = '';
-                let dbYearlyStats = {};
-                const initUserStat = (nv) => {
-                    if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
-                };
+                    let dbYearlyStats = {};
+                    const initUserStat = (nv) => {
+                        if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                    };
 
-                // 1. TÍNH TOÁN TỪ THÁNG 1->12 (TRỪ THÁNG HIỆN TẠI ĐANG XEM TRÊN LƯỚI)
-                for (let m = 1; m <= 12; m++) {
-                    if (m === month) continue; 
+                    (dbYearlyStatsRaw || []).forEach(stat => {
+                        dbYearlyStats[stat.ma_nv] = {
+                            usedP: parseFloat(stat.used_p) || 0,
+                            usedNb: parseFloat(stat.used_nb) || 0,
+                            earnedNb: parseFloat(stat.earned_nb) || 0
+                        };
+                    });
 
-                    let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
-                    if (savedBccs.length > 0) {
-                        savedBccs.forEach(b => {
-                            let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                    let tbodyHtml = '';
+
+                    rows.forEach(tr => {
+                        const maNV = tr.getAttribute('data-id');
+                        const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                        const isRowHSCC = maKhoa === 'HSCC';
+
+                        const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+                        const hoTen = hoTenText || tr.cells[1].innerText.trim();
+
+                        let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                        let tenKhoaHienThi = maKhoa;
+                        if (userObj) {
+                            let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
+                            tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                        }
+
+                        initUserStat(maNV);
+                        const baseP = getBaseAnnualLeave(maNV, year);
+
+                        let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                        let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                        let currentEarnedNb = 0;
+
+                        const cells = tr.querySelectorAll('.cell-day');
+                        cells.forEach((cell, idx) => {
+                            const day = idx + 1;
+                            if (day > daysInMonth) return;
+
+                            const dw = new Date(year, month - 1, day).getDay();
+
+                            const rawVal = cell.innerText.trim().toUpperCase();
+                            if (!rawVal) return;
+
+                            let parts = parseShifts(rawVal);
+                            parts.forEach(v => {
+                                v = v.toUpperCase();
+
+                                if (v === 'LT') currentEarnedNb += 1;
+                                else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                                if (dw === 5 || dw === 6) {
+                                    if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
+                                    else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
+                                }
+                            });
+                        });
+
+                        // Khấu trừ phần trùng lặp giữa UI tháng này và Dữ liệu đã lưu
+                        let oldUsedP = 0, oldUsedNb = 0, oldEarnedNb = 0;
+                        let savedBcc = MOCK_DB.bangChamCong.find(b => b.MaKhoa === maKhoa && b.Thang == month && b.Nam == year);
+                        if (savedBcc && savedBcc.DuLieu) {
                             try {
-                                let data = JSON.parse(b.DuLieu);
-                                for (let nv in data) {
-                                    initUserStat(nv);
-                                    for (let day in data[nv].days) {
-                                        let valStr = data[nv].days[day];
-                                        if (!valStr) continue;
-
-                                        let parts = parseShifts(valStr);
-                                        parts.forEach(v => {
+                                let oldData = JSON.parse(savedBcc.DuLieu);
+                                if (oldData[maNV]) {
+                                    for (let d in oldData[maNV].days) {
+                                        let p = parseShifts(oldData[maNV].days[d]);
+                                        p.forEach(v => {
                                             v = v.toUpperCase();
+                                            if (v === 'P') oldUsedP += 1; else if (v === 'P/2') oldUsedP += 0.5;
+                                            else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
+                                            else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
 
-                                            // Tính trừ ngày phép/bù đã sử dụng
-                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
-                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
-                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
-                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-
-                                            // ĐIỀU KIỆN 1: Tích lũy Làm Thêm (Mọi khoa)
-                                            if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
-                                            else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
-
-                                            // ĐIỀU KIỆN 2: Tích lũy Trực Thứ 6, Thứ 7
-                                            const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
-                                            // JS: 5 = Thứ 6, 6 = Thứ 7
-                                            if (dw === 5 || dw === 6) {
-                                                if (isBccHSCC) {
-                                                    // Nếu là Khoa HSCC, CHỈ TÍNH nghỉ bù khi trực T24
-                                                    if (v === 'T24') {
-                                                        dbYearlyStats[nv].earnedNb += 1;
-                                                    }
-                                                } else {
-                                                    // Các khoa khác được tính cả T24, T12N, T12D
-                                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') {
-                                                        dbYearlyStats[nv].earnedNb += 1;
-                                                    }
-                                                }
+                                            const dayOfWeek = new Date(year, month - 1, parseInt(d)).getDay();
+                                            if (dayOfWeek === 5 || dayOfWeek === 6) {
+                                                if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
+                                                else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
                                             }
                                         });
                                     }
                                 }
                             } catch (e) { }
-                        });
-                    }
-                }
+                        }
 
-                // 2. TÍNH TOÁN CHO THÁNG HIỆN TẠI LẤY TRỰC TIẾP TỪ LƯỚI GIAO DIỆN
-                rows.forEach(tr => {
-                    const maNV = tr.getAttribute('data-id');
-                    const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
-                    const isRowHSCC = maKhoa === 'HSCC';
+                        let totalUsedP = (dbYearlyStats[maNV].usedP - oldUsedP) + currentUsedP;
+                        let totalUsedNb = (dbYearlyStats[maNV].usedNb - oldUsedNb) + currentUsedNb;
+                        let totalEarnedNb = (dbYearlyStats[maNV].earnedNb - oldEarnedNb) + currentEarnedNb;
 
-                    const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
-                    const hoTen = hoTenText || tr.cells[1].innerText.trim();
+                        const remainingP = baseP - totalUsedP;
+                        const remainNb = totalEarnedNb - totalUsedNb;
+                        const totalRemaining = remainingP + remainNb;
 
-                    let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-                    let tenKhoaHienThi = maKhoa;
-                    if (userObj) {
-                        let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
-                        tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
-                    }
+                        const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
+                        const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
 
-                    const baseP = getBaseAnnualLeave(maNV, year);
-
-                    let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
-                    let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
-                    let currentEarnedNb = 0;
-
-                    const cells = tr.querySelectorAll('.cell-day');
-                    cells.forEach((cell, idx) => {
-                        const day = idx + 1;
-                        if (day > daysInMonth) return;
-
-                        const dw = new Date(year, month - 1, day).getDay(); 
-
-                        const rawVal = cell.innerText.trim().toUpperCase();
-                        if (!rawVal) return;
-
-                        let parts = parseShifts(rawVal);
-                        parts.forEach(v => {
-                            v = v.toUpperCase();
-                            
-                            // Điều kiện 1: Tích lũy Làm Thêm
-                            if (v === 'LT') currentEarnedNb += 1;
-                            else if (v === 'LT/2') currentEarnedNb += 0.5;
-
-                            // Điều kiện 2: Tích lũy trực Thứ 6, Thứ 7
-                            if (dw === 5 || dw === 6) {
-                                if (isRowHSCC) {
-                                    // Khoa HSCC chỉ tính cho T24
-                                    if (v === 'T24') currentEarnedNb += 1;
-                                } else {
-                                    // Khoa khác tính cho cả T24, T12N, T12D
-                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') currentEarnedNb += 1;
-                                }
-                            }
-                        });
-                    });
-
-                    let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
-
-                    let totalUsedP = currentUsedP + pastStats.usedP;
-                    let totalUsedNb = currentUsedNb + pastStats.usedNb;
-                    let totalEarnedNb = currentEarnedNb + pastStats.earnedNb;
-
-                    const remainingP = baseP - totalUsedP;
-                    const remainNb = totalEarnedNb - totalUsedNb;
-                    const totalRemaining = remainingP + remainNb;
-
-                    const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
-                    const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
-
-                    tbodyHtml += `
+                        tbodyHtml += `
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
                             <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
@@ -3865,19 +4222,19 @@
                             <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
                         </tr>
                     `;
-                });
+                    });
 
-                document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
-                document.getElementById('leave-stats-modal').classList.remove('hidden');
-                lucide.createIcons();
-                
-            } catch (error) {
-                console.error("Lỗi thống kê phép:", error);
-                showToast("Có lỗi xảy ra khi tải dữ liệu cả năm!", "error");
-            } finally {
-                document.getElementById('loading-screen').classList.add('hidden');
+                    document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
+                    document.getElementById('leave-stats-modal').classList.remove('hidden');
+                    lucide.createIcons();
+
+                } catch (error) {
+                    console.error("Lỗi thống kê phép:", error);
+                    showToast("Có lỗi xảy ra khi tải dữ liệu cả năm!", "error");
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                }
             }
-        }
 
         function closeLeaveStatsModal() {
             document.getElementById('leave-stats-modal').classList.add('hidden');
@@ -3887,10 +4244,10 @@
         function printBlankTimesheet() {
             // Thêm class 'print-blank-mode' vào thẻ body để kích hoạt CSS ẩn dữ liệu
             document.body.classList.add('print-blank-mode');
-            
+
             // Gọi lệnh in của trình duyệt
             window.print();
-            
+
             // Gỡ bỏ class sau khi cửa sổ in xuất hiện
             setTimeout(() => {
                 document.body.classList.remove('print-blank-mode');
