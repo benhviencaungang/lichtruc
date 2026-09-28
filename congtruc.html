@@ -336,7 +336,7 @@
 
             <div class="h-6 w-px bg-slate-300 hidden md:block shrink-0 mx-2"></div>
 
-            <select id="sel-month" onchange="generateReport()"
+            <select id="sel-month" onchange="handleFilterChange()"
                 class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
                 <option value="1">Tháng 1</option>
                 <option value="2">Tháng 2</option>
@@ -351,10 +351,10 @@
                 <option value="11">Tháng 11</option>
                 <option value="12">Tháng 12</option>
             </select>
-            <select id="sel-year" onchange="generateReport()"
+            <select id="sel-year" onchange="handleFilterChange()"
                 class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 shrink-0 font-medium">
             </select>
-            <select id="sel-khoa" onchange="generateReport()"
+            <select id="sel-khoa" onchange="handleFilterChange()"
                 class="border border-slate-300 rounded px-3 py-2 outline-none focus:border-emerald-500 min-w-[150px] shrink-0 font-medium bg-emerald-50 text-emerald-900 border-emerald-200">
                 <!-- Tự động điền qua JS -->
             </select>
@@ -929,10 +929,6 @@
                     document.getElementById('loading-screen').classList.add('hidden');
                     document.getElementById('control-panel').classList.remove('hidden');
                     document.getElementById('print-workspace').classList.remove('hidden');
-
-                    // Bắt đầu tải ngầm
-                    loadRemainingDataInBackground(currentYear, currentMonth);
-
                 } catch (e) {
                     document.getElementById('retry-btn-container').classList.remove('hidden');
                     document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
@@ -1129,6 +1125,13 @@
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isOwner = currentUser.KhoaList.includes(maKhoa);
 
+            // ==========================================
+            // MỞ NÚT IN CHO TẤT CẢ CÁC TRẠNG THÁI (Nếu có ca trực)
+            // ==========================================
+            btnPrint.disabled = false;
+            btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
+            btnPrint.title = "In phiếu Bồi dưỡng trực";
+
             if (status === 'Nháp' || status === 'KHTH trả lại') {
                 badge.textContent = status === 'Nháp' ? "Chưa gửi KHTH" : "KHTH Trả Lại";
                 badge.className = "px-2 py-1 rounded text-xs font-bold " + (status === 'Nháp' ? "bg-slate-200 text-slate-600" : "bg-red-100 text-red-700") + " whitespace-nowrap";
@@ -1155,8 +1158,6 @@
                     // Khoa được phép Đồng bộ lại dữ liệu gốc nếu có sự thay đổi
                     btnResetData.classList.remove('hidden');
                 }
-                btnPrint.disabled = true;
-                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
             }
             else if (status === 'Chờ KHTH duyệt' || status === 'TCKT trả lại') {
                 badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ xử lý)";
@@ -1175,8 +1176,6 @@
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3 inline mr-1"></i>Trả lại Khoa`;
                 }
-                btnPrint.disabled = true;
-                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
             }
             else if (status === 'Chờ TCKT chốt') {
                 badge.textContent = "Chờ Kế Toán Tính Tiền & Chốt";
@@ -1196,15 +1195,10 @@
                     btnCancel.classList.remove('hidden');
                     btnCancel.innerHTML = `<i data-lucide="rotate-ccw" class="w-3 h-3 inline mr-1"></i>Hủy duyệt (Rút lại)`;
                 }
-                btnPrint.disabled = true;
-                btnPrint.classList.add('opacity-50', 'cursor-not-allowed');
             }
             else if (status === 'Đã chốt') {
                 badge.textContent = "TCKT Đã Chốt - Được Phép In";
                 badge.className = "px-2 py-1 rounded text-xs font-bold bg-emerald-100 text-emerald-800 whitespace-nowrap";
-
-                btnPrint.disabled = false;
-                btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
 
                 if (isTCKT) {
                     btnSaveData.classList.remove('hidden');
@@ -1536,7 +1530,53 @@
                     }
                 );
             }
+            async function handleFilterChange() {
+            const month = parseInt(document.getElementById('sel-month').value);
+            const year = parseInt(document.getElementById('sel-year').value);
 
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = `Đang tải dữ liệu tháng ${month}/${year}...`;
+
+            try {
+                const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
+                const endOfMonth = `${year}-${String(month).padStart(2, '0')}-31`;
+
+                const [
+                    { data: shiftsFast },
+                    { data: phieuBoiDuongFast }
+                ] = await Promise.all([
+                    fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startOfMonth, endDate: endOfMonth }),
+                    fetchAllSupabase('PhieuBoiDuong', '*', { type: 'eq', column: 'Nam', value: year })
+                ]);
+
+                // Xóa ca trực của tháng này trong bộ nhớ và ghi đè dữ liệu mới
+                MOCK_DB.shifts = MOCK_DB.shifts.filter(s => {
+                    if (!s.NgayTruc) return true;
+                    const parts = s.NgayTruc.split('-');
+                    return !(parseInt(parts[0]) === year && parseInt(parts[1]) === month);
+                });
+
+                if (shiftsFast) {
+                    const newShifts = shiftsFast.map(s => ({
+                        ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(),
+                        ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc)
+                    }));
+                    MOCK_DB.shifts.push(...newShifts);
+                }
+
+                if (phieuBoiDuongFast) {
+                    MOCK_DB.phieuBoiDuong = phieuBoiDuongFast;
+                }
+
+                // Cập nhật lại giao diện
+                generateReport();
+            } catch (e) {
+                console.error(e);
+                showToast("Lỗi khi tải dữ liệu tháng này từ máy chủ", "error");
+            } finally {
+                document.getElementById('loading-screen').classList.add('hidden');
+            }
+        }
         function generateReport() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
