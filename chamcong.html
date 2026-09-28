@@ -510,6 +510,7 @@
                             <p>+ : Làm nguyên ngày</p>
                             <p>- : Làm 1 buổi</p>
                             <p>O : Nghỉ không lý do</p>
+                            <p>O/2: Nghỉ không lý do 1/2 ngày</p>
                             <p>Ô : Nghỉ ốm</p>
                             <p>Cô : Con ốm mẹ nghỉ</p>
                             <p>H : Đi học</p>
@@ -526,6 +527,8 @@
                             <p>Rt: Ra trực</p>
                             <p>Rt/2: Ra trực 1/2 ngày</p>
                             <p>LT/2: Làm thêm 1/2 ngày</p>
+                            <p>NBL: Nghỉ bù Lễ</p>
+                            <p>NBL/2: Nghỉ bù Lễ 1/2</p>
                         </div>
                         <div class="w-1/3">
                             <p>T24: Trực 24/24</p>
@@ -774,7 +777,8 @@
             }
         });
 
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2'];
+        // Thêm 'O/2' vào danh sách ca nửa ngày
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -788,9 +792,12 @@
             { id: 'P/2', name: 'Nghỉ phép nửa ngày (P/2)', bg: 'bg-yellow-100 text-yellow-700' },
             { id: 'Nb', name: 'Nghỉ bù (Nb)', bg: 'bg-yellow-100 text-yellow-700' },
             { id: 'Nb/2', name: 'Nghỉ bù nửa ngày (Nb/2)', bg: 'bg-yellow-100 text-yellow-700' },
+            { id: 'NBL', name: 'Nghỉ bù Lễ (NBL)', bg: 'bg-teal-100 text-teal-700 font-bold' }, // <--- MỚI THÊM
+            { id: 'NBL/2', name: 'Nghỉ bù Lễ 1/2 ngày (NBL/2)', bg: 'bg-teal-100 text-teal-700 font-bold' }, // <--- MỚI THÊM
             { id: 'Ô', name: 'Nghỉ ốm (Ô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'Cô', name: 'Con ốm mẹ nghỉ (Cô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'O', name: 'Nghỉ không lý do (O)', bg: 'bg-red-100 text-red-700 font-bold' },
+            { id: 'O/2', name: 'Nghỉ không lý do 1/2 ngày (O/2)', bg: 'bg-red-100 text-red-700' }, // <--- MỚI THÊM NẰM Ở ĐÂY
             { id: 'H', name: 'Đi học (H)', bg: '' },
             { id: 'CT', name: 'Công tác (CT)', bg: '' },
             { id: 'CT/2', name: 'Công tác 1/2 ngày (CT/2)', bg: '' },
@@ -1108,7 +1115,85 @@
             handleMorningChange();
             document.getElementById('sp-chieu').value = '';
         }
+        async function getRemainingLeaveBalance(maNV, currentYear, currentMonth, excludeIndices = []) {
+            let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+            if (!userObj) return 0;
+            
+            const baseP = getBaseAnnualLeave(maNV, currentYear);
+            let usedP = 0, usedNb = 0, earnedNb = 0;
+            let isBccHSCC = userObj.MaKhoa.toUpperCase().includes('HSCC');
 
+            // 1. Quét dữ liệu 12 tháng từ MOCK_DB (bao gồm các tháng đã lưu)
+            MOCK_DB.bangChamCong.forEach(b => {
+                if (parseInt(b.Nam) === currentYear && b.DuLieu) {
+                    try {
+                        let data = JSON.parse(b.DuLieu);
+                        if (data[maNV]) {
+                            for (let day in data[maNV].days) {
+                                // Bỏ qua các ô đang được bôi đen thao tác để không bị cộng/trừ sai số dư
+                                if (parseInt(b.Thang) === currentMonth && excludeIndices.includes(parseInt(day) - 1)) continue;
+                                
+                                let valStr = data[maNV].days[day];
+                                if (!valStr) continue;
+
+                                let parts = parseShifts(valStr);
+                                parts.forEach(v => {
+                                    v = v.toUpperCase();
+                                    if (v === 'P') usedP += 1;
+                                    else if (v === 'P/2') usedP += 0.5;
+                                    else if (v === 'NB') usedNb += 1;
+                                    else if (v === 'NB/2') usedNb += 0.5;
+                                    else if (v === 'LT') earnedNb += 1;
+                                    else if (v === 'LT/2') earnedNb += 0.5;
+
+                                    const dw = new Date(currentYear, parseInt(b.Thang) - 1, parseInt(day)).getDay();
+                                    if (dw === 5 || dw === 6) {
+                                        if (isBccHSCC && v === 'T24') earnedNb += 1;
+                                        else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
+                                    }
+                                });
+                            }
+                        }
+                    } catch (e) { }
+                }
+            });
+
+            // 2. Cộng thêm dữ liệu đang gõ trên giao diện (nếu tháng hiện tại chưa lưu)
+            const tr = document.querySelector(`tr.data-row[data-id="${maNV}"]`);
+            if (tr) {
+                // Tránh cộng đúp nếu tháng này đã có trong MOCK_DB.bangChamCong
+                const isMonthSaved = MOCK_DB.bangChamCong.some(b => b.MaKhoa === tr.getAttribute('data-khoa') && parseInt(b.Thang) === currentMonth && parseInt(b.Nam) === currentYear);
+                
+                if (!isMonthSaved) {
+                    const cells = tr.querySelectorAll('.cell-day');
+                    cells.forEach((cell, idx) => {
+                        if (excludeIndices.includes(idx)) return; // Bỏ qua các ô đang thao tác
+
+                        let valStr = cell.innerText.trim();
+                        if (!valStr) return;
+
+                        const dw = new Date(currentYear, currentMonth - 1, idx + 1).getDay();
+                        let parts = parseShifts(valStr);
+                        parts.forEach(v => {
+                            v = v.toUpperCase();
+                            if (v === 'P') usedP += 1;
+                            else if (v === 'P/2') usedP += 0.5;
+                            else if (v === 'NB') usedNb += 1;
+                            else if (v === 'NB/2') usedNb += 0.5;
+                            else if (v === 'LT') earnedNb += 1;
+                            else if (v === 'LT/2') earnedNb += 0.5;
+
+                            if (dw === 5 || dw === 6) {
+                                if (isBccHSCC && v === 'T24') earnedNb += 1;
+                                else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
+                            }
+                        });
+                    });
+                }
+            }
+
+            return (baseP - usedP) + (earnedNb - usedNb);
+        }
         function applyShiftSelection() {
             const sangVal = document.getElementById('sp-sang').value;
             const chieuVal = document.getElementById('sp-chieu').value;
@@ -1147,8 +1232,47 @@
                         if (otherTr !== tr) {
                             const otherCell = otherTr.children[cellIndex];
                             if (otherCell) {
-                                otherCell.innerText = finalVal;
-                                updateCellStyles(otherCell, finalVal);
+                                 otherCell.innerText = finalVal;
+                                 updateCellStyles(otherCell, finalVal);
+                                 recalcRow(otherTr);
+                            }
+                        }
+                    });
+                }
+            });
+
+            closeShiftPicker(new Event('click'), true);
+            markUnsaved();
+        }
+
+        function pasteShift() {
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+            if (copiedShiftValue === null) {
+                showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
+                return;
+            }
+
+            const selectedCells = document.querySelectorAll('.cell-selected');
+            const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
+
+            if (cellsToUpdate.length === 0) return;
+
+            cellsToUpdate.forEach(cell => {
+                if (!cell) return;
+                cell.innerText = copiedShiftValue;
+                updateCellStyles(cell, copiedShiftValue);
+                recalcRow(cell);
+
+                const tr = cell.closest('tr');
+                if (tr) {
+                    const maNV = tr.getAttribute('data-id');
+                    const cellIndex = Array.from(tr.children).indexOf(cell);
+                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                        if (otherTr !== tr) {
+                            const otherCell = otherTr.children[cellIndex];
+                            if (otherCell) {
+                                otherCell.innerText = copiedShiftValue;
+                                updateCellStyles(otherCell, copiedShiftValue);
                                 recalcRow(otherTr);
                             }
                         }
@@ -1158,6 +1282,105 @@
 
             closeShiftPicker(new Event('click'), true);
             markUnsaved();
+            showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
+        }
+
+        function copyShift() {
+            const selected = document.querySelector('.cell-selected');
+            const targetCell = selected || activeInputCell;
+            if (!targetCell) return;
+
+            copiedShiftValue = targetCell.innerText.trim();
+            showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
+        }
+
+        async function pasteShift() {
+            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+            if (copiedShiftValue === null) {
+                showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
+                return;
+            }
+
+            const selectedCells = document.querySelectorAll('.cell-selected');
+            const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
+
+            if (cellsToUpdate.length === 0) return;
+
+            // KIỂM TRA ĐIỀU KIỆN CHẶN NGHỈ PHÉP/BÙ SAU KHI DÁN
+            let hasLeaveRequest = copiedShiftValue.includes('P') || copiedShiftValue.includes('NB');
+            if (hasLeaveRequest) {
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
+                
+                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                
+                let leavePerCell = 0;
+                let parts = parseShifts(copiedShiftValue);
+                parts.forEach(v => {
+                    let upperV = v.toUpperCase();
+                    if (upperV === 'P' || upperV === 'NB') leavePerCell += 1;
+                    else if (upperV === 'P/2' || upperV === 'NB/2') leavePerCell += 0.5;
+                });
+
+                let requestsByNV = {};
+                cellsToUpdate.forEach(cell => {
+                    if (!cell) return;
+                    const tr = cell.closest('tr');
+                    if (tr) {
+                        const maNV = tr.getAttribute('data-id');
+                        const cellIndex = Array.from(tr.children).indexOf(cell) - 2; 
+                        if (!requestsByNV[maNV]) {
+                            requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
+                        }
+                        requestsByNV[maNV].count += leavePerCell;
+                        requestsByNV[maNV].indices.push(cellIndex);
+                    }
+                });
+
+                let errorUsers = [];
+                for (let maNV in requestsByNV) {
+                    let req = requestsByNV[maNV];
+                    let remaining = await getRemainingLeaveBalance(maNV, year, month, req.indices);
+                    if (remaining < req.count) {
+                        errorUsers.push(`${req.name} (còn ${remaining} ngày)`);
+                    }
+                }
+
+                document.getElementById('loading-screen').classList.add('hidden');
+
+                if (errorUsers.length > 0) {
+                    showToast(`Số ngày nghỉ đã hết! Không thể dán cho: ${errorUsers.join(', ')}`, "error");
+                    return; // Chặn ghi dữ liệu
+                }
+            }
+
+            cellsToUpdate.forEach(cell => {
+                if (!cell) return;
+                cell.innerText = copiedShiftValue;
+                updateCellStyles(cell, copiedShiftValue);
+                recalcRow(cell);
+
+                const tr = cell.closest('tr');
+                if (tr) {
+                    const maNV = tr.getAttribute('data-id');
+                    const cellIndex = Array.from(tr.children).indexOf(cell);
+                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                        if (otherTr !== tr) {
+                            const otherCell = otherTr.children[cellIndex];
+                            if (otherCell) {
+                                otherCell.innerText = copiedShiftValue;
+                                updateCellStyles(otherCell, copiedShiftValue);
+                                recalcRow(otherTr);
+                            }
+                        }
+                    });
+                }
+            });
+
+            closeShiftPicker(new Event('click'), true);
+            markUnsaved();
+            showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
         }
 
         function copyShift() {
@@ -1554,108 +1777,256 @@
             }
 
             async function updateBangStatus(status) {
-                if (isSaving) return;
-                isSaving = true;
-                window.isSavingData = true; // Khóa cờ đồng bộ ngầm ngay lập tức
+            if (isSaving) return;
+            isSaving = true;
+            window.isSavingData = true; // Khóa cờ đồng bộ ngầm ngay lập tức
 
-                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư phép...";
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
 
-                try {
-                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+            try {
+                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                const daysInMonth = new Date(year, month, 0).getDate();
 
-                    let latestServerDB = [];
-                    try {
-                        const { data, error } = await fetchAllSupabase('BangChamCong');
-                        if (!error && data) latestServerDB = data;
-                    } catch (e) {
-                        console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
-                        latestServerDB = MOCK_DB.bangChamCong;
-                    }
+                // ==========================================
+                // KIỂM TRA PHÉP ÂM TRƯỚC KHI LƯU
+                // ==========================================
+                const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                const yearBcc = yearBccRaw || [];
+                
+                const startOfYear = `${year}-01-01`;
+                const endOfYear = `${year}-12-31`;
+                const { data: yearShiftsRaw } = await fetchAllSupabase('ChiTietLichTruc', 'MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa', { type: 'date_range', column: 'NgayTruc', startDate: startOfYear, endDate: endOfYear });
+                const yearShifts = yearShiftsRaw || [];
 
-                    let uiDataByKhoa = extractGridData();
-                    let hasMerged = false;
-                    let bangToUpsertMap = new Map();
+                let dbYearlyStats = {};
+                const initUserStat = (nv) => {
+                    if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                };
 
-                    for (let parentMk in uiDataByKhoa) {
-                        const maBang = `BCC_${parentMk}_${month}_${year}`;
-                        let uiGrid = uiDataByKhoa[parentMk];
-                        let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+                // Lấy dữ liệu 11 tháng còn lại
+                for (let m = 1; m <= 12; m++) {
+                    if (m === month) continue; // Bỏ qua tháng hiện tại vì sẽ lấy từ UI
 
-                        if (latestBang && latestBang.DuLieu) {
+                    let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                    if (savedBccs.length > 0) {
+                        savedBccs.forEach(b => {
+                            let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
                             try {
-                                let serverGrid = JSON.parse(latestBang.DuLieu);
-                                for (let nv in uiGrid) {
-                                    if (serverGrid[nv]) {
-                                        for (let d = 1; d <= 31; d++) {
-                                            let uiVal = uiGrid[nv].days[d] || '';
-                                            let serverVal = serverGrid[nv].days[d] || '';
-                                            let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+                                let data = JSON.parse(b.DuLieu);
+                                for (let nv in data) {
+                                    initUserStat(nv);
+                                    for (let day in data[nv].days) {
+                                        let valStr = data[nv].days[day];
+                                        if (!valStr) continue;
 
-                                            if (uiVal === origVal && serverVal !== origVal) {
-                                                uiGrid[nv].days[d] = serverVal;
-                                                hasMerged = true;
+                                        let parts = parseShifts(valStr);
+                                        parts.forEach(v => {
+                                            v = v.toUpperCase();
+                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                            else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                            else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
+
+                                            const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
+                                            if (dw === 5 || dw === 6) {
+                                                if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
                                             }
-                                        }
-
-                                        let uiNote = uiGrid[nv].note || '';
-                                        let serverNote = serverGrid[nv].note || '';
-                                        let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
-                                        if (uiNote === origNote && serverNote !== origNote) {
-                                            uiGrid[nv].note = serverNote;
-                                            hasMerged = true;
-                                        }
+                                        });
                                     }
                                 }
                             } catch (e) { }
-                        }
+                        });
+                    } else {
+                        let shiftsInMonth = yearShifts.filter(s => {
+                            if (!s.NgayTruc) return false;
+                            const parts = s.NgayTruc.split('-');
+                            return parts.length === 3 && parseInt(parts[0]) === year && parseInt(parts[1]) === m;
+                        });
 
-                        let finalGridJson = JSON.stringify(uiGrid);
-
-                        let bangObj = {
-                            MaBang: maBang,
-                            MaKhoa: parentMk,
-                            Thang: month,
-                            Nam: year,
-                            TrangThai: status,
-                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
-                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
-                            DuLieu: finalGridJson
-                        };
-
-                        bangToUpsertMap.set(maBang, bangObj);
+                        shiftsInMonth.forEach(s => {
+                            const parts = s.NgayTruc.split('-');
+                            if (parts.length === 3) {
+                                const dw = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay();
+                                if (dw === 5 || dw === 6) {
+                                    let isBccHSCC = String(s.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                    let v = 'T24';
+                                    if (s.PhanCa) {
+                                        let pc = s.PhanCa.toLowerCase().trim();
+                                        if (pc === 'ngày' || pc === 'ngay') v = 'T12N';
+                                        else if (pc === 'đêm' || pc === 'dem') v = 'T12D';
+                                    }
+                                    
+                                    if (isBccHSCC && v === 'T24') {
+                                        initUserStat(s.MaNV);
+                                        dbYearlyStats[s.MaNV].earnedNb += 1;
+                                    } else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) {
+                                        initUserStat(s.MaNV);
+                                        dbYearlyStats[s.MaNV].earnedNb += 1;
+                                    }
+                                }
+                            }
+                        });
                     }
-
-                    const newBangList = Array.from(bangToUpsertMap.values());
-
-                    newBangList.forEach(newBang => {
-                        const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
-                        if (index !== -1) {
-                            MOCK_DB.bangChamCong[index] = newBang;
-                        } else {
-                            MOCK_DB.bangChamCong.push(newBang);
-                        }
-                    });
-
-                    hasUnsavedChanges = false;
-                    currentOverallStatus = status;
-                    updateApprovalUI(status);
-
-                    await syncWithGAS('sync_BangChamCong', newBangList);
-
-                    originalGridData = extractGridData();
-                    if (hasMerged) {
-                        showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
-                        generateReport();
-                    }
-
-                } finally {
-                    isSaving = false;
-                    document.getElementById('loading-screen').classList.add('hidden');
                 }
+
+                let uiDataByKhoa = extractGridData();
+                let errorUsers = [];
+
+                // Lấy dữ liệu tháng hiện tại từ UI và cộng dồn
+                for (let parentMk in uiDataByKhoa) {
+                    let uiGrid = uiDataByKhoa[parentMk];
+                    for (let maNV in uiGrid) {
+                        initUserStat(maNV);
+                        let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                        let isRowHSCC = userObj && userObj.MaKhoa.toUpperCase().includes('HSCC');
+                        const baseP = getBaseAnnualLeave(maNV, year);
+
+                        let currentUsedP = 0, currentUsedNb = 0, currentEarnedNb = 0;
+
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            let valStr = uiGrid[maNV].days[day] || '';
+                            if (!valStr) continue;
+
+                            const dw = new Date(year, month - 1, day).getDay(); 
+                            let parts = parseShifts(valStr);
+                            parts.forEach(v => {
+                                v = v.toUpperCase();
+                                if (v === 'P') currentUsedP += 1;
+                                else if (v === 'P/2') currentUsedP += 0.5;
+                                else if (v === 'NB') currentUsedNb += 1;
+                                else if (v === 'NB/2') currentUsedNb += 0.5;
+                                else if (v === 'LT') currentEarnedNb += 1;
+                                else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                                if (dw === 5 || dw === 6) {
+                                    if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
+                                    else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
+                                }
+                            });
+                        }
+
+                        let totalUsedP = currentUsedP + dbYearlyStats[maNV].usedP;
+                        let totalUsedNb = currentUsedNb + dbYearlyStats[maNV].usedNb;
+                        let totalEarnedNb = currentEarnedNb + dbYearlyStats[maNV].earnedNb;
+
+                        let totalRemaining = (baseP - totalUsedP) + (totalEarnedNb - totalUsedNb);
+
+                        if (totalRemaining < 0) {
+                            let name = userObj ? userObj.HoTen : maNV;
+                            errorUsers.push(`${name} (Âm ${Math.abs(totalRemaining)} ngày)`);
+                        }
+                    }
+                }
+
+                if (errorUsers.length > 0) {
+                    showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ (phép/bù): ${errorUsers.join(', ')}`, "error");
+                    isSaving = false;
+                    window.isSavingData = false;
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    return; // Chặn lưu
+                }
+                // ==========================================
+
+                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
+
+                let latestServerDB = [];
+                try {
+                    const { data, error } = await fetchAllSupabase('BangChamCong');
+                    if (!error && data) latestServerDB = data;
+                } catch (e) {
+                    console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                    latestServerDB = MOCK_DB.bangChamCong;
+                }
+
+                let hasMerged = false;
+                let bangToUpsertMap = new Map();
+
+                for (let parentMk in uiDataByKhoa) {
+                    const maBang = `BCC_${parentMk}_${month}_${year}`;
+                    let uiGrid = uiDataByKhoa[parentMk];
+                    let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+
+                    if (latestBang && latestBang.DuLieu) {
+                        try {
+                            let serverGrid = JSON.parse(latestBang.DuLieu);
+                            for (let nv in uiGrid) {
+                                if (serverGrid[nv]) {
+                                    for (let d = 1; d <= 31; d++) {
+                                        let uiVal = uiGrid[nv].days[d] || '';
+                                        let serverVal = serverGrid[nv].days[d] || '';
+                                        let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+
+                                        if (uiVal === origVal && serverVal !== origVal) {
+                                            uiGrid[nv].days[d] = serverVal;
+                                            hasMerged = true;
+                                        }
+                                    }
+
+                                    let uiNote = uiGrid[nv].note || '';
+                                    let serverNote = serverGrid[nv].note || '';
+                                    let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                    if (uiNote === origNote && serverNote !== origNote) {
+                                        uiGrid[nv].note = serverNote;
+                                        hasMerged = true;
+                                    }
+                                }
+                            }
+                        } catch (e) { }
+                    }
+
+                    let finalGridJson = JSON.stringify(uiGrid);
+
+                    let bangObj = {
+                        MaBang: maBang,
+                        MaKhoa: parentMk,
+                        Thang: month,
+                        Nam: year,
+                        TrangThai: status,
+                        NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                        NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
+                        DuLieu: finalGridJson
+                    };
+
+                    bangToUpsertMap.set(maBang, bangObj);
+                }
+
+                const newBangList = Array.from(bangToUpsertMap.values());
+
+                newBangList.forEach(newBang => {
+                    const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
+                    if (index !== -1) {
+                        MOCK_DB.bangChamCong[index] = newBang;
+                    } else {
+                        MOCK_DB.bangChamCong.push(newBang);
+                    }
+                });
+
+                hasUnsavedChanges = false;
+                currentOverallStatus = status;
+                updateApprovalUI(status);
+
+                await syncWithGAS('sync_BangChamCong', newBangList);
+
+                originalGridData = extractGridData();
+                if (hasMerged) {
+                    showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                    generateReport();
+                }
+
+            } catch (err) {
+                console.error("Lỗi khi lưu bảng chấm công:", err);
+            } finally {
+                isSaving = false;
+                window.isSavingData = false;
+                document.getElementById('loading-screen').classList.add('hidden');
             }
+        }
 
         async function loadDataFromGAS() {
                 document.getElementById('loading-screen').classList.remove('hidden');
@@ -1676,7 +2047,8 @@
                         { data: shiftsFast }, { data: bangChamCongFast }
                     ] = await Promise.all([
                         _supabase.from('KhoaPhong').select('*'),
-                        _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc'),
+                        // SỬA TẠI ĐÂY: Đổi select() lấy toàn bộ (*) thay vì select danh sách thiếu NgayVaoLam
+                        _supabase.from('NhanVien').select('*'),
                         _supabase.from('CauHinhPhep').select('*'),
                         // Chỉ tải ca trực trong đúng 1 tháng
                         _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
@@ -1867,7 +2239,7 @@
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
                     if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(val)) khac += 0.5;
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2'].includes(val)) khac += 0.5;
                 });
             });
 
@@ -1959,143 +2331,292 @@
         }
 
         async function updateBangStatus(status) {
-                if (isSaving) return;
-                isSaving = true;
+            if (isSaving) return;
+            isSaving = true;
+            window.isSavingData = true;
 
-                document.getElementById('loading-text').innerText = "Đang lưu & đồng bộ lên máy chủ...";
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày nghỉ...";
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            document.getElementById('loading-screen').classList.remove('hidden');
 
-                try {
-                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+            try {
+                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                const daysInMonth = new Date(year, month, 0).getDate();
 
-                    // 1. Tải dữ liệu mới nhất từ server để gộp
-                    let latestServerDB = [];
-                    try {
-                        const { data, error } = await fetchAllSupabase('BangChamCong');
-                        if (!error && data) latestServerDB = data;
-                    } catch (e) {
-                        console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
-                        latestServerDB = MOCK_DB.bangChamCong;
+                // Lấy toàn bộ dữ liệu đang gõ trên giao diện
+                let uiDataByKhoa = extractGridData();
+
+                // ==========================================================
+                // 1. RÀ SOÁT VÀ CHẶN NGHIÊM NGẶT NHỮNG NGƯỜI ÂM PHÉP NĂM VÀ ĐANG CHẤM P/NB
+                // ==========================================================
+                let hasLeaveInUI = false;
+                for (let parentMk in uiDataByKhoa) {
+                    let uiGrid = uiDataByKhoa[parentMk];
+                    for (let maNV in uiGrid) {
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            let valStr = uiGrid[maNV].days[day] || '';
+                            let parts = parseShifts(valStr);
+                            for (let v of parts) {
+                                let upperV = v.toUpperCase();
+                                // Chỉ kiểm tra nếu có xin nghỉ phép (P) hoặc bù (NB). NBL không bị trừ.
+                                if (upperV === 'P' || upperV === 'P/2' || upperV === 'NB' || upperV === 'NB/2') {
+                                    hasLeaveInUI = true;
+                                    break;
+                                }
+                            }
+                            if (hasLeaveInUI) break;
+                        }
+                        if (hasLeaveInUI) break;
                     }
+                    if (hasLeaveInUI) break;
+                }
 
-                    let uiDataByKhoa = extractGridData();
-                    let hasMerged = false;
+                if (hasLeaveInUI) {
+                    const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                    const yearBcc = yearBccRaw || [];
+                    
+                    const startOfYear = `${year}-01-01`;
+                    const endOfYear = `${year}-12-31`;
+                    const { data: yearShiftsRaw } = await fetchAllSupabase('ChiTietLichTruc', 'MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa', { type: 'date_range', column: 'NgayTruc', startDate: startOfYear, endDate: endOfYear });
+                    const yearShifts = yearShiftsRaw || [];
 
-                    // 2. Sử dụng Map để đảm bảo KHÔNG BAO GIỜ trùng khóa chính MaBang
-                    let bangToUpsertMap = new Map();
+                    let dbYearlyStats = {};
+                    const initUserStat = (nv) => {
+                        if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                    };
 
-                    for (let parentMk in uiDataByKhoa) {
-                        const maBang = `BCC_${parentMk}_${month}_${year}`;
+                    for (let m = 1; m <= 12; m++) {
+                        if (m === month) continue; 
 
-                        let uiGrid = uiDataByKhoa[parentMk];
-                        let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+                        let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                        if (savedBccs.length > 0) {
+                            savedBccs.forEach(b => {
+                                let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                try {
+                                    let data = JSON.parse(b.DuLieu);
+                                    for (let nv in data) {
+                                        initUserStat(nv);
+                                        for (let day in data[nv].days) {
+                                            let valStr = data[nv].days[day];
+                                            if (!valStr) continue;
 
-                        if (latestBang && latestBang.DuLieu) {
-                            try {
-                                let serverGrid = JSON.parse(latestBang.DuLieu);
-                                // Thực hiện Gộp Dữ Liệu
-                                for (let nv in uiGrid) {
-                                    if (serverGrid[nv]) {
-                                        for (let d = 1; d <= 31; d++) {
-                                            let uiVal = uiGrid[nv].days[d] || '';
-                                            let serverVal = serverGrid[nv].days[d] || '';
-                                            let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+                                            let parts = parseShifts(valStr);
+                                            parts.forEach(v => {
+                                                v = v.toUpperCase();
+                                                if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                                else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                                else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                                else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
+                                                else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                                else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
 
-                                            // Nếu UI không đổi nhưng Server có đổi -> Lấy của Server
-                                            if (uiVal === origVal && serverVal !== origVal) {
-                                                uiGrid[nv].days[d] = serverVal;
-                                                hasMerged = true;
-                                            }
+                                                const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
+                                                if (dw === 5 || dw === 6) {
+                                                    if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                    else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
+                                                }
+                                            });
                                         }
+                                    }
+                                } catch (e) { }
+                            });
+                        } else {
+                            let shiftsInMonth = yearShifts.filter(s => {
+                                if (!s.NgayTruc) return false;
+                                const parts = s.NgayTruc.split('-');
+                                return parts.length === 3 && parseInt(parts[0]) === year && parseInt(parts[1]) === m;
+                            });
 
-                                        let uiNote = uiGrid[nv].note || '';
-                                        let serverNote = serverGrid[nv].note || '';
-                                        let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
-                                        if (uiNote === origNote && serverNote !== origNote) {
-                                            uiGrid[nv].note = serverNote;
-                                            hasMerged = true;
+                            shiftsInMonth.forEach(s => {
+                                const parts = s.NgayTruc.split('-');
+                                if (parts.length === 3) {
+                                    const dw = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).getDay();
+                                    if (dw === 5 || dw === 6) {
+                                        let isBccHSCC = String(s.MaKhoa).trim().toUpperCase() === 'HSCC';
+                                        let v = 'T24';
+                                        if (s.PhanCa) {
+                                            let pc = s.PhanCa.toLowerCase().trim();
+                                            if (pc === 'ngày' || pc === 'ngay') v = 'T12N';
+                                            else if (pc === 'đêm' || pc === 'dem') v = 'T12D';
+                                        }
+                                        
+                                        if (isBccHSCC && v === 'T24') {
+                                            initUserStat(s.MaNV);
+                                            dbYearlyStats[s.MaNV].earnedNb += 1;
+                                        } else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) {
+                                            initUserStat(s.MaNV);
+                                            dbYearlyStats[s.MaNV].earnedNb += 1;
                                         }
                                     }
                                 }
-                            } catch (e) { }
+                            });
                         }
-
-                        let finalGridJson = JSON.stringify(uiGrid);
-
-                        // Xây dựng Object duy nhất cho maBang này
-                        let bangObj = {
-                            MaBang: maBang,
-                            MaKhoa: parentMk,
-                            Thang: month,
-                            Nam: year,
-                            TrangThai: status,
-                            NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
-                            NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
-                            DuLieu: finalGridJson
-                        };
-
-                        // Đưa vào Map để lọc trùng lặp
-                        bangToUpsertMap.set(maBang, bangObj);
                     }
 
-                    // 3. Cập nhật vào MOCK_DB (xóa cũ thêm mới để tránh trùng lặp)
-                    const newBangList = Array.from(bangToUpsertMap.values());
-                    newBangList.forEach(newBang => {
-                        const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
-                        if (index !== -1) {
-                            MOCK_DB.bangChamCong[index] = newBang;
-                        } else {
-                            MOCK_DB.bangChamCong.push(newBang);
+                    let errorUsers = [];
+                    const rows = document.querySelectorAll('#report-tbody tr.data-row');
+                    
+                    rows.forEach(tr => {
+                        const maNV = tr.getAttribute('data-id');
+                        const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                        const isRowHSCC = maKhoa === 'HSCC';
+                        const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+
+                        initUserStat(maNV);
+                        const baseP = getBaseAnnualLeave(maNV, year);
+
+                        let currentUsedP = 0, currentUsedNb = 0, currentEarnedNb = 0;
+                        let isRequestingLeaveThisMonth = false;
+
+                        const cells = tr.querySelectorAll('.cell-day');
+                        cells.forEach((cell, idx) => {
+                            const day = idx + 1;
+                            if (day > daysInMonth) return;
+
+                            const dw = new Date(year, month - 1, day).getDay(); 
+                            const rawVal = cell.innerText.trim().toUpperCase();
+                            if (!rawVal) return;
+
+                            let parts = parseShifts(rawVal);
+                            parts.forEach(v => {
+                                v = v.toUpperCase();
+                                
+                                if (v === 'P') { currentUsedP += 1; isRequestingLeaveThisMonth = true; }
+                                else if (v === 'P/2') { currentUsedP += 0.5; isRequestingLeaveThisMonth = true; }
+                                else if (v === 'NB') { currentUsedNb += 1; isRequestingLeaveThisMonth = true; }
+                                else if (v === 'NB/2') { currentUsedNb += 0.5; isRequestingLeaveThisMonth = true; }
+                                // Các mã NBL không trừ vào quỹ nghỉ
+
+                                else if (v === 'LT') currentEarnedNb += 1;
+                                else if (v === 'LT/2') currentEarnedNb += 0.5;
+
+                                if (dw === 5 || dw === 6) {
+                                    if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
+                                    else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
+                                }
+                            });
+                        });
+
+                        let totalUsedP = currentUsedP + dbYearlyStats[maNV].usedP;
+                        let totalUsedNb = currentUsedNb + dbYearlyStats[maNV].usedNb;
+                        let totalEarnedNb = currentEarnedNb + dbYearlyStats[maNV].earnedNb;
+
+                        let totalRemaining = (baseP - totalUsedP) + (totalEarnedNb - totalUsedNb);
+
+                        // CHỈ BÁO LỖI NẾU BỊ ÂM VÀ ĐỒNG THỜI ĐANG CỐ TÌNH CHẤM THÊM P / NB VÀO BẢNG
+                        if (totalRemaining < 0 && isRequestingLeaveThisMonth) {
+                            errorUsers.push(`${hoTenText} (Âm ${Math.abs(totalRemaining)} ngày)`);
                         }
                     });
 
-                    hasUnsavedChanges = false;
-                    currentOverallStatus = status;
-
-                    // 4. CẬP NHẬT GIAO DIỆN NGAY LẬP TỨC (Không dùng setTimeout chờ đợi)
-                    originalGridData = extractGridData();
-                    updateApprovalUI(status);
-                    generateReport();
-
-                    isSaving = false;
-                    window.isSavingData = false;
-                    document.getElementById('loading-screen').classList.add('hidden'); // Tắt loading ngay
-
-                    // 5. ĐẨY LÊN SERVER CHẠY NGẦM
-                    if (hasMerged) {
-                        showToast("Đã gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
-                    }
-                    syncWithGAS('sync_BangChamCong', newBangList); // Chạy ngầm, không await để tránh nghẽn
-
-                    hasUnsavedChanges = false;
-                    currentOverallStatus = status;
-                    
-                    // Lệnh đẩy dữ liệu lên máy chủ
-                    await syncWithGAS('sync_BangChamCong', newBangList);
-
-                    // CHỜ ĐỢI 1 CHÚT CHO SERVER TIÊU HÓA RỒI MỚI RENDER LẠI UI
-                    setTimeout(() => {
-                        originalGridData = extractGridData();
-                        if (hasMerged) {
-                            showToast("Đã lưu và gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
-                        }
-                        updateApprovalUI(status);
-                        generateReport();
-                        
+                    if (errorUsers.length > 0) {
+                        showToast(`Không thể lưu! Các nhân sự sau đã cạn ngày nghỉ: ${errorUsers.join(', ')}. Hãy xóa ký hiệu (P) hoặc (NB) của người này để tiếp tục.`, "error");
                         isSaving = false;
-                        window.isSavingData = false; // Mở lại cờ đồng bộ
+                        window.isSavingData = false;
                         document.getElementById('loading-screen').classList.add('hidden');
-                    }, 1000); 
-
-                } catch (err) {
-                    console.error("Lỗi khi lưu bảng chấm công:", err);
-                    isSaving = false;
-                    window.isSavingData = false;
-                    document.getElementById('loading-screen').classList.add('hidden');
+                        return; // CHẶN KHÔNG CHO LƯU
+                    }
                 }
+                // ==========================================================
+
+                document.getElementById('loading-text').innerText = "Dữ liệu hợp lệ. Đang lưu lên máy chủ...";
+
+                let latestServerDB = [];
+                try {
+                    const { data, error } = await fetchAllSupabase('BangChamCong');
+                    if (!error && data) latestServerDB = data;
+                } catch (e) {
+                    console.warn("Không thể tải dữ liệu mới nhất để gộp", e);
+                    latestServerDB = MOCK_DB.bangChamCong;
+                }
+
+                let hasMerged = false;
+                let bangToUpsertMap = new Map();
+
+                for (let parentMk in uiDataByKhoa) {
+                    const maBang = `BCC_${parentMk}_${month}_${year}`;
+                    let uiGrid = uiDataByKhoa[parentMk];
+                    let latestBang = latestServerDB.find(b => b.MaBang === maBang);
+
+                    if (latestBang && latestBang.DuLieu) {
+                        try {
+                            let serverGrid = JSON.parse(latestBang.DuLieu);
+                            for (let nv in uiGrid) {
+                                if (serverGrid[nv]) {
+                                    for (let d = 1; d <= 31; d++) {
+                                        let uiVal = uiGrid[nv].days[d] || '';
+                                        let serverVal = serverGrid[nv].days[d] || '';
+                                        let origVal = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].days[d]) || '';
+
+                                        if (uiVal === origVal && serverVal !== origVal) {
+                                            uiGrid[nv].days[d] = serverVal;
+                                            hasMerged = true;
+                                        }
+                                    }
+
+                                    let uiNote = uiGrid[nv].note || '';
+                                    let serverNote = serverGrid[nv].note || '';
+                                    let origNote = (originalGridData[parentMk] && originalGridData[parentMk][nv] && originalGridData[parentMk][nv].note) || '';
+                                    if (uiNote === origNote && serverNote !== origNote) {
+                                        uiGrid[nv].note = serverNote;
+                                        hasMerged = true;
+                                    }
+                                }
+                            }
+                        } catch (e) { }
+                    }
+
+                    let finalGridJson = JSON.stringify(uiGrid);
+
+                    let bangObj = {
+                        MaBang: maBang,
+                        MaKhoa: parentMk,
+                        Thang: month,
+                        Nam: year,
+                        TrangThai: status,
+                        NguoiDuyet: status === 'Đã duyệt' ? currentUser.MaNV : '',
+                        NgayDuyet: status === 'Đã duyệt' ? getVNFormatYYYYMMDD() : '',
+                        DuLieu: finalGridJson
+                    };
+
+                    bangToUpsertMap.set(maBang, bangObj);
+                }
+
+                const newBangList = Array.from(bangToUpsertMap.values());
+
+                newBangList.forEach(newBang => {
+                    const index = MOCK_DB.bangChamCong.findIndex(b => b.MaBang === newBang.MaBang);
+                    if (index !== -1) {
+                        MOCK_DB.bangChamCong[index] = newBang;
+                    } else {
+                        MOCK_DB.bangChamCong.push(newBang);
+                    }
+                });
+
+                hasUnsavedChanges = false;
+                currentOverallStatus = status;
+
+                originalGridData = extractGridData();
+                updateApprovalUI(status);
+                generateReport();
+
+                isSaving = false;
+                window.isSavingData = false;
+                document.getElementById('loading-screen').classList.add('hidden'); 
+
+                if (hasMerged) {
+                    showToast("Đã gộp dữ liệu do có người khác vừa chỉnh sửa cùng lúc.", "info");
+                }
+                syncWithGAS('sync_BangChamCong', newBangList); 
+
+            } catch (err) {
+                console.error("Lỗi khi lưu bảng chấm công:", err);
+                isSaving = false;
+                window.isSavingData = false;
+                document.getElementById('loading-screen').classList.add('hidden');
             }
+        }
 
         async function saveDraftData() {
             await updateBangStatus('Nháp');
@@ -2561,7 +3082,7 @@
                                     if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
 
                                     if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(v)) khac += 1;
-                                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2'].includes(v)) khac += 0.5;
+                                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2'].includes(v)) khac += 0.5;
                                 });
                             }
 
@@ -3074,13 +3595,11 @@
             const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
             if (!user) return 12;
 
-            let baseP = 12;
+            let baseP = 12; // Phép cơ bản mặc định là 12
 
             if (user.SoPhep !== undefined && user.SoPhep !== null && String(user.SoPhep).trim() !== '') {
                 let dbPhep = parseInt(user.SoPhep);
-                if (!isNaN(dbPhep) && dbPhep > 0) {
-                    baseP = dbPhep;
-                }
+                if (!isNaN(dbPhep) && dbPhep > 0) baseP = dbPhep;
             }
 
             const currentLeaveConfig = getCurrentLeaveConfig();
@@ -3091,158 +3610,211 @@
 
             for (let mk of userKhoaIds) {
                 let parentMa = getParentKhoaInfo(mk).ma;
-                let currentMkUpper = String(mk).trim().toUpperCase();
-                let parentMkUpper = String(parentMa).trim().toUpperCase();
-
-                if (configKhoa.includes(currentMkUpper) || configKhoa.includes(parentMkUpper)) {
+                if (configKhoa.includes(mk.toUpperCase()) || configKhoa.includes(parentMa.toUpperCase())) {
                     isToxicDept = true;
                     break;
                 }
             }
 
-            if (isToxicDept) {
-                baseP += 2;
-            }
+            if (isToxicDept) baseP += 2; // Khoa độc hại +2 ngày
 
             if (currentLeaveConfig.caNhan && currentLeaveConfig.caNhan[maNV] !== undefined) {
                 let adjPhep = parseFloat(currentLeaveConfig.caNhan[maNV]);
-                if (!isNaN(adjPhep)) {
-                    baseP += adjPhep;
-                }
+                if (!isNaN(adjPhep)) baseP += adjPhep; 
             }
 
-            if (user.NgayVaoLam) {
-                let joinDateObj = parseEmployeeDate(user.NgayVaoLam, false);
-                let startYear = joinDateObj.getFullYear();
-
-                if (startYear > 1900 && startYear <= currentYear) {
-                    let yearsWorked = currentYear - startYear;
-                    let extraDays = Math.floor(yearsWorked / 5);
-                    baseP += extraDays;
-                }
+            // ĐÃ SỬA: Tính Thâm niên an toàn (5 năm = +1 ngày phép)
+            if (user.NgayVaoLam && String(user.NgayVaoLam).trim() !== "") {
+                try {
+                    let dateStr = String(user.NgayVaoLam).trim();
+                    let startYear = null;
+                    
+                    // Xử lý trực tiếp chuỗi YYYY-MM-DD
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                        startYear = parseInt(dateStr.substring(0, 4));
+                    } else {
+                        // Nếu không phải chuẩn, fallback dùng hàm parse
+                        let joinDateObj = parseEmployeeDate(dateStr, false);
+                        startYear = joinDateObj.getFullYear();
+                    }
+                    
+                    if (startYear > 1900 && startYear <= currentYear) {
+                        let yearsWorked = currentYear - startYear;
+                        let extraDays = Math.floor(yearsWorked / 5);
+                        baseP += extraDays;
+                    }
+                } catch(e) {}
             }
             return baseP;
         }
+        // Hàm hỗ trợ tải toàn bộ dữ liệu từ Supabase (vượt giới hạn 1000 dòng)
+        async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
 
-        function openLeaveStatsModal() {
-            const rows = document.querySelectorAll('#report-tbody tr.data-row');
-            if (rows.length === 0) {
-                return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
+                if (filter) {
+                    if (filter.type === 'eq') {
+                        query = query.eq(filter.column, filter.value);
+                    } else if (filter.type === 'date_range') {
+                        query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
+                    }
+                }
+
+                const { data, error } = await query;
+                if (error) {
+                    console.error("Lỗi fetchAllSupabase:", error);
+                    return { data: allData, error };
+                }
+                
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
             }
+            return { data: allData, error: null };
+        }
+        // Hàm hỗ trợ tải toàn bộ dữ liệu từ Supabase (vượt giới hạn 1000 dòng)
+        async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+
+                if (filter) {
+                    if (filter.type === 'eq') {
+                        query = query.eq(filter.column, filter.value);
+                    } else if (filter.type === 'date_range') {
+                        query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
+                    }
+                }
+
+                const { data, error } = await query;
+                if (error) {
+                    console.error("Lỗi fetchAllSupabase:", error);
+                    return { data: allData, error };
+                }
+                
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
+            }
+            return { data: allData, error: null };
+        }
+        async function openLeaveStatsModal() {
+            const rows = document.querySelectorAll('#report-tbody tr.data-row');
+            if (rows.length === 0) return showToast("Chưa có dữ liệu bảng chấm công để thống kê!", "warning");
 
             const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
             const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
             const daysInMonth = new Date(year, month, 0).getDate();
 
-            let tbodyHtml = '';
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('loading-text').innerText = `Đang tổng hợp dữ liệu thống kê năm ${year}...`;
 
-            let dbYearlyStats = {};
-            const initUserStat = (nv) => {
-                if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
-            };
+            try {
+                // TỐI ƯU TỐC ĐỘ: Chỉ tải Bảng Chấm Công đã lưu.
+                const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+                const yearBcc = yearBccRaw || [];
 
-            for (let m = 1; m <= 12; m++) {
-                if (m === month) continue;
+                let tbodyHtml = '';
+                let dbYearlyStats = {};
+                const initUserStat = (nv) => {
+                    if (!dbYearlyStats[nv]) dbYearlyStats[nv] = { usedP: 0, usedNb: 0, earnedNb: 0 };
+                };
 
-                let mergedMonthData = {};
-                let savedBccs = MOCK_DB.bangChamCong.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                // 1. TÍNH TOÁN TỪ THÁNG 1->12 (TRỪ THÁNG HIỆN TẠI ĐANG XEM TRÊN LƯỚI)
+                for (let m = 1; m <= 12; m++) {
+                    if (m === month) continue; 
 
-                if (savedBccs.length > 0) {
-                    savedBccs.forEach(b => {
-                        try {
-                            let data = JSON.parse(b.DuLieu);
-                            for (let nv in data) {
-                                if (!mergedMonthData[nv]) mergedMonthData[nv] = { days: {}, maKhoaLuu: b.MaKhoa };
-                                for (let d in data[nv].days) {
-                                    if (data[nv].days[d]) mergedMonthData[nv].days[d] = data[nv].days[d];
-                                }
-                            }
-                        } catch (e) { }
-                    });
+                    let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                    if (savedBccs.length > 0) {
+                        savedBccs.forEach(b => {
+                            let isBccHSCC = String(b.MaKhoa).trim().toUpperCase() === 'HSCC';
+                            try {
+                                let data = JSON.parse(b.DuLieu);
+                                for (let nv in data) {
+                                    initUserStat(nv);
+                                    for (let day in data[nv].days) {
+                                        let valStr = data[nv].days[day];
+                                        if (!valStr) continue;
 
-                    for (let nv in mergedMonthData) {
-                        initUserStat(nv);
-                        let userMonthData = mergedMonthData[nv];
-                        let maKhoaDb = userMonthData.maKhoaLuu;
+                                        let parts = parseShifts(valStr);
+                                        parts.forEach(v => {
+                                            v = v.toUpperCase();
 
-                        for (let day in userMonthData.days) {
-                            let valStr = userMonthData.days[day];
-                            if (!valStr) continue;
+                                            // Tính trừ ngày phép/bù đã sử dụng
+                                            if (v === 'P') dbYearlyStats[nv].usedP += 1;
+                                            else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
+                                            else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
+                                            else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
 
-                            let parts = parseShifts(valStr);
-                            parts.forEach(v => {
-                                v = v.toUpperCase();
+                                            // ĐIỀU KIỆN 1: Tích lũy Làm Thêm (Mọi khoa)
+                                            if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
+                                            else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
 
-                                if (v === 'P') dbYearlyStats[nv].usedP += 1;
-                                else if (v === 'P/2') dbYearlyStats[nv].usedP += 0.5;
-                                else if (v === 'NB') dbYearlyStats[nv].usedNb += 1;
-                                else if (v === 'NB/2') dbYearlyStats[nv].usedNb += 0.5;
-
-                                if (maKhoaDb !== 'HSCC') {
-                                    if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
-                                    else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
-
-                                    const dDate = new Date(year, m - 1, parseInt(day));
-                                    const dw = dDate.getDay();
-                                    if (dw === 5 || dw === 6) {
-                                        if (v === 'T24' || v === 'T12N' || v === 'T12D') dbYearlyStats[nv].earnedNb += 1;
+                                            // ĐIỀU KIỆN 2: Tích lũy Trực Thứ 6, Thứ 7
+                                            const dw = new Date(year, m - 1, parseInt(day)).getDay(); 
+                                            // JS: 5 = Thứ 6, 6 = Thứ 7
+                                            if (dw === 5 || dw === 6) {
+                                                if (isBccHSCC) {
+                                                    // Nếu là Khoa HSCC, CHỈ TÍNH nghỉ bù khi trực T24
+                                                    if (v === 'T24') {
+                                                        dbYearlyStats[nv].earnedNb += 1;
+                                                    }
+                                                } else {
+                                                    // Các khoa khác được tính cả T24, T12N, T12D
+                                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') {
+                                                        dbYearlyStats[nv].earnedNb += 1;
+                                                    }
+                                                }
+                                            }
+                                        });
                                     }
                                 }
-                            });
-                        }
+                            } catch (e) { }
+                        });
                     }
-                } else {
-                    let shiftsInMonth = MOCK_DB.shifts.filter(s => {
-                        if (!s.NgayTruc) return false;
-                        const parts = s.NgayTruc.split('-');
-                        if (parts.length !== 3) return false;
-                        return parseInt(parts[0]) === year && parseInt(parts[1]) === m;
-                    });
-
-                    shiftsInMonth.forEach(s => {
-                        if (s.MaKhoa !== 'HSCC') {
-                            const parts = s.NgayTruc.split('-');
-                            if (parts.length === 3) {
-                                const dDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-                                const dw = dDate.getDay();
-                                if (dw === 5 || dw === 6) {
-                                    initUserStat(s.MaNV);
-                                    dbYearlyStats[s.MaNV].earnedNb += 1;
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-
-            rows.forEach(tr => {
-                const maNV = tr.getAttribute('data-id');
-                const maKhoa = tr.getAttribute('data-khoa');
-
-                const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
-                const hoTen = hoTenText || tr.cells[1].innerText.trim();
-
-                let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-                let tenKhoaHienThi = maKhoa;
-                if (userObj) {
-                    let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
-                    tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
                 }
 
-                const baseP = getBaseAnnualLeave(maNV, year);
+                // 2. TÍNH TOÁN CHO THÁNG HIỆN TẠI LẤY TRỰC TIẾP TỪ LƯỚI GIAO DIỆN
+                rows.forEach(tr => {
+                    const maNV = tr.getAttribute('data-id');
+                    const maKhoa = String(tr.getAttribute('data-khoa')).trim().toUpperCase();
+                    const isRowHSCC = maKhoa === 'HSCC';
 
-                let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
-                let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
-                let currentEarnedNb = 0;
+                    const hoTenText = tr.cells[1].innerText.split('\n')[0].trim();
+                    const hoTen = hoTenText || tr.cells[1].innerText.trim();
 
-                if (maKhoa !== 'HSCC') {
+                    let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                    let tenKhoaHienThi = maKhoa;
+                    if (userObj) {
+                        let uKhoaGoc = getPrimaryKhoa(userObj.MaKhoa);
+                        tenKhoaHienThi = MOCK_DB.khoa.find(k => k.MaKhoa === uKhoaGoc)?.TenKhoa || uKhoaGoc;
+                    }
+
+                    const baseP = getBaseAnnualLeave(maNV, year);
+
+                    let currentUsedP = parseFloat(tr.querySelector('.sum-p').innerText || '0');
+                    let currentUsedNb = parseFloat(tr.querySelector('.sum-nb').innerText || '0');
+                    let currentEarnedNb = 0;
+
                     const cells = tr.querySelectorAll('.cell-day');
                     cells.forEach((cell, idx) => {
                         const day = idx + 1;
                         if (day > daysInMonth) return;
 
-                        const dateObj = new Date(year, month - 1, day);
-                        const dw = dateObj.getDay();
+                        const dw = new Date(year, month - 1, day).getDay(); 
 
                         const rawVal = cell.innerText.trim().toUpperCase();
                         if (!rawVal) return;
@@ -3250,48 +3822,61 @@
                         let parts = parseShifts(rawVal);
                         parts.forEach(v => {
                             v = v.toUpperCase();
+                            
+                            // Điều kiện 1: Tích lũy Làm Thêm
                             if (v === 'LT') currentEarnedNb += 1;
                             else if (v === 'LT/2') currentEarnedNb += 0.5;
 
+                            // Điều kiện 2: Tích lũy trực Thứ 6, Thứ 7
                             if (dw === 5 || dw === 6) {
-                                if (v === 'T24' || v === 'T12N' || v === 'T12D') currentEarnedNb += 1;
+                                if (isRowHSCC) {
+                                    // Khoa HSCC chỉ tính cho T24
+                                    if (v === 'T24') currentEarnedNb += 1;
+                                } else {
+                                    // Khoa khác tính cho cả T24, T12N, T12D
+                                    if (v === 'T24' || v === 'T12N' || v === 'T12D') currentEarnedNb += 1;
+                                }
                             }
                         });
                     });
-                }
 
-                let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
+                    let pastStats = dbYearlyStats[maNV] || { usedP: 0, usedNb: 0, earnedNb: 0 };
 
-                let totalUsedP = currentUsedP + pastStats.usedP;
-                let totalUsedNb = currentUsedNb + pastStats.usedNb;
+                    let totalUsedP = currentUsedP + pastStats.usedP;
+                    let totalUsedNb = currentUsedNb + pastStats.usedNb;
+                    let totalEarnedNb = currentEarnedNb + pastStats.earnedNb;
 
-                let totalEarnedNb = currentEarnedNb + pastStats.earnedNb;
+                    const remainingP = baseP - totalUsedP;
+                    const remainNb = totalEarnedNb - totalUsedNb;
+                    const totalRemaining = remainingP + remainNb;
 
-                const remainingP = baseP - totalUsedP;
-                const remainNb = totalEarnedNb - totalUsedNb;
+                    const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
+                    const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
 
-                const totalRemaining = remainingP + remainNb;
+                    tbodyHtml += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
+                            <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold text-emerald-700">${totalEarnedNb > 0 ? totalEarnedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center">${totalUsedNb > 0 ? totalUsedNb : '-'}</td>
+                            <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
+                        </tr>
+                    `;
+                });
 
-                const remainNbClass = remainNb < 0 ? 'text-red-600' : 'text-emerald-600';
-                const totalRemainClass = totalRemaining < 0 ? 'text-red-600' : 'text-purple-700';
-
-                tbodyHtml += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="px-4 py-3 border-b font-medium text-slate-800">${hoTen}</td>
-                        <td class="px-4 py-3 border-b text-xs text-slate-600">${tenKhoaHienThi}</td>
-                        <td class="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50/30">${baseP}</td>
-                        <td class="px-4 py-3 border-b text-center">${totalUsedP > 0 ? totalUsedP : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center font-bold text-teal-600">${currentEarnedNb > 0 ? currentEarnedNb : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center font-bold text-emerald-700">${totalEarnedNb > 0 ? totalEarnedNb : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center">${totalUsedNb > 0 ? totalUsedNb : '-'}</td>
-                        <td class="px-4 py-3 border-b text-center font-bold ${totalRemainClass}">${totalRemaining}</td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
-            document.getElementById('leave-stats-modal').classList.remove('hidden');
-            lucide.createIcons();
+                document.getElementById('leave-stats-tbody').innerHTML = tbodyHtml;
+                document.getElementById('leave-stats-modal').classList.remove('hidden');
+                lucide.createIcons();
+                
+            } catch (error) {
+                console.error("Lỗi thống kê phép:", error);
+                showToast("Có lỗi xảy ra khi tải dữ liệu cả năm!", "error");
+            } finally {
+                document.getElementById('loading-screen').classList.add('hidden');
+            }
         }
 
         function closeLeaveStatsModal() {
