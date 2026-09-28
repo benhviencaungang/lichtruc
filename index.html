@@ -1686,7 +1686,7 @@
             }, 3000);
         }
 
-        // FIX VÀ CẬP NHẬT: Hàm chuẩn hóa ngày tháng chống lỗi format từ Google Sheets
+        // FIX VÀ CẬP NHẬT: Hàm chuẩn hóa ngày tháng chống lỗi format
         function normalizeDateStr(val) {
             if (!val) return "";
             let strVal = String(val).trim();
@@ -1694,16 +1694,17 @@
             // Nếu đã là chuẩn YYYY-MM-DD thì giữ nguyên
             if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) return strVal;
 
-            // Xử lý định dạng DD/MM/YYYY hoặc MM/DD/YYYY từ Google Sheets trả về
-            if (strVal.includes('/')) {
+            // Xử lý định dạng có dấu '/' hoặc '-' không chuẩn
+            if (strVal.includes('/') || strVal.includes('-')) {
                 let datePart = strVal.split(/[T\s]/)[0]; // Bỏ phần giờ nếu có
-                let parts = datePart.split('/');
+                let parts = datePart.split(/[\/\-]/); // Cắt theo cả / và -
+                
                 if (parts.length === 3) {
-                    // Nếu là DD/MM/YYYY (Năm đứng cuối)
+                    // Nếu là DD/MM/YYYY hoặc DD-MM-YYYY (Năm đứng cuối)
                     if (parts[2].length === 4) {
                         return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                     }
-                    // Nếu là YYYY/MM/DD (Năm đứng đầu)
+                    // Nếu là YYYY/MM/DD hoặc YYYY-MM-DD (Năm đứng đầu)
                     else if (parts[0].length === 4) {
                         return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
                     }
@@ -2017,7 +2018,7 @@
 
                 const responses = await Promise.all([
                     fetchAllSupabase('KhoaPhong'),
-                    fetchAllSupabase('NhanVien', 'MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password'),
+                    fetchAllSupabase('NhanVien', '*'),
                     fetchAllSupabase('LoaiCaTruc'),
                     fetchAllSupabase('CauHinhKySo')
                 ]);
@@ -2206,7 +2207,7 @@
             try {
                 const responses = await Promise.all([
                     _supabase.from('KhoaPhong').select('*').limit(1000),
-                    _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password').limit(5000),
+                    _supabase.from('NhanVien').select('*').limit(5000),
                     _supabase.from('LoaiCaTruc').select('*').limit(100),
                     // KHÔNG tải ngầm PhieuLichTruc ở đây nữa
                     { data: [] },
@@ -2323,7 +2324,7 @@
                 const week = getCurrentWeekDates();
                 const responses = await Promise.all([
                     _supabase.from('KhoaPhong').select('*'),
-                    _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password'),
+                    _supabase.from('NhanVien').select('*'),
                     _supabase.from('LoaiCaTruc').select('*'),
                     _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', week.start).lte('TuanTruc', week.end),
                     _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', week.start).lte('NgayTruc', week.end),
@@ -2733,7 +2734,7 @@
             // NẾU MOCK_DB.users chưa kịp tải, thử gọi lại DB một lần nữa để chắc chắn
             if (!MOCK_DB.users || MOCK_DB.users.length === 0) {
                 try {
-                    const { data } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Role, NgayNghi, CoTruc, Username, Password');
+                    const { data } = await _supabase.from('NhanVien').select('*');
                     if (data && data.length > 0) {
                         let rawUsers = data.map(u => ({
                             ...u,
@@ -3770,14 +3771,27 @@
                 const sdtHtml = u.SDT ? formatSDT(u.SDT) : 'Chưa có SĐT';
                 const mailHtml = u.Email ? u.Email : 'Chưa có Email';
 
-                const ngayVaoLamUI = u.NgayVaoLam ? u.NgayVaoLam.split('-').reverse().join('/') : 'Chưa cập nhật';
+                // ĐÃ SỬA: Chuẩn hóa ngày trước khi hiển thị (đảm bảo luôn ra định dạng DD/MM/YYYY)
+                let ngayVaoLamUI = 'Chưa cập nhật';
+                if (u.NgayVaoLam) {
+                    let normDate = normalizeDateStr(u.NgayVaoLam);
+                    if (normDate) ngayVaoLamUI = normDate.split('-').reverse().join('/');
+                }
+
                 const coTrucUI = u.CoTruc !== false
                     ? '<span class="text-emerald-600"><i data-lucide="check-circle" class="w-3 h-3 inline"></i> Có xếp trực</span>'
                     : '<span class="text-red-500"><i data-lucide="x-circle" class="w-3 h-3 inline"></i> Không trực</span>';
 
                 const cchnUI = u.CCHN ? `<div class="text-[10px] text-slate-500 mt-1"><i data-lucide="award" class="w-3 h-3 inline"></i> CCHN: ${u.CCHN}</div>` : '';
 
-                const statusNghiViec = u.NgayNghi ? `<div class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold mt-1 inline-block">Đã nghỉ (${u.NgayNghi.split('-').reverse().join('/')})</div>` : '';
+                // ĐÃ SỬA: Chuẩn hóa ngày nghỉ trước khi hiển thị
+                let statusNghiViec = '';
+                if (u.NgayNghi) {
+                    let normNghi = normalizeDateStr(u.NgayNghi);
+                    if (normNghi) {
+                        statusNghiViec = `<div class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-[10px] font-bold mt-1 inline-block">Đã nghỉ (${normNghi.split('-').reverse().join('/')})</div>`;
+                    }
+                }
 
                 const deleteBtn = (currentUser && currentUser.Role === 'Admin_KHTH')
                     ? `<button onclick="deleteUser('${u.MaNV}')" class="text-red-400 hover:text-red-600 p-1" title="Xóa"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
@@ -3841,17 +3855,18 @@
                     document.getElementById('u-email').value = user.Email || "";
                     document.getElementById('u-username').value = user.Username || "";
                     document.getElementById('u-password').value = user.Password || "";
-                    document.getElementById('u-cccd').value = user.CCCD || ""; // DÒNG MỚI THÊM NÀY
+                    document.getElementById('u-cccd').value = user.CCCD || ""; 
                     document.getElementById('u-bhxh').value = user.BHXH || "";
                     document.getElementById('u-cchn').value = user.CCHN || "";
 
-                    document.getElementById('u-ngayvaolam').value = user.NgayVaoLam || "";
+                    // ĐÃ SỬA: Gán định dạng chuẩn để input date nhận diện được
+                    document.getElementById('u-ngayvaolam').value = user.NgayVaoLam ? normalizeDateStr(user.NgayVaoLam) : "";
                     document.getElementById('u-cotruc').checked = user.CoTruc !== false;
 
                     if (user.NgayNghi) {
                         document.getElementById('u-danghi').checked = true;
                         document.getElementById('wrap-ngaynghi').classList.remove('hidden');
-                        document.getElementById('u-ngaynghi').value = user.NgayNghi;
+                        document.getElementById('u-ngaynghi').value = normalizeDateStr(user.NgayNghi);
                     } else {
                         document.getElementById('u-danghi').checked = false;
                         document.getElementById('wrap-ngaynghi').classList.add('hidden');
