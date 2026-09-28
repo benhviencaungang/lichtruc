@@ -3902,6 +3902,9 @@
             e.preventDefault();
             const maNV = document.getElementById('u-manv').value.toUpperCase().trim();
             const hoTenInput = document.getElementById('u-hoten').value.trim();
+            const sdtInput = document.getElementById('u-sdt').value.trim();
+            const cccdInput = document.getElementById('u-cccd').value.trim();
+            const cchnInput = document.getElementById('u-cchn').value.trim();
 
             const selectedKhoas = Array.from(document.querySelectorAll('input[name="u-khoa-cb"]'))
                 .filter(c => c.checked)
@@ -3911,12 +3914,14 @@
             let userRole = document.getElementById('u-role').value;
             let existingUser = {};
 
-            if (document.getElementById('form-mode').value === 'edit') {
+            const formMode = document.getElementById('form-mode').value;
+
+            if (formMode === 'edit') {
                 existingUser = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV)) || {};
             }
 
             if (currentUser && currentUser.Role === 'Admin_Khoa') {
-                if (document.getElementById('form-mode').value === 'edit') {
+                if (formMode === 'edit') {
                     if (existingUser.MaNV) {
                         userRole = existingUser.Role || 'User_Khoa';
                         const oldKhoas = (existingUser.MaKhoa || "").split(',').map(s => s.trim()).filter(Boolean);
@@ -3930,7 +3935,34 @@
 
             if (!finalKhoas) return showToast("Phải chọn ít nhất 1 khoa cho nhân viên!", "error");
 
-            if (document.getElementById('form-mode').value === 'add') {
+            // --- KIỂM TRA TRÙNG LẶP SĐT, CCCD, CCHN TRƯỚC KHI LƯU ---
+            const duplicateErrors = [];
+
+            // Chỉ kiểm tra những người KHÁC với người đang sửa (nếu là chế độ edit)
+            const otherUsers = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV));
+
+            if (sdtInput) {
+                const sdtExists = otherUsers.some(u => u.SDT && String(u.SDT).trim() === sdtInput);
+                if (sdtExists) duplicateErrors.push("Số điện thoại");
+            }
+
+            if (cccdInput) {
+                const cccdExists = otherUsers.some(u => u.CCCD && String(u.CCCD).trim() === cccdInput);
+                if (cccdExists) duplicateErrors.push("Số CCCD");
+            }
+
+            if (cchnInput) {
+                const cchnExists = otherUsers.some(u => u.CCHN && String(u.CCHN).trim() === cchnInput);
+                if (cchnExists) duplicateErrors.push("Số CCHN");
+            }
+
+            // Nếu có lỗi trùng lặp, báo lỗi và dừng lại ngay
+            if (duplicateErrors.length > 0) {
+                return showToast(`Lỗi trùng lặp: ${duplicateErrors.join(', ')} đã tồn tại trong hệ thống!`, "error");
+            }
+            // --------------------------------------------------------
+
+            if (formMode === 'add') {
                 const isDuplicate = MOCK_DB.users.some(u => {
                     const nameMatches = u.HoTen.trim().toLowerCase() === hoTenInput.toLowerCase() ||
                         (u.TenHienThi && u.TenHienThi.trim().toLowerCase() === hoTenInput.toLowerCase());
@@ -3955,7 +3987,7 @@
                 HoTen: hoTenInput,
                 MaKhoa: finalKhoas,
                 ChucDanh: document.getElementById('u-chucdanh').value,
-                SDT: document.getElementById('u-sdt').value.trim(),
+                SDT: sdtInput,
                 Email: document.getElementById('u-email').value.trim(),
                 Username: document.getElementById('u-username').value.trim(),
                 Password: document.getElementById('u-password').value.trim(),
@@ -3965,27 +3997,56 @@
                 NgayVaoLam: document.getElementById('u-ngayvaolam').value,
                 CoTruc: document.getElementById('u-cotruc').checked,
                 BHXH: document.getElementById('u-bhxh').value.trim(),
-                CCHN: document.getElementById('u-cchn').value.trim(),
+                CCHN: cchnInput,
+                CCCD: cccdInput,
                 NgayNghi: ngayNghiVal
             };
 
-            if (document.getElementById('form-mode').value === 'add') {
+            if (formMode === 'add') {
                 if (MOCK_DB.users.some(u => String(u.MaNV) === String(maNV))) return showToast("Mã NV đã tồn tại trong hệ thống! Vui lòng thử lại.", "error");
-                MOCK_DB.users.push(newUser); await logActivity("Thêm nhân sự", `Mã: ${maNV}`); showToast("Thêm nhân viên thành công.");
+                MOCK_DB.users.push(newUser); 
+                await logActivity("Thêm nhân sự", `Mã: ${maNV}`); 
+                showToast("Thêm nhân viên thành công.");
             } else {
                 const idx = MOCK_DB.users.findIndex(u => String(u.MaNV) === String(maNV));
-                if (idx > -1) { MOCK_DB.users[idx] = newUser; await logActivity("Sửa nhân sự", `Mã: ${maNV}`); showToast("Cập nhật thành công."); }
+                if (idx > -1) { 
+                    MOCK_DB.users[idx] = newUser; 
+                    await logActivity("Sửa nhân sự", `Mã: ${maNV}`); 
+                    showToast("Cập nhật thành công."); 
+                }
             }
-            closeUserModal(); renderAdminUsersTable(); await syncWithGAS('sync_NhanVien', MOCK_DB.users);
+            closeUserModal(); 
+            renderAdminUsersTable(); 
+            await syncWithGAS('sync_NhanVien', MOCK_DB.users);
         }
 
         function deleteUser(maNV) {
-            showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}?`, async () => {
-                MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV));
-                await logActivity("Xóa nhân sự", `Mã: ${maNV}`);
-                renderAdminUsersTable();
-                await syncWithGAS('sync_NhanVien', MOCK_DB.users);
-                await showToast("Đã xóa nhân sự", "success");
+            showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}? Hành động này không thể hoàn tác!`, async () => {
+                showGlobalLoading(); // Bật màn hình chờ khóa thao tác
+                try {
+                    // 1. GỬI LỆNH XÓA TRỰC TIẾP LÊN SUPABASE
+                    const { error } = await _supabase.from('NhanVien').delete().eq('MaNV', maNV);
+                    
+                    if (error) {
+                        throw error;
+                    }
+
+                    // 2. Cập nhật mảng trên giao diện (Local)
+                    MOCK_DB.users = MOCK_DB.users.filter(u => String(u.MaNV) !== String(maNV));
+                    
+                    // 3. Render lại bảng
+                    renderAdminUsersTable();
+                    
+                    // 4. Ghi Log
+                    await logActivity("Xóa nhân sự", `Mã: ${maNV}`);
+                    
+                    showToast("Đã xóa nhân sự thành công ra khỏi máy chủ!", "success");
+                } catch (err) {
+                    console.error("Lỗi xóa nhân sự:", err);
+                    showToast("Lỗi hệ thống: Không thể xóa nhân sự trên máy chủ!", "error");
+                } finally {
+                    hideGlobalLoading(); // Tắt màn hình chờ
+                }
             });
         }
 
