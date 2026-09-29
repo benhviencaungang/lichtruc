@@ -1553,26 +1553,23 @@
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
 
-            // Bật loading để người dùng biết hệ thống đang lấy dữ liệu tháng mới
             document.getElementById('loading-screen').classList.remove('hidden');
 
             try {
-                // Xác định khung ngày của tháng được chọn
                 const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`;
                 const endOfMonth = `${year}-${String(month).padStart(2, '0')}-31`;
 
-                // Gọi API lấy đúng dữ liệu của tháng đó
-                const [
-                    { data: shiftsFast },
-                    { data: bangChamCongFast }
-                ] = await Promise.all([
-                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
-                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
-                    _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
-                        .eq('Nam', year).eq('Thang', month)
-                ]);
+                // Tải Lịch Trực tuần tự
+                const { data: shiftsFast } = await _supabase.from('ChiTietLichTruc')
+                        .select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth);
 
-                // Xóa lịch trực của tháng này trong bộ nhớ tạm (nếu có) và đè dữ liệu mới vào
+                // Tải Bảng Chấm Công tuần tự
+                const { data: bangChamCongFast } = await _supabase.from('BangChamCong')
+                        .select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                        .eq('Nam', year).eq('Thang', month);
+
+                // Xóa lịch trực của tháng này trong bộ nhớ tạm (nếu có)
                 MOCK_DB.shifts = MOCK_DB.shifts.filter(s => {
                     const parts = s.NgayTruc.split('-');
                     return !(parseInt(parts[0]) === year && parseInt(parts[1]) === month);
@@ -1593,13 +1590,11 @@
                     MOCK_DB.bangChamCong.push(...bangChamCongFast);
                 }
 
-                // Vẽ lại giao diện
                 generateReport();
             } catch (e) {
                 console.error(e);
                 showToast("Lỗi khi tải dữ liệu tháng này từ máy chủ", "error");
             } finally {
-                // Tắt loading
                 document.getElementById('loading-screen').classList.add('hidden');
             }
         }
@@ -2567,51 +2562,53 @@
                 const currentYear = today.getFullYear();
                 const currentMonth = today.getMonth() + 1;
 
-                // Chỉ lấy khung thời gian của tháng hiện tại để quét cực nhanh
                 const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
                 const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
 
-                const [
-                    { data: khoa }, { data: users }, { data: cauHinhPhep },
-                    { data: shiftsFast }, { data: bangChamCongFast }
-                ] = await Promise.all([
+                // 1. Tải các bảng nhỏ lẻ trước (Dùng Promise.all vì dung lượng thấp)
+                const [{ data: khoa }, { data: cauHinhPhep }] = await Promise.all([
                     _supabase.from('KhoaPhong').select('*'),
-                    // SỬA TẠI ĐÂY: Đổi select() lấy toàn bộ (*) thay vì select danh sách thiếu NgayVaoLam
-                    _supabase.from('NhanVien').select('*'),
-                    _supabase.from('CauHinhPhep').select('*'),
-                    // Chỉ tải ca trực trong đúng 1 tháng
-                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
-                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth),
-                    // Chỉ tải bảng chấm công của đúng tháng này, năm này
-                    _supabase.from('BangChamCong').select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
-                        .eq('Nam', currentYear).eq('Thang', currentMonth)
+                    _supabase.from('CauHinhPhep').select('*')
                 ]);
 
                 MOCK_DB.khoa = khoa || [];
-                MOCK_DB.users = users || [];
                 if (cauHinhPhep && cauHinhPhep.length > 0) MOCK_DB.cauHinhPhep = cauHinhPhep[0].data || null;
 
-                // Chuẩn hóa dữ liệu lịch trực tải nhanh
+                // 2. Tải bảng Nhân viên (Tối ưu chỉ lấy các cột thực sự cần thiết)
+                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, NgayVaoLam, NgayNghi, CoTruc, Role, Username, Password');
+                MOCK_DB.users = users || [];
+
+                // 3. Tải bảng Lịch Trực (Chỉ tải theo ngày)
+                const { data: shiftsFast } = await _supabase.from('ChiTietLichTruc')
+                        .select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa')
+                        .gte('NgayTruc', startOfMonth).lte('NgayTruc', endOfMonth);
+
                 MOCK_DB.shifts = (shiftsFast || []).map(s => {
                     let parsedDate = String(s.NgayTruc || "").trim();
                     if (parsedDate && parsedDate.includes('T')) parsedDate = parsedDate.split('T')[0];
                     return { ...s, MaNV: String(s.MaNV), NgayTruc: parsedDate };
                 });
 
+                // 4. Cuối cùng mới tải bảng Nặng nhất (Bảng Chấm Công - Chuỗi JSON lớn)
+                const { data: bangChamCongFast } = await _supabase.from('BangChamCong')
+                        .select('MaBang, MaKhoa, Thang, Nam, TrangThai, NguoiDuyet, NgayDuyet, DuLieu')
+                        .eq('Nam', currentYear).eq('Thang', currentMonth);
+
                 MOCK_DB.bangChamCong = bangChamCongFast || [];
 
-                showToast("Đã tải dữ liệu tháng hiện tại, hệ thống đang đồng bộ nền...", "success");
+                showToast("Đã tải dữ liệu tháng hiện tại.", "success");
 
-                // Kích hoạt UI ngay lập tức
+                // Kích hoạt UI
                 initUI();
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('control-panel').classList.remove('hidden');
                 document.getElementById('print-workspace').classList.remove('hidden');
 
             } catch (e) {
+                console.error("Lỗi tải dữ liệu", e);
                 document.getElementById('retry-btn-container').classList.remove('hidden');
                 document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
-                document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                document.getElementById('loading-text').innerHTML = "Lỗi kết nối hoặc timeout!";
                 lucide.createIcons();
             }
         }
