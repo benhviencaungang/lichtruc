@@ -2098,12 +2098,12 @@
         }
 
         function startAutoSync() {
-            // Luôn xóa interval nếu có để đảm bảo không có tiến trình chạy ngầm
-            if (autoSyncInterval) clearInterval(autoSyncInterval);
-            
-            // Đã đóng lệnh setInterval dưới đây để tắt chức năng loading tự động
-            // autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
-        }
+                // Luôn xóa interval nếu có để đảm bảo không có tiến trình chạy ngầm
+                if (autoSyncInterval) clearInterval(autoSyncInterval);
+                
+                // Đã đóng lệnh setInterval dưới đây để tắt chức năng loading tự động
+                // autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
+            }
 
         function stopAutoSync() {
             if (autoSyncInterval) clearInterval(autoSyncInterval);
@@ -2285,11 +2285,17 @@
         // ĐÃ KHẮC PHỤC CHÍNH BẰNG ASYNC: Chờ lưu bảng này xong mới được lưu bảng kế tiếp
         // --- HÀM LẤY TOÀN BỘ DỮ LIỆU VƯỢT GIỚI HẠN 1000 DÒNG CỦA SUPABASE ---
         // Thêm bộ lọc filter vào tham số
+        // --- HÀM LẤY TOÀN BỘ DỮ LIỆU CỦA SUPABASE ---
+        // Thêm bộ lọc filter vào tham số và chặn lặp vô hạn
         async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
             let allData = [];
             let from = 0;
             const step = 1000;
-            while (true) {
+            const maxIterations = 20; // Ngăn chặn vòng lặp vô tận (tối đa 20.000 dòng)
+            let currentIteration = 0;
+
+            while (currentIteration < maxIterations) {
+                currentIteration++;
                 let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
 
                 // Nếu có bộ lọc thời gian, áp dụng vào câu query
@@ -2297,16 +2303,34 @@
                     query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
                 }
 
-                const { data, error } = await query;
-                if (error) return { data: allData, error };
-                if (data && data.length > 0) {
+                try {
+                    const { data, error } = await query;
+                    
+                    if (error) {
+                        console.error(`Lỗi tải bảng ${tableName}:`, error);
+                        return { data: allData, error };
+                    }
+                    
+                    // Nếu data rỗng hoặc null -> Thoát vòng lặp ngay lập tức
+                    if (!data || data.length === 0) {
+                        break;
+                    }
+
                     allData.push(...data);
-                    if (data.length < step) break;
+
+                    // Nếu số dòng trả về ít hơn giới hạn step (1000) -> Đã lấy hết data, thoát vòng lặp
+                    if (data.length < step) {
+                        break;
+                    }
+
                     from += step;
-                } else {
-                    break;
+                    
+                } catch (err) {
+                    console.error(`Ngoại lệ khi tải bảng ${tableName}:`, err);
+                    return { data: allData, error: err };
                 }
             }
+            
             return { data: allData, error: null };
         }
 
