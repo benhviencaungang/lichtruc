@@ -1309,7 +1309,8 @@
             if (cellsToUpdate.length === 0) return;
 
             // KIỂM TRA ĐIỀU KIỆN CHẶN NGHỈ PHÉP/BÙ SAU KHI DÁN
-            let hasLeaveRequest = copiedShiftValue.includes('P') || copiedShiftValue.includes('NB');
+            let partsForCheck = parseShifts(copiedShiftValue);
+            let hasLeaveRequest = partsForCheck.some(v => ['P', 'P/2', 'NB', 'NB/2'].includes(v.toUpperCase()));
             if (hasLeaveRequest) {
                 document.getElementById('loading-screen').classList.remove('hidden');
                 document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
@@ -2764,8 +2765,8 @@
                     if (val === 'Ô' || val === 'O^') om += 1;
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
-                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2'].includes(val)) khac += 0.5;
+                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL'].includes(val)) khac += 1;
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2'].includes(val)) khac += 0.5;
                 });
             });
 
