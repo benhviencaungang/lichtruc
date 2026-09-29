@@ -1988,110 +1988,155 @@
                 startAutoSync();
             }
         }
-
-        // Bắt đầu quy trình tải dữ liệu an toàn khi mở trang
+// Bắt đầu quy trình tải dữ liệu an toàn khi mở trang
         window.addEventListener('load', async () => {
-            // 1. Kiểm tra ngay lập tức xem đã có phiên đăng nhập chưa
             const savedUser = localStorage.getItem('currentUser');
-
-            // 2. NẾU ĐÃ ĐĂNG NHẬP: Ẩn ngay form đăng nhập để tránh bị chớp/nháy màn hình
             if (savedUser) {
                 document.getElementById('login-screen').classList.add('hidden');
-            }
-
-            // 3. Tiến hành chờ tải dữ liệu thiết yếu từ máy chủ
-            await loadEssentialData();
-
-            // 4. Phân luồng giao diện
-            if (savedUser) {
-                await checkAutoLogin();
+                await checkAutoLogin(); 
             } else {
-                // Chỉ chạy loadDataFromGAS nếu là người dùng mới chưa đăng nhập
-                await loadDataFromGAS();
+                // Chưa đăng nhập: CHỈ tải nhân viên để đăng nhập, không tải dữ liệu thừa
+                const initialLoading = document.getElementById('initial-loading');
+                if (initialLoading) initialLoading.classList.remove('hidden');
+                try {
+                    const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, Username, Password, Role, NgayNghi, CoTruc, SDT, Email, CCCD, ChungChiHS, NgayVaoLam, BHXH, CCHN');
+                    if (users) {
+                        MOCK_DB.users = users.map(u => ({ ...u, MaNV: String(u.MaNV).trim() }));
+                        MOCK_DB.users = processDisplayNames(MOCK_DB.users);
+                    }
+                } catch (e) { console.error(e); }
+                if (initialLoading) initialLoading.classList.add('hidden');
             }
         });
-        // 1. TẢI DỮ LIỆU THIẾT YẾU (Chạy ngay khi mở web)
-        async function loadEssentialData() {
+
+        async function checkAutoLogin() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                document.getElementById('login-screen').classList.add('hidden');
+                
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('flex');
+                document.getElementById('main-content').classList.remove('hidden');
+
+                document.getElementById('user-fullname').textContent = currentUser.HoTen;
+                document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
+
+                buildMenu();
+
+                // GỌI HÀM TẢI DỮ LIỆU CHÍNH TẠI ĐÂY
+                await loadDataFromGAS();
+
+                const sel = document.getElementById('user-khoa-selector');
+                const xemSel = document.getElementById('xem-khoa-selector');
+                if (currentUser.Role === 'Admin_KHTH') {
+                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
+                    const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+                    if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                } else {
+                    const options = currentUser.KhoaList.map(k => {
+                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                    }).join('');
+                    if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                }
+                if (sel && currentUser.ActiveKhoa) sel.value = currentUser.ActiveKhoa;
+                if (xemSel && currentUser.ActiveKhoa) xemSel.value = currentUser.ActiveKhoa;
+
+                refreshCurrentView();
+
+                if (currentUser.Role === 'Admin_KHTH') switchView('view-dashboard');
+                else switchView('view-khoa-schedule');
+            }
+        }
+
+        async function loadDataFromGAS() {
             try {
                 const initialLoading = document.getElementById('initial-loading');
                 if (initialLoading) initialLoading.classList.remove('hidden');
+                
+                showGlobalLoading(); 
 
-                // Tải TUẦN TỰ để tránh nghẽn mạng
+                // Lấy khoảng thời gian để không tải quá nhiều dữ liệu rác (60 ngày trước, 30 ngày sau)
+                let now = new Date();
+                let past = new Date(now); past.setDate(now.getDate() - 60);
+                let future = new Date(now); future.setDate(now.getDate() + 30);
+                
+                const startDateStr = past.toISOString().split('T')[0];
+                const endDateStr = future.toISOString().split('T')[0];
+
+                // NHỊP 1: Tải dữ liệu danh mục cơ bản
                 const { data: khoa } = await _supabase.from('KhoaPhong').select('*');
                 const { data: loaiCa } = await _supabase.from('LoaiCaTruc').select('*');
                 const { data: cauHinhKySo } = await _supabase.from('CauHinhKySo').select('*');
                 
-                // Giới hạn cột lấy về của Nhân viên để giảm dung lượng
-                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, CCCD, ChungChiHS, NgayVaoLam, CoTruc, NgayNghi, Username, Password, Role, SDT, Email');
+                // NHỊP 2: Tải danh sách nhân viên
+                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Username, Password, Role, CCCD, ChungChiHS, NgayVaoLam, CoTruc, BHXH, CCHN, NgayNghi');
+                
+                // NHỊP 3: Tải dữ liệu giao dịch (Chỉ giới hạn trong khoảng thời gian cần thiết)
+                const { data: phieu } = await _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', startDateStr).lte('TuanTruc', endDateStr);
+                const { data: shifts } = await _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', startDateStr).lte('NgayTruc', endDateStr);
+                
+                // NHỊP 4: Tải dữ liệu phụ trợ
+                const { data: thongBao } = await _supabase.from('ThongBao').select('*').limit(100);
+                const { data: auditLogs } = await _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(30);
 
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
                 if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
                 if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
-
-                if (users) {
-                    let rawUsers = users.map(u => ({
-                        ...u, MaNV: String(u.MaNV).trim(), MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
-                        ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "", CCCD: u.CCCD ? String(u.CCCD).trim() : "",
-                        ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
-                        CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
-                        NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "", NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
-                    }));
-
-                    let nameGroups = {};
-                    rawUsers.forEach(item => {
-                        let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
-                        if (!nameGroups[firstName]) nameGroups[firstName] = [];
-                        nameGroups[firstName].push(item);
-                    });
-                    rawUsers.forEach(item => {
-                        let parts = (item.HoTen || "").trim().split(' '); let firstName = parts.pop() || "";
-                        if (nameGroups[firstName].length === 1) item.TenHienThi = firstName;
-                        else {
-                            let middleName = parts.length > 0 ? parts[parts.length - 1] : "";
-                            let attempt1 = (middleName ? middleName.charAt(0).toUpperCase() + "." : "") + firstName;
-                            let count = nameGroups[firstName].filter(x => {
-                                let xParts = (x.HoTen || "").trim().split(' '); xParts.pop();
-                                let xMiddle = xParts.length > 0 ? xParts[xParts.length - 1] : "";
-                                return ((xMiddle ? xMiddle.charAt(0).toUpperCase() + "." : "") + firstName) === attempt1;
-                            }).length;
-                            if (count === 1 || parts.length <= 1) item.TenHienThi = attempt1;
-                            else { let lastName = parts[0]; item.TenHienThi = (lastName ? lastName.charAt(0).toUpperCase() + "." : "") + attempt1; }
-                        }
-                        if (!item.TenHienThi) item.TenHienThi = item.HoTen;
-                    });
-                    MOCK_DB.users = rawUsers;
-                }
-                if (initialLoading) initialLoading.classList.add('hidden');
-            } catch (e) { console.error(e); showToast("Lỗi kết nối máy chủ ban đầu!", "error"); }
-        }
-
-        // 2. TẢI DỮ LIỆU NẶNG (Chỉ chạy sau khi xác thực đăng nhập)
-        async function loadHeavyData() {
-            try {
-                showGlobalLoading();
-                const week = getCurrentWeekDates();
-                
-                // Tải Lịch và Phiếu trước
-                const [ { data: phieu }, { data: shifts } ] = await Promise.all([
-                    _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', week.start).lte('TuanTruc', week.end),
-                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', week.start).lte('NgayTruc', week.end)
-                ]);
-
-                // Tải Thông báo và Log hệ thống sau
-                const { data: thongBao } = await _supabase.from('ThongBao').select('*').limit(100);
-                const { data: auditLogs } = await _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(30);
-
                 if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                if (shifts) MOCK_DB.shifts = shifts.map(s => ({ ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(), ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc) }));
+                if (shifts) MOCK_DB.shifts = shifts.map(s => ({ ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(), ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc), PhanCa: s.PhanCa || '24h' }));
                 if (thongBao) MOCK_DB.thongBao = thongBao.map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
                 if (auditLogs) MOCK_DB.auditLogs = auditLogs;
+
+                if (users) {
+                    let rawUsers = users.map(u => {
+                        // Chống null và chuẩn hóa an toàn kiểu dữ liệu
+                        let isHS = false;
+                        if (u.ChungChiHS === true) isHS = true;
+                        else if (u.ChungChiHS) isHS = String(u.ChungChiHS).toUpperCase() === 'TRUE';
+
+                        let hasShift = true;
+                        if (u.CoTruc === false) hasShift = false;
+                        else if (u.CoTruc !== null && u.CoTruc !== undefined) hasShift = String(u.CoTruc).toUpperCase() !== 'FALSE';
+
+                        return {
+                            ...u, 
+                            MaNV: u.MaNV ? String(u.MaNV).trim() : "", 
+                            MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "", 
+                            ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
+                            ChungChiHS: isHS, 
+                            CoTruc: hasShift,
+                            NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "", 
+                            NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
+                        };
+                    });
+                    MOCK_DB.users = processDisplayNames(rawUsers);
+                }
+
+                // Cập nhật lại Dropdown nếu đang đứng ở màn hình có dropdown
+                if (currentUser) {
+                    const sel = document.getElementById('user-khoa-selector');
+                    const xemSel = document.getElementById('xem-khoa-selector');
+                    if (currentUser.Role === 'Admin_KHTH') {
+                        const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
+                        const opts = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+                        if (sel && sel.options.length <= 1) sel.innerHTML = opts;
+                        if (xemSel && xemSel.options.length <= 1) xemSel.innerHTML = opts;
+                    }
+                    checkAndRenderNotifications();
+                    refreshCurrentView();
+                }
+
+                document.getElementById('sync-status')?.classList.add('hidden');
+                if (initialLoading) initialLoading.classList.add('hidden');
             } catch (e) {
-                console.error(e); showToast("Lỗi kết nối tải dữ liệu lịch trực!", "error");
+                console.error(e);
+                document.getElementById('sync-status')?.classList.add('hidden');
             } finally {
-                hideGlobalLoading();
+                hideGlobalLoading(); // Tắt màn che
             }
         }
-
 
         function forceRefreshData() {
             showToast("Đang làm mới dữ liệu từ máy chủ...", "success");
@@ -2204,57 +2249,6 @@
             } catch (e) {
             }
         }
-        async function silentBackgroundSync() {
-            if (!currentUser || isPushingData || hasUnsavedChanges) return;
-
-            try {
-                const responses = await Promise.all([
-                    _supabase.from('KhoaPhong').select('*').limit(1000),
-                    _supabase.from('NhanVien').select('*').limit(5000),
-                    _supabase.from('LoaiCaTruc').select('*').limit(100),
-                    // KHÔNG tải ngầm PhieuLichTruc ở đây nữa
-                    { data: [] },
-                    // KHÔNG tải ngầm 50000 ChiTietLichTruc ở đây nữa để tránh sập Database
-                    { data: [] },
-                    _supabase.from('ThongBao').select('*').limit(1000),
-                    _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(200),
-                    _supabase.from('CauHinhKySo').select('*').limit(100)
-                ]);
-
-                // Ngăn chặn việc làm trống dữ liệu nếu gặp lỗi kết nối
-                const hasError = responses.some(res => res.error);
-                if (hasError) {
-                    console.warn("Đồng bộ ngầm gặp lỗi, hủy bỏ cập nhật để bảo toàn dữ liệu.");
-                    return;
-                }
-
-                const [
-                    { data: khoa }, { data: users }, { data: loaiCa },
-                    { data: phieu }, { data: shifts }, { data: thongBao },
-                    { data: auditLogs }, { data: cauHinhKySo }
-                ] = responses;
-
-                MOCK_DB.khoa = khoa || [];
-                MOCK_DB.users = (users || []).map(u => ({
-                    ...u,
-                    MaNV: String(u.MaNV),
-                    ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
-                    CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
-                    NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
-                    NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
-                }));
-                MOCK_DB.loaiCa = loaiCa || [];
-                MOCK_DB.phieu = (phieu || []).map(p => ({ ...p, TuanTruc: normalizeDateStr(p.TuanTruc) }));
-                if (shifts) MOCK_DB.shifts = shifts.map(s => ({ ...s, MaNV: String(s.MaNV), NgayTruc: normalizeDateStr(s.NgayTruc) }));
-                MOCK_DB.thongBao = (thongBao || []).map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
-                MOCK_DB.auditLogs = auditLogs || [];
-                MOCK_DB.cauHinhKySo = cauHinhKySo || [];
-
-                refreshCurrentView();
-            } catch (e) {
-                // Lỗi mạng thì bỏ qua, chờ chu kỳ tiếp theo
-            }
-        }
 
         function refreshCurrentView() {
             if (!currentUser) return;
@@ -2344,140 +2338,7 @@
                 startDate: past.toISOString().split('T')[0],
                 endDate: future.toISOString().split('T')[0]
             };
-        }
-
-        async function loadDataFromGAS() {
-            try {
-                const initialLoading = document.getElementById('initial-loading');
-                if (initialLoading) initialLoading.classList.remove('hidden');
-                
-                const week = getCurrentWeekDates();
-                
-                // Nhịp 1: Tải danh mục
-                const { data: khoa } = await _supabase.from('KhoaPhong').select('*');
-                const { data: loaiCa } = await _supabase.from('LoaiCaTruc').select('*');
-                const { data: cauHinhKySo } = await _supabase.from('CauHinhKySo').select('*');
-                
-                // Nhịp 2: Tải Nhân sự
-                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Username, Password, Role, CCCD, ChungChiHS, NgayVaoLam, CoTruc, BHXH, CCHN, NgayNghi');
-
-                // Nhịp 3: Tải Dữ liệu Lịch theo tuần
-                const [ { data: phieu }, { data: shifts } ] = await Promise.all([
-                    _supabase.from('PhieuLichTruc').select('*').gte('TuanTruc', week.start).lte('TuanTruc', week.end),
-                    _supabase.from('ChiTietLichTruc').select('MaChiTiet, NgayTruc, MaNV, MaKhoa, ChucDanh, PhanCa').gte('NgayTruc', week.start).lte('NgayTruc', week.end)
-                ]);
-
-                // Nhịp 4: Phụ trợ
-                const { data: thongBao } = await _supabase.from('ThongBao').select('*').limit(100);
-                const { data: auditLogs } = await _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(30);
-
-                if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-
-                if (users) {
-                    let rawUsers = users.map(u => ({
-                        ...u,
-                        MaNV: String(u.MaNV).trim(),
-                        MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
-                        ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
-                        ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
-                        CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
-                        NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
-                        NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
-                    }));
-
-                    let nameGroups = {};
-                    rawUsers.forEach(item => {
-                        let fullName = (item.HoTen || "").trim();
-                        let parts = fullName.split(' ');
-                        let firstName = parts.pop() || "";
-                        if (!nameGroups[firstName]) nameGroups[firstName] = [];
-                        nameGroups[firstName].push(item);
-                    });
-
-                    rawUsers.forEach(item => {
-                        let fullName = (item.HoTen || "").trim();
-                        let parts = fullName.split(' ');
-                        let firstName = parts.pop() || "";
-                        if (nameGroups[firstName].length === 1) item.TenHienThi = firstName;
-                        else {
-                            let middleName = parts.length > 0 ? parts[parts.length - 1] : "";
-                            let attempt1 = (middleName ? middleName.charAt(0).toUpperCase() + "." : "") + firstName;
-                            let count = nameGroups[firstName].filter(x => {
-                                let xParts = (x.HoTen || "").trim().split(' '); xParts.pop();
-                                let xMiddle = xParts.length > 0 ? xParts[xParts.length - 1] : "";
-                                return ((xMiddle ? xMiddle.charAt(0).toUpperCase() + "." : "") + firstName) === attempt1;
-                            }).length;
-                            if (count === 1 || parts.length <= 1) item.TenHienThi = attempt1;
-                            else {
-                                let lastName = parts[0];
-                                item.TenHienThi = (lastName ? lastName.charAt(0).toUpperCase() + "." : "") + attempt1;
-                            }
-                        }
-                        if (!item.TenHienThi) item.TenHienThi = item.HoTen;
-                    });
-                    MOCK_DB.users = rawUsers;
-                }
-
-                if (loaiCa) MOCK_DB.loaiCa = loaiCa.map(lc => ({ ...lc, MaLoaiCa: String(lc.MaLoaiCa).trim() }));
-                if (phieu) MOCK_DB.phieu = phieu.map(p => ({ ...p, MaKhoa: String(p.MaKhoa).trim(), TuanTruc: normalizeDateStr(p.TuanTruc) }));
-
-                if (shifts) {
-                    MOCK_DB.shifts = shifts.map(s => ({
-                        ...s,
-                        MaNV: String(s.MaNV).trim(),
-                        MaKhoa: String(s.MaKhoa).trim(),
-                        ChucDanh: String(s.ChucDanh).trim(),
-                        NgayTruc: normalizeDateStr(s.NgayTruc)
-                    }));
-                }
-
-                if (thongBao) MOCK_DB.thongBao = thongBao.map(tb => ({ ...tb, NgayBatDau: normalizeDateStr(tb.NgayBatDau), NgayKetThuc: normalizeDateStr(tb.NgayKetThuc) }));
-                if (auditLogs) MOCK_DB.auditLogs = auditLogs;
-                if (cauHinhKySo) MOCK_DB.cauHinhKySo = cauHinhKySo;
-
-                if (currentUser) {
-                    // BỔ SUNG: Khôi phục danh sách Dropdown Khoa khi tự động đăng nhập
-                    const sel = document.getElementById('user-khoa-selector');
-                    const xemSel = document.getElementById('xem-khoa-selector');
-
-                    if (currentUser.Role === 'Admin_KHTH') {
-                        const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
-                        const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
-                        if (sel) sel.innerHTML = options;
-                        if (xemSel) xemSel.innerHTML = options;
-                    } else {
-                        const options = currentUser.KhoaList.map(k => {
-                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k);
-                            return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
-                        }).join('');
-                        if (sel) sel.innerHTML = options;
-                        if (xemSel) xemSel.innerHTML = options;
-                    }
-
-                    if (sel && currentUser.ActiveKhoa) sel.value = currentUser.ActiveKhoa;
-                    if (xemSel && currentUser.ActiveKhoa) xemSel.value = currentUser.ActiveKhoa;
-
-                    checkAndRenderNotifications();
-                    if (currentUser.Role === 'User_Khoa' || currentUser.Role === 'Admin_Khoa') {
-                        checkWeeklyStatus();
-                    } else {
-                        updateDashboardStats();
-                        renderAdminUsersTable();
-                        renderAdminDepartmentsTable();
-                        renderAdminApprovalTable();
-                        renderAdminThongBaoTable();
-                        renderAuditLog();
-                    }
-                }
-                document.getElementById('sync-status')?.classList.add('hidden');
-                if (initialLoading) initialLoading.classList.add('hidden');
-            } catch (e) {
-                console.error(e);
-                document.getElementById('sync-status')?.classList.add('hidden');
-            }
-        }
-
-
+        }   
         function forceRefreshData() {
             showToast("Đang làm mới dữ liệu từ máy chủ...", "success");
             loadDataFromGAS();
