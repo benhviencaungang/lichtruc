@@ -2097,10 +2097,12 @@
             loadDataFromGAS();
         }
 
-        // --- CÁC HÀM XỬ LÝ ĐỒNG BỘ NGẦM ---
         function startAutoSync() {
+            // Luôn xóa interval nếu có để đảm bảo không có tiến trình chạy ngầm
             if (autoSyncInterval) clearInterval(autoSyncInterval);
-            autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
+            
+            // Đã đóng lệnh setInterval dưới đây để tắt chức năng loading tự động
+            // autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
         }
 
         function stopAutoSync() {
