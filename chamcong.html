@@ -1278,45 +1278,49 @@
 
                 return (baseP - usedP) + (earnedNb - usedNb);
             }
-        function applyShiftSelection() {
-                const sangVal = document.getElementById('sp-sang').value;
-                const chieuVal = document.getElementById('sp-chieu').value;
+        
+            function applyShiftSelection() {
+                    const sangVal = document.getElementById('sp-sang').value;
+                    const chieuVal = document.getElementById('sp-chieu').value;
 
-                const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
-                const isChieuHalf = chieuVal !== '';
+                    const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
+                    const isChieuHalf = chieuVal !== '';
 
-                // ĐÃ SỬA: Cho phép LT/2 và - (Làm 1 buổi ngày lễ) được đứng 1 mình không cần chọn ca còn lại
-                if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
-                    if (sangVal !== 'LT/2' && chieuVal !== 'LT/2' && sangVal !== '-' && chieuVal !== '-') {
-                        showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
-                        return;
+                    // ĐÃ SỬA: Cho phép các ký hiệu nửa ngày (như P/2, Nb/2, -...) được phép đứng 1 mình
+                    if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
+                        if (!['LT/2', '-', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'L/2', 'O/2', 'Rt/2'].includes(sangVal) &&
+                            !['LT/2', '-', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'L/2', 'O/2', 'Rt/2'].includes(chieuVal)) {
+                            showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
+                            return;
+                        }
                     }
-                }
 
-                let finalVal = sangVal;
-                if (chieuVal && sangVal) {
-                    finalVal = `${sangVal}; ${chieuVal}`;
-                } else if (chieuVal && !sangVal) {
-                    finalVal = `; ${chieuVal}`;
-                }
+                    let finalVal = sangVal;
+                    if (chieuVal && sangVal) {
+                        finalVal = `${sangVal}; ${chieuVal}`;
+                    } else if (chieuVal && !sangVal) {
+                        finalVal = `; ${chieuVal}`;
+                    }
 
-                const selectedCells = document.querySelectorAll('.cell-selected');
-                const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
+                    const selectedCells = document.querySelectorAll('.cell-selected');
+                    const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
 
-                const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
 
+                    // KIỂM TRA NGHIỆP VỤ: KÝ HIỆU "-" ĐỨNG 1 MÌNH CHỈ DÀNH CHO NGÀY LỄ
+                // (Nếu kết hợp -;P/2 hoặc -;Nb/2 thì vẫn được lưu ở ngày thường)
                 let partsForCheck = parseShifts(finalVal);
-                let isContainingMinus = partsForCheck.some(v => v.toUpperCase() === '-');
+                let isStandaloneMinus = partsForCheck.length === 1 && partsForCheck[0].trim() === '-';
 
-                if (isContainingMinus) {
+                if (isStandaloneMinus) {
                     let invalidCells = [];
                     cellsToUpdate.forEach(cell => {
                         if (!cell) return;
                         const tr = cell.closest('tr');
                         if (tr) {
                             const cellIndex = Array.from(tr.children).indexOf(cell);
-                            const day = cellIndex - 1;
+                            const day = cellIndex - 1; // Cột ngày bắt đầu từ vị trí số 2
                             if (!isHoliday(day, month, year)) {
                                 invalidCells.push(day);
                             }
@@ -1324,224 +1328,161 @@
                     });
 
                     if (invalidCells.length > 0) {
-                        showToast("Chỉ được phép chấm 1 buổi (-) vào Ngày Lễ. Vui lòng kiểm tra lại!", "error");
-                        return;
+                        showToast("Chỉ được phép để trống buổi còn lại (chỉ chấm -) vào Ngày Lễ!", "error");
+                        return; // Chặn lưu
                     }
                 }
 
-                cellsToUpdate.forEach(cell => {
-                    if (!cell) return;
-                    cell.innerText = finalVal;
-                    updateCellStyles(cell, finalVal);
-                    recalcRow(cell);
-
-                    const tr = cell.closest('tr');
-                    if (tr) {
-                        const maNV = tr.getAttribute('data-id');
-                        const cellIndex = Array.from(tr.children).indexOf(cell);
-                        document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
-                            if (otherTr !== tr) {
-                                const otherCell = otherTr.children[cellIndex];
-                                if (otherCell) {
-                                    otherCell.innerText = finalVal;
-                                    updateCellStyles(otherCell, finalVal);
-                                    recalcRow(otherTr);
-                                }
-                            }
-                        });
-                    }
-                });
-
-                closeShiftPicker(new Event('click'), true);
-                markUnsaved();
-            }
-
-        function pasteShift() {
-            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-            if (copiedShiftValue === null) {
-                showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
-                return;
-            }
-
-            const selectedCells = document.querySelectorAll('.cell-selected');
-            const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
-
-            if (cellsToUpdate.length === 0) return;
-
-            cellsToUpdate.forEach(cell => {
-                if (!cell) return;
-                cell.innerText = copiedShiftValue;
-                updateCellStyles(cell, copiedShiftValue);
-                recalcRow(cell);
-
-                const tr = cell.closest('tr');
-                if (tr) {
-                    const maNV = tr.getAttribute('data-id');
-                    const cellIndex = Array.from(tr.children).indexOf(cell);
-                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
-                        if (otherTr !== tr) {
-                            const otherCell = otherTr.children[cellIndex];
-                            if (otherCell) {
-                                otherCell.innerText = copiedShiftValue;
-                                updateCellStyles(otherCell, copiedShiftValue);
-                                recalcRow(otherTr);
-                            }
-                        }
-                    });
-                }
-            });
-
-            closeShiftPicker(new Event('click'), true);
-            markUnsaved();
-            showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
-        }
-
-        function copyShift() {
-                const selected = document.querySelector('.cell-selected');
-                const targetCell = selected || activeInputCell;
-                if (!targetCell) return;
-
-                copiedShiftValue = targetCell.innerText.trim();
-                showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
-            }
-
-            async function pasteShift() {
-                if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-                if (copiedShiftValue === null) {
-                    showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
-                    return;
-                }
-
-                const selectedCells = document.querySelectorAll('.cell-selected');
-                const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
-
-                if (cellsToUpdate.length === 0) return;
-
-                // KIỂM TRA SỐ DƯ PHÉP KHI DÁN
-                let partsForCheck = parseShifts(copiedShiftValue);
-                let hasLeaveRequest = partsForCheck.some(v => ['P', 'P/2', 'NB', 'NB/2'].includes(v.toUpperCase()));
-                if (hasLeaveRequest) {
-                    document.getElementById('loading-screen').classList.remove('hidden');
-                    document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
-
-                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-
-                    let leavePerCell = 0;
-                    partsForCheck.forEach(v => {
-                        let upperV = v.toUpperCase();
-                        if (upperV === 'P' || upperV === 'NB') leavePerCell += 1;
-                        else if (upperV === 'P/2' || upperV === 'NB/2') leavePerCell += 0.5;
-                    });
-
-                    let requestsByNV = {};
                     cellsToUpdate.forEach(cell => {
                         if (!cell) return;
+                        cell.innerText = finalVal;
+                        updateCellStyles(cell, finalVal);
+                        recalcRow(cell);
+
                         const tr = cell.closest('tr');
                         if (tr) {
                             const maNV = tr.getAttribute('data-id');
-                            const cellIndex = Array.from(tr.children).indexOf(cell) - 2;
-                            if (!requestsByNV[maNV]) {
-                                requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
-                            }
-                            requestsByNV[maNV].count += leavePerCell;
-                            requestsByNV[maNV].indices.push(cellIndex);
+                            const cellIndex = Array.from(tr.children).indexOf(cell);
+                            document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                                if (otherTr !== tr) {
+                                    const otherCell = otherTr.children[cellIndex];
+                                    if (otherCell) {
+                                        otherCell.innerText = finalVal;
+                                        updateCellStyles(otherCell, finalVal);
+                                        recalcRow(otherTr);
+                                    }
+                                }
+                            });
                         }
                     });
 
-                    let errorUsers = [];
-                    for (let maNV in requestsByNV) {
-                        let req = requestsByNV[maNV];
-                        let remaining = await getRemainingLeaveBalance(maNV, year, month, req.indices);
-                        if (remaining < req.count) {
-                            errorUsers.push(`${req.name} (còn ${remaining} ngày)`);
-                        }
-                    }
-
-                    document.getElementById('loading-screen').classList.add('hidden');
-
-                    if (errorUsers.length > 0) {
-                        showToast(`Số ngày nghỉ đã hết! Không thể dán cho: ${errorUsers.join(', ')}`, "error");
-                        return;
-                    }
+                    closeShiftPicker(new Event('click'), true);
+                    markUnsaved();
                 }
 
-                cellsToUpdate.forEach(cell => {
-                    if (!cell) return;
-                    cell.innerText = copiedShiftValue;
-                    updateCellStyles(cell, copiedShiftValue);
-                    recalcRow(cell);
+                function copyShift() {
+                    const selected = document.querySelector('.cell-selected');
+                    const targetCell = selected || activeInputCell;
+                    if (!targetCell) return;
 
-                    const tr = cell.closest('tr');
-                    if (tr) {
-                        const maNV = tr.getAttribute('data-id');
-                        const cellIndex = Array.from(tr.children).indexOf(cell);
-                        document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
-                            if (otherTr !== tr) {
-                                const otherCell = otherTr.children[cellIndex];
-                                if (otherCell) {
-                                    otherCell.innerText = copiedShiftValue;
-                                    updateCellStyles(otherCell, copiedShiftValue);
-                                    recalcRow(otherTr);
+                    copiedShiftValue = targetCell.innerText.trim();
+                    showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
+                }
+
+                async function pasteShift() {
+                        if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+                        if (copiedShiftValue === null) {
+                            showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
+                            return;
+                        }
+
+                        const selectedCells = document.querySelectorAll('.cell-selected');
+                        const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
+
+                        if (cellsToUpdate.length === 0) return;
+
+                        const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                        const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+
+                        // KIỂM TRA NGHIỆP VỤ KHI DÁN: DẤU "-" ĐỨNG 1 MÌNH CHỈ DÙNG CHO NGÀY LỄ
+                    let partsForCheckMinus = parseShifts(copiedShiftValue);
+                    let isStandaloneMinus = partsForCheckMinus.length === 1 && partsForCheckMinus[0].trim() === '-';
+
+                    if (isStandaloneMinus) {
+                        let invalidCells = [];
+                        cellsToUpdate.forEach(cell => {
+                            if (!cell) return;
+                            const tr = cell.closest('tr');
+                            if (tr) {
+                                const cellIndex = Array.from(tr.children).indexOf(cell);
+                                const day = cellIndex - 1;
+                                if (!isHoliday(day, month, year)) {
+                                    invalidCells.push(day);
                                 }
                             }
                         });
+
+                        if (invalidCells.length > 0) {
+                            showToast("Không thể dán! Dấu (-) đứng 1 mình chỉ dùng cho Ngày Lễ.", "error");
+                            return; // Chặn dán
+                        }
                     }
-                });
 
-                closeShiftPicker(new Event('click'), true);
-                markUnsaved();
-                showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
-            }
+                        // KIỂM TRA SỐ DƯ PHÉP KHI DÁN
+                        let partsForCheck = parseShifts(copiedShiftValue);
+                        let hasLeaveRequest = partsForCheck.some(v => ['P', 'P/2', 'NB', 'NB/2'].includes(v.toUpperCase()));
 
-        function copyShift() {
-            const selected = document.querySelector('.cell-selected');
-            const targetCell = selected || activeInputCell;
-            if (!targetCell) return;
+                        if (hasLeaveRequest) {
+                            document.getElementById('loading-screen').classList.remove('hidden');
+                            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
 
-            copiedShiftValue = targetCell.innerText.trim();
-            showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
-        }
+                            let leavePerCell = 0;
+                            partsForCheck.forEach(v => {
+                                let upperV = v.toUpperCase();
+                                if (upperV === 'P' || upperV === 'NB') leavePerCell += 1;
+                                else if (upperV === 'P/2' || upperV === 'NB/2') leavePerCell += 0.5;
+                            });
 
-        function pasteShift() {
-            if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-            if (copiedShiftValue === null) {
-                showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
-                return;
-            }
+                            let requestsByNV = {};
+                            cellsToUpdate.forEach(cell => {
+                                if (!cell) return;
+                                const tr = cell.closest('tr');
+                                if (tr) {
+                                    const maNV = tr.getAttribute('data-id');
+                                    const cellIndex = Array.from(tr.children).indexOf(cell) - 2;
+                                    if (!requestsByNV[maNV]) {
+                                        requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
+                                    }
+                                    requestsByNV[maNV].count += leavePerCell;
+                                    requestsByNV[maNV].indices.push(cellIndex);
+                                }
+                            });
 
-            const selectedCells = document.querySelectorAll('.cell-selected');
-            const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
+                            let errorUsers = [];
+                            for (let maNV in requestsByNV) {
+                                let req = requestsByNV[maNV];
+                                let remaining = await getRemainingLeaveBalance(maNV, year, month, req.indices);
+                                if (remaining < req.count) {
+                                    errorUsers.push(`${req.name} (còn ${remaining} ngày)`);
+                                }
+                            }
 
-            if (cellsToUpdate.length === 0) return;
+                            document.getElementById('loading-screen').classList.add('hidden');
 
-            cellsToUpdate.forEach(cell => {
-                if (!cell) return;
-                cell.innerText = copiedShiftValue;
-                updateCellStyles(cell, copiedShiftValue);
-                recalcRow(cell);
-
-                const tr = cell.closest('tr');
-                if (tr) {
-                    const maNV = tr.getAttribute('data-id');
-                    const cellIndex = Array.from(tr.children).indexOf(cell);
-                    document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
-                        if (otherTr !== tr) {
-                            const otherCell = otherTr.children[cellIndex];
-                            if (otherCell) {
-                                otherCell.innerText = copiedShiftValue;
-                                updateCellStyles(otherCell, copiedShiftValue);
-                                recalcRow(otherTr);
+                            if (errorUsers.length > 0) {
+                                showToast(`Số ngày nghỉ đã hết! Không thể dán cho: ${errorUsers.join(', ')}`, "error");
+                                return;
                             }
                         }
-                    });
-                }
-            });
 
-            closeShiftPicker(new Event('click'), true);
-            markUnsaved();
-            showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
-        }
+                        cellsToUpdate.forEach(cell => {
+                            if (!cell) return;
+                            cell.innerText = copiedShiftValue;
+                            updateCellStyles(cell, copiedShiftValue);
+                            recalcRow(cell);
+
+                            const tr = cell.closest('tr');
+                            if (tr) {
+                                const maNV = tr.getAttribute('data-id');
+                                const cellIndex = Array.from(tr.children).indexOf(cell);
+                                document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                                    if (otherTr !== tr) {
+                                        const otherCell = otherTr.children[cellIndex];
+                                        if (otherCell) {
+                                            otherCell.innerText = copiedShiftValue;
+                                            updateCellStyles(otherCell, copiedShiftValue);
+                                            recalcRow(otherTr);
+                                        }
+                                    }
+                                });
+                            }
+                        });
+
+                        closeShiftPicker(new Event('click'), true);
+                        markUnsaved();
+                        showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
+                    }
+        
         function syncGhiChu(el) {
             const tr = el.closest('tr');
             if (!tr) return;
