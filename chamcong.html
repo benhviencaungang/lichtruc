@@ -1212,25 +1212,27 @@
                             if (data[maNV]) {
                                 for (let day in data[maNV].days) {
                                     if (m === currentMonth && excludeIndices.includes(parseInt(day) - 1)) continue;
-                                    if (trackedDays[m].has(day)) continue; // Bỏ qua nếu đã đếm
+                                    if (trackedDays[m].has(day)) continue;
                                     trackedDays[m].add(day);
 
                                     let valStr = data[maNV].days[day];
                                     if (!valStr) continue;
+
+                                    const dw = new Date(currentYear, m - 1, parseInt(day)).getDay();
+                                    const isLe = isHoliday(day, m, currentYear);
+                                    let prevDate = new Date(currentYear, m - 1, parseInt(day) - 1);
+                                    const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
+
                                     let parts = parseShifts(valStr);
                                     parts.forEach(v => {
                                         v = v.toUpperCase();
-                                        if (v === 'P') usedP += 1;
-                                        else if (v === 'P/2') usedP += 0.5;
-                                        else if (v === 'NB') usedNb += 1;
-                                        else if (v === 'NB/2') usedNb += 0.5;
-                                        else if (v === 'LT') earnedNb += 1;
-                                        else if (v === 'LT/2') earnedNb += 0.5;
+                                        if (v === 'P') usedP += 1; else if (v === 'P/2') usedP += 0.5;
+                                        else if (v === 'NB') usedNb += 1; else if (v === 'NB/2') usedNb += 0.5;
+                                        else if (v === 'LT') earnedNb += 1; else if (v === 'LT/2') earnedNb += 0.5;
 
-                                        const dw = new Date(currentYear, m - 1, parseInt(day)).getDay();
-                                        const isLe = isHoliday(day, m, currentYear);
-                                        if (isLe && v === 'T24') {
-                                            earnedNb += 2;
+                                        if (isLe) {
+                                            if (v === 'T24') earnedNb += 1;
+                                            else if (v === 'RT' && !isPrevLe) earnedNb += 1;
                                         } else if (dw === 5 || dw === 6) {
                                             if (isBccHSCC && v === 'T24') earnedNb += 1;
                                             else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
@@ -1256,18 +1258,19 @@
 
                         const dw = new Date(currentYear, currentMonth - 1, idx + 1).getDay();
                         const isLe = isHoliday(idx + 1, currentMonth, currentYear);
+                        let prevDate = new Date(currentYear, currentMonth - 1, idx);
+                        const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
+
                         let parts = parseShifts(valStr);
                         parts.forEach(v => {
                             v = v.toUpperCase();
-                            if (v === 'P') usedP += 1;
-                            else if (v === 'P/2') usedP += 0.5;
-                            else if (v === 'NB') usedNb += 1;
-                            else if (v === 'NB/2') usedNb += 0.5;
-                            else if (v === 'LT') earnedNb += 1;
-                            else if (v === 'LT/2') earnedNb += 0.5;
+                            if (v === 'P') usedP += 1; else if (v === 'P/2') usedP += 0.5;
+                            else if (v === 'NB') usedNb += 1; else if (v === 'NB/2') usedNb += 0.5;
+                            else if (v === 'LT') earnedNb += 1; else if (v === 'LT/2') earnedNb += 0.5;
 
-                            if (isLe && v === 'T24') {
-                                earnedNb += 2;
+                            if (isLe) {
+                                if (v === 'T24') earnedNb += 1;
+                                else if (v === 'RT' && !isPrevLe) earnedNb += 1;
                             } else if (dw === 5 || dw === 6) {
                                 if (isBccHSCC && v === 'T24') earnedNb += 1;
                                 else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
@@ -1275,10 +1278,8 @@
                         });
                     });
                 }
-
                 return (baseP - usedP) + (earnedNb - usedNb);
             }
-        
             function applyShiftSelection() {
                     const sangVal = document.getElementById('sp-sang').value;
                     const chieuVal = document.getElementById('sp-chieu').value;
@@ -1286,10 +1287,9 @@
                     const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
                     const isChieuHalf = chieuVal !== '';
 
-                    // ĐÃ SỬA: Cho phép các ký hiệu nửa ngày (như P/2, Nb/2, -...) được phép đứng 1 mình
+                    // BẮT BUỘC CHỌN 2 BUỔI CHO MỌI TRƯỜNG HỢP NỬA NGÀY, NGOẠI TRỪ LT/2
                     if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
-                        if (!['LT/2', '-', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'L/2', 'O/2', 'Rt/2'].includes(sangVal) &&
-                            !['LT/2', '-', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'L/2', 'O/2', 'Rt/2'].includes(chieuVal)) {
+                        if (sangVal !== 'LT/2' && chieuVal !== 'LT/2') {
                             showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
                             return;
                         }
@@ -1304,34 +1304,6 @@
 
                     const selectedCells = document.querySelectorAll('.cell-selected');
                     const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
-
-                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-
-                    // KIỂM TRA NGHIỆP VỤ: KÝ HIỆU "-" ĐỨNG 1 MÌNH CHỈ DÀNH CHO NGÀY LỄ
-                // (Nếu kết hợp -;P/2 hoặc -;Nb/2 thì vẫn được lưu ở ngày thường)
-                let partsForCheck = parseShifts(finalVal);
-                let isStandaloneMinus = partsForCheck.length === 1 && partsForCheck[0].trim() === '-';
-
-                if (isStandaloneMinus) {
-                    let invalidCells = [];
-                    cellsToUpdate.forEach(cell => {
-                        if (!cell) return;
-                        const tr = cell.closest('tr');
-                        if (tr) {
-                            const cellIndex = Array.from(tr.children).indexOf(cell);
-                            const day = cellIndex - 1; // Cột ngày bắt đầu từ vị trí số 2
-                            if (!isHoliday(day, month, year)) {
-                                invalidCells.push(day);
-                            }
-                        }
-                    });
-
-                    if (invalidCells.length > 0) {
-                        showToast("Chỉ được phép để trống buổi còn lại (chỉ chấm -) vào Ngày Lễ!", "error");
-                        return; // Chặn lưu
-                    }
-                }
 
                     cellsToUpdate.forEach(cell => {
                         if (!cell) return;
@@ -1360,6 +1332,103 @@
                     markUnsaved();
                 }
 
+               async function pasteShift() {
+                    if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
+                    if (copiedShiftValue === null) {
+                        showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
+                        return;
+                    }
+
+                    const selectedCells = document.querySelectorAll('.cell-selected');
+                    const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
+
+                    if (cellsToUpdate.length === 0) return;
+
+                    let partsForCheck = parseShifts(copiedShiftValue);
+
+                    // Chống dán 1 buổi đơn lẻ, NGOẠI TRỪ LT/2
+                    if (partsForCheck.length === 1 && HALF_DAY_SYMBOLS.some(s => s.toUpperCase() === partsForCheck[0].toUpperCase())) {
+                        if (partsForCheck[0].toUpperCase() !== 'LT/2') {
+                            showToast("LỖI: Không thể dán 1 buổi đơn lẻ. Bạn phải copy ô có đủ 2 buổi!", "error");
+                            return;
+                        }
+                    }
+
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+
+                    // KIỂM TRA SỐ DƯ PHÉP KHI DÁN
+                    let hasLeaveRequest = partsForCheck.some(v => ['P', 'P/2', 'NB', 'NB/2'].includes(v.toUpperCase()));
+                    if (hasLeaveRequest) {
+                        document.getElementById('loading-screen').classList.remove('hidden');
+                        document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
+
+                        let leavePerCell = 0;
+                        partsForCheck.forEach(v => {
+                            let upperV = v.toUpperCase();
+                            if (upperV === 'P' || upperV === 'NB') leavePerCell += 1;
+                            else if (upperV === 'P/2' || upperV === 'NB/2') leavePerCell += 0.5;
+                        });
+
+                        let requestsByNV = {};
+                        cellsToUpdate.forEach(cell => {
+                            if (!cell) return;
+                            const tr = cell.closest('tr');
+                            if (tr) {
+                                const maNV = tr.getAttribute('data-id');
+                                const cellIndex = Array.from(tr.children).indexOf(cell) - 2;
+                                if (!requestsByNV[maNV]) {
+                                    requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
+                                }
+                                requestsByNV[maNV].count += leavePerCell;
+                                requestsByNV[maNV].indices.push(cellIndex);
+                            }
+                        });
+
+                        let errorUsers = [];
+                        for (let maNV in requestsByNV) {
+                            let req = requestsByNV[maNV];
+                            let remaining = await getRemainingLeaveBalance(maNV, year, month, req.indices);
+                            if (remaining < req.count) {
+                                errorUsers.push(`${req.name} (còn ${remaining} ngày)`);
+                            }
+                        }
+
+                        document.getElementById('loading-screen').classList.add('hidden');
+
+                        if (errorUsers.length > 0) {
+                            showToast(`Số ngày nghỉ đã hết! Không thể dán cho: ${errorUsers.join(', ')}`, "error");
+                            return;
+                        }
+                    }
+
+                    cellsToUpdate.forEach(cell => {
+                        if (!cell) return;
+                        cell.innerText = copiedShiftValue;
+                        updateCellStyles(cell, copiedShiftValue);
+                        recalcRow(cell);
+
+                        const tr = cell.closest('tr');
+                        if (tr) {
+                            const maNV = tr.getAttribute('data-id');
+                            const cellIndex = Array.from(tr.children).indexOf(cell);
+                            document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
+                                if (otherTr !== tr) {
+                                    const otherCell = otherTr.children[cellIndex];
+                                    if (otherCell) {
+                                        otherCell.innerText = copiedShiftValue;
+                                        updateCellStyles(otherCell, copiedShiftValue);
+                                        recalcRow(otherTr);
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    closeShiftPicker(new Event('click'), true);
+                    markUnsaved();
+                    showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
+                }                   
                 function copyShift() {
                     const selected = document.querySelector('.cell-selected');
                     const targetCell = selected || activeInputCell;
@@ -1369,120 +1438,6 @@
                     showToast(`Đã sao chép: ${copiedShiftValue || 'Ô trống'}`, 'info');
                 }
 
-                async function pasteShift() {
-                        if (currentOverallStatus === 'Chờ duyệt' || currentOverallStatus === 'Đã duyệt') return;
-                        if (copiedShiftValue === null) {
-                            showToast("Chưa có dữ liệu sao chép! Hãy ấn Ctrl+C trước.", "warning");
-                            return;
-                        }
-
-                        const selectedCells = document.querySelectorAll('.cell-selected');
-                        const cellsToUpdate = selectedCells.length > 0 ? selectedCells : (activeInputCell ? [activeInputCell] : []);
-
-                        if (cellsToUpdate.length === 0) return;
-
-                        const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
-                        const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
-
-                        // KIỂM TRA NGHIỆP VỤ KHI DÁN: DẤU "-" ĐỨNG 1 MÌNH CHỈ DÙNG CHO NGÀY LỄ
-                    let partsForCheckMinus = parseShifts(copiedShiftValue);
-                    let isStandaloneMinus = partsForCheckMinus.length === 1 && partsForCheckMinus[0].trim() === '-';
-
-                    if (isStandaloneMinus) {
-                        let invalidCells = [];
-                        cellsToUpdate.forEach(cell => {
-                            if (!cell) return;
-                            const tr = cell.closest('tr');
-                            if (tr) {
-                                const cellIndex = Array.from(tr.children).indexOf(cell);
-                                const day = cellIndex - 1;
-                                if (!isHoliday(day, month, year)) {
-                                    invalidCells.push(day);
-                                }
-                            }
-                        });
-
-                        if (invalidCells.length > 0) {
-                            showToast("Không thể dán! Dấu (-) đứng 1 mình chỉ dùng cho Ngày Lễ.", "error");
-                            return; // Chặn dán
-                        }
-                    }
-
-                        // KIỂM TRA SỐ DƯ PHÉP KHI DÁN
-                        let partsForCheck = parseShifts(copiedShiftValue);
-                        let hasLeaveRequest = partsForCheck.some(v => ['P', 'P/2', 'NB', 'NB/2'].includes(v.toUpperCase()));
-
-                        if (hasLeaveRequest) {
-                            document.getElementById('loading-screen').classList.remove('hidden');
-                            document.getElementById('loading-text').innerText = "Đang kiểm tra số dư ngày phép...";
-
-                            let leavePerCell = 0;
-                            partsForCheck.forEach(v => {
-                                let upperV = v.toUpperCase();
-                                if (upperV === 'P' || upperV === 'NB') leavePerCell += 1;
-                                else if (upperV === 'P/2' || upperV === 'NB/2') leavePerCell += 0.5;
-                            });
-
-                            let requestsByNV = {};
-                            cellsToUpdate.forEach(cell => {
-                                if (!cell) return;
-                                const tr = cell.closest('tr');
-                                if (tr) {
-                                    const maNV = tr.getAttribute('data-id');
-                                    const cellIndex = Array.from(tr.children).indexOf(cell) - 2;
-                                    if (!requestsByNV[maNV]) {
-                                        requestsByNV[maNV] = { name: tr.cells[1].innerText.split('\n')[0].trim(), count: 0, indices: [] };
-                                    }
-                                    requestsByNV[maNV].count += leavePerCell;
-                                    requestsByNV[maNV].indices.push(cellIndex);
-                                }
-                            });
-
-                            let errorUsers = [];
-                            for (let maNV in requestsByNV) {
-                                let req = requestsByNV[maNV];
-                                let remaining = await getRemainingLeaveBalance(maNV, year, month, req.indices);
-                                if (remaining < req.count) {
-                                    errorUsers.push(`${req.name} (còn ${remaining} ngày)`);
-                                }
-                            }
-
-                            document.getElementById('loading-screen').classList.add('hidden');
-
-                            if (errorUsers.length > 0) {
-                                showToast(`Số ngày nghỉ đã hết! Không thể dán cho: ${errorUsers.join(', ')}`, "error");
-                                return;
-                            }
-                        }
-
-                        cellsToUpdate.forEach(cell => {
-                            if (!cell) return;
-                            cell.innerText = copiedShiftValue;
-                            updateCellStyles(cell, copiedShiftValue);
-                            recalcRow(cell);
-
-                            const tr = cell.closest('tr');
-                            if (tr) {
-                                const maNV = tr.getAttribute('data-id');
-                                const cellIndex = Array.from(tr.children).indexOf(cell);
-                                document.querySelectorAll(`tr.data-row[data-id="${maNV}"]`).forEach(otherTr => {
-                                    if (otherTr !== tr) {
-                                        const otherCell = otherTr.children[cellIndex];
-                                        if (otherCell) {
-                                            otherCell.innerText = copiedShiftValue;
-                                            updateCellStyles(otherCell, copiedShiftValue);
-                                            recalcRow(otherTr);
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
-                        closeShiftPicker(new Event('click'), true);
-                        markUnsaved();
-                        showToast(`Đã dán: ${copiedShiftValue || 'Ô trống'} vào ${cellsToUpdate.length} ô`, 'success');
-                    }
-        
         function syncGhiChu(el) {
             const tr = el.closest('tr');
             if (!tr) return;
@@ -1911,6 +1866,11 @@
                                                         let valStr = data[nv].days[day];
                                                         if (!valStr) continue;
 
+                                                        const dw = new Date(year, m - 1, parseInt(day)).getDay();
+                                                        const isLe = isHoliday(day, m, year);
+                                                        let prevDate = new Date(year, m - 1, parseInt(day) - 1);
+                                                        const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
+
                                                         let parts = parseShifts(valStr);
                                                         parts.forEach(v => {
                                                             v = v.toUpperCase();
@@ -1921,10 +1881,9 @@
                                                             else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
                                                             else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
 
-                                                            const dw = new Date(year, m - 1, parseInt(day)).getDay();
-                                                            const isLe = isHoliday(day, m, year);
-                                                            if (isLe && v === 'T24') {
-                                                                dbYearlyStats[nv].earnedNb += 2;
+                                                            if (isLe) {
+                                                                if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                                else if (v === 'RT' && !isPrevLe) dbYearlyStats[nv].earnedNb += 1;
                                                             } else if (dw === 5 || dw === 6) {
                                                                 if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
                                                                 else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
@@ -1958,6 +1917,10 @@
                                     if (day > daysInMonth) return;
 
                                     const dw = new Date(year, month - 1, day).getDay();
+                                    const isLe = isHoliday(day, month, year);
+                                    let prevDate = new Date(year, month - 1, day - 1);
+                                    const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
+
                                     const rawVal = cell.innerText.trim().toUpperCase();
                                     if (!rawVal) return;
 
@@ -1972,7 +1935,10 @@
                                         else if (v === 'LT') currentEarnedNb += 1;
                                         else if (v === 'LT/2') currentEarnedNb += 0.5;
 
-                                        if (dw === 5 || dw === 6) {
+                                        if (isLe) {
+                                            if (v === 'T24') currentEarnedNb += 1;
+                                            else if (v === 'RT' && !isPrevLe) currentEarnedNb += 1;
+                                        } else if (dw === 5 || dw === 6) {
                                             if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
                                             else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
                                         }
@@ -1989,6 +1955,8 @@
                                                 let p = parseShifts(oldData[maNV].days[d]);
                                                 const dw = new Date(year, month - 1, parseInt(d)).getDay();
                                                 const isLe = isHoliday(d, month, year);
+                                                let prevDate = new Date(year, month - 1, parseInt(d) - 1);
+                                                const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
 
                                                 p.forEach(v => {
                                                     v = v.toUpperCase();
@@ -1996,8 +1964,9 @@
                                                     else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
                                                     else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
 
-                                                    if (isLe && v === 'T24') {
-                                                        oldEarnedNb += 2;
+                                                    if (isLe) {
+                                                        if (v === 'T24') oldEarnedNb += 1;
+                                                        else if (v === 'RT' && !isPrevLe) oldEarnedNb += 1;
                                                     } else if (dw === 5 || dw === 6) {
                                                         if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
                                                         else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
@@ -3593,6 +3562,11 @@
                                                     let valStr = data[nv].days[day];
                                                     if (!valStr) continue;
 
+                                                    const dw = new Date(year, m - 1, parseInt(day)).getDay();
+                                                    const isLe = isHoliday(day, m, year);
+                                                    let prevDate = new Date(year, m - 1, parseInt(day) - 1);
+                                                    const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
+
                                                     let parts = parseShifts(valStr);
                                                     parts.forEach(v => {
                                                         v = v.toUpperCase();
@@ -3603,10 +3577,9 @@
                                                         else if (v === 'LT') dbYearlyStats[nv].earnedNb += 1;
                                                         else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
 
-                                                        const dw = new Date(year, m - 1, parseInt(day)).getDay();
-                                                        const isLe = isHoliday(day, m, year);
-                                                        if (isLe && v === 'T24') {
-                                                            dbYearlyStats[nv].earnedNb += 2;
+                                                        if (isLe) {
+                                                            if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                            else if (v === 'RT' && !isPrevLe) dbYearlyStats[nv].earnedNb += 1;
                                                         } else if (dw === 5 || dw === 6) {
                                                             if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
                                                             else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
@@ -3651,6 +3624,8 @@
 
                                 const dw = new Date(year, month - 1, day).getDay();
                                 const isLe = isHoliday(day, month, year);
+                                let prevDate = new Date(year, month - 1, day - 1);
+                                const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
 
                                 const rawVal = cell.innerText.trim().toUpperCase();
                                 if (!rawVal) return;
@@ -3661,8 +3636,9 @@
                                     if (v === 'LT') currentEarnedNb += 1;
                                     else if (v === 'LT/2') currentEarnedNb += 0.5;
 
-                                    if (isLe && v === 'T24') {
-                                        currentEarnedNb += 2;
+                                    if (isLe) {
+                                        if (v === 'T24') currentEarnedNb += 1;
+                                        else if (v === 'RT' && !isPrevLe) currentEarnedNb += 1;
                                     } else if (dw === 5 || dw === 6) {
                                         if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
                                         else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
@@ -3680,6 +3656,8 @@
                                             let p = parseShifts(oldData[maNV].days[d]);
                                             const dw = new Date(year, month - 1, parseInt(d)).getDay();
                                             const isLe = isHoliday(d, month, year);
+                                            let prevDate = new Date(year, month - 1, parseInt(d) - 1);
+                                            const isPrevLe = isHoliday(prevDate.getDate(), prevDate.getMonth() + 1, prevDate.getFullYear());
 
                                             p.forEach(v => {
                                                 v = v.toUpperCase();
@@ -3687,8 +3665,9 @@
                                                 else if (v === 'NB') oldUsedNb += 1; else if (v === 'NB/2') oldUsedNb += 0.5;
                                                 else if (v === 'LT') oldEarnedNb += 1; else if (v === 'LT/2') oldEarnedNb += 0.5;
 
-                                                if (isLe && v === 'T24') {
-                                                    oldEarnedNb += 2;
+                                                if (isLe) {
+                                                    if (v === 'T24') oldEarnedNb += 1;
+                                                    else if (v === 'RT' && !isPrevLe) oldEarnedNb += 1;
                                                 } else if (dw === 5 || dw === 6) {
                                                     if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
                                                     else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
@@ -3699,7 +3678,6 @@
                                 } catch (e) { }
                             }
 
-                            // TÍNH TOÁN BÙ TRỪ: Tổng năm + (Trên màn hình hiện tại - Dữ liệu cũ đã lưu của tháng này)
                             let totalUsedP = dbYearlyStats[maNV].usedP + (currentUsedP - oldUsedP);
                             let totalUsedNb = dbYearlyStats[maNV].usedNb + (currentUsedNb - oldUsedNb);
                             let totalEarnedNb = dbYearlyStats[maNV].earnedNb + (currentEarnedNb - oldEarnedNb);
@@ -4031,9 +4009,44 @@
                 let tbodyHtml = '';
                 let stt = 1;
 
-                // Chỉ hiển thị những ai có phát sinh cộng NBL HOẶC đã sử dụng NBL
-                let nblArray = Object.values(nblDetails).filter(item => item.totalEarned > 0 || item.totalUsed > 0);
-                
+                // --- LOGIC PHÂN QUYỀN HIỂN THỊ KHOA ---
+                const isAdminAll = isGlobalAdmin();
+                const selectedKhoaFilter = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+
+                let allowedParentKhoas = [];
+                if (isAdminAll) {
+                    if (selectedKhoaFilter === 'ALL') {
+                        allowedParentKhoas = MOCK_DB.khoa.map(k => k.MaKhoa);
+                    } else {
+                        allowedParentKhoas = [getParentKhoaInfo(selectedKhoaFilter).ma];
+                    }
+                } else {
+                    // Nếu là Admin Khoa, chỉ lấy danh sách khoa được phân quyền
+                    allowedParentKhoas = currentUser.KhoaList.map(mk => getParentKhoaInfo(mk).ma);
+                }
+
+                // Lọc dữ liệu: Chỉ hiển thị người có số liệu NBL VÀ thuộc khoa được phép xem
+                let nblArray = Object.values(nblDetails).filter(item => {
+                    const hasData = item.totalEarned > 0 || item.totalUsed > 0;
+                    if (!hasData) return false;
+
+                    // Xác định mã khoa gốc của người này
+                    let maKhoaGoc = "";
+                    let userObj = MOCK_DB.users.find(u => u.HoTen === item.name);
+                    if (userObj) {
+                        maKhoaGoc = getParentKhoaInfo(getPrimaryKhoa(userObj.MaKhoa)).ma;
+                    } else {
+                        // Trùng tên Khoa
+                        let kObj = MOCK_DB.khoa.find(k => k.TenKhoa === item.khoa);
+                        if (kObj) maKhoaGoc = getParentKhoaInfo(kObj.MaKhoa).ma;
+                    }
+
+                    // Nếu là Admin toàn quyền chọn "Toàn viện", cho xem hết
+                    if (isAdminAll && selectedKhoaFilter === 'ALL') return true;
+
+                    // Nếu không, chỉ xem những khoa nằm trong allowedParentKhoas
+                    return allowedParentKhoas.includes(maKhoaGoc);
+                });                
                 nblArray.sort((a, b) => {
                     let nameA = getTenString(a.name);
                     let nameB = getTenString(b.name);
