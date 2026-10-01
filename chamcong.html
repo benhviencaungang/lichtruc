@@ -551,6 +551,7 @@
                             <p>CT/2: Công tác 1/2 ngày</p>
                             <p>LT: Làm thêm ngày (+Phép)</p>
                             <p>LK/2: Nghĩ tết dân tộc 1/2 ngày</p>
+                            <p>LLK/2: Làm thêm lễ dân tộc 1/2 ngày</p>
                         </div>
                         <div class="w-1/3">
                             <p>P: Nghỉ phép</p>
@@ -576,6 +577,7 @@
                             <p>L/2: Nghỉ lễ 1/2 ngày</p>
                             <p>PT: Nghỉ phép tang</p>
                             <p>PC: Nghỉ phép cưới</p>
+                            <p>LLK: Làm thêm lễ dân tộc</p>
                         </div>
                     </div>
                 </div>
@@ -775,7 +777,7 @@
                     <h3 class="font-bold text-lg text-teal-800 flex items-center">
                         <i data-lucide="calendar-heart" class="w-5 h-5 mr-2"></i> Báo cáo Chi tiết Nghỉ Bù Lễ (NBL)
                     </h3>
-                    <p class="text-sm text-teal-600 mt-1">Quét tự động các ngày đi làm Lễ (+, -, LT, LT/2) để tính quỹ NBL và đối chiếu với ngày đã nghỉ.</p>
+                    <p class="text-sm text-teal-600 mt-1">Quét tự động các ngày đi làm Lễ (+, -, LK, LK/2, LLK, LLK/2) để tính quỹ NBL và đối chiếu với ngày đã nghỉ.</p>
                 </div>
                 <button onclick="document.getElementById('nbl-details-modal').classList.add('hidden')" class="text-teal-400 hover:text-teal-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
@@ -865,9 +867,10 @@
                 <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                     <h4 class="font-bold text-red-600 mb-2 flex items-center"><i data-lucide="calendar" class="w-4 h-4 mr-2"></i>1. Quy định Ngày Lễ & Lễ Dân Tộc</h4>
                     <ul class="list-disc pl-5 text-sm text-slate-700 space-y-2">
-                        <li><b>Đi làm ngày Lễ:</b> Nếu chấm <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">+</span> (1 ngày) hoặc <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">-</span> (nửa ngày) vào ngày Lễ, hệ thống sẽ tự động cộng tích lũy vào <span class="font-bold text-teal-600">Quỹ Nghỉ Bù Lễ (NBL)</span>. Xem tại nút <i>"Chi tiết NBL"</i>.</li>
-                        <li><b>Sử dụng quỹ NBL:</b> Khi nghỉ bù cho ngày lễ, sử dụng ký hiệu <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL</span> hoặc <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL/2</span>.</li>
-                        <li><b>Lễ Dân Tộc:</b> Sử dụng ký hiệu <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK</span> hoặc <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK/2</span>. Hệ thống ghi nhận được nghỉ hưởng lương và <b>không trừ vào quỹ phép năm</b> (khác với PT, PC).</li>
+                        <li><b>Đi làm ngày Lễ toàn quốc:</b> Nếu chấm <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">+</span> (1 ngày) hoặc <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">-</span> (nửa ngày) vào ngày Lễ, hệ thống sẽ tự động cộng tích lũy vào <span class="font-bold text-teal-600">Quỹ Nghỉ Bù Lễ (NBL)</span>. Xem tại nút <i>"Chi tiết NBL"</i>.</li>
+                        <li><b>Sử dụng quỹ NBL:</b> Khi nghỉ bù cho ngày lễ, sử dụng ký hiệu <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL</span> hoặc <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL/2</span> để trừ quỹ.</li>
+                        <li><b>Nghỉ Lễ Dân Tộc:</b> Sử dụng ký hiệu <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK</span> hoặc <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK/2</span>. Hệ thống ghi nhận được nghỉ hưởng lương và <b>không trừ vào quỹ phép năm</b>.</li>
+                        <li><b>Đi làm ngày Lễ Dân Tộc:</b> Nếu phải đi làm vào ngày Lễ Dân Tộc, sử dụng ký hiệu <span class="font-bold text-indigo-800 bg-indigo-100 px-1 rounded">LLK</span> (1 ngày) hoặc <span class="font-bold text-indigo-800 bg-indigo-100 px-1 rounded">LLK/2</span> (nửa ngày). Hệ thống sẽ tự động cộng thêm vào <b>Quỹ Nghỉ Bù Lễ (NBL)</b> để được chấm bù sau này.</li>
                     </ul>
                 </div>
 
@@ -959,7 +962,7 @@
         });
 
         // Thêm 'O/2' vào danh sách ca nửa ngày
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2'];
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2', 'LLK/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -993,7 +996,9 @@
             { id: 'PT', name: 'Nghỉ phép tang (PT)', bg: 'bg-gray-100 text-gray-700 font-bold' },
             { id: 'PC', name: 'Nghỉ phép cưới (PC)', bg: 'bg-pink-50 text-pink-600 font-bold' },
             { id: 'LK', name: 'Nghỉ tết dân tộc (LK)', bg: 'bg-indigo-50 text-indigo-700 font-bold' },
-            { id: 'LK/2', name: 'Nghỉ tết dân tộc 1/2 ngày (LK/2)', bg: 'bg-indigo-50 text-indigo-700' }
+            { id: 'LK/2', name: 'Nghỉ tết dân tộc 1/2 ngày (LK/2)', bg: 'bg-indigo-50 text-indigo-700' },
+            { id: 'LLK', name: 'Làm thêm lễ dân tộc (LLK)', bg: 'bg-indigo-100 text-indigo-800 font-bold' },
+            { id: 'LLK/2', name: 'Làm thêm lễ dân tộc 1/2 ngày (LLK/2)', bg: 'bg-indigo-100 text-indigo-800' }
         ];
 
         function isHoliday(day, month, year) {
@@ -2508,8 +2513,8 @@
                     val = val.toUpperCase();
                     if (!val) return;
 
-                    if (val === '+' || val === 'LT') ngayViec += 1;
-                    if (val === '-' || val === 'LT/2') ngayViec += 0.5;
+                    if (val === '+' || val === 'LT' || val === 'LLK') ngayViec += 1;
+                    if (val === '-' || val === 'LT/2' || val === 'LLK/2') ngayViec += 0.5;
 
                     if (val === 'T24') truc24 += 1;
                     if (val === 'T12D' || val === 'T12N') truc12 += 1;
@@ -4026,21 +4031,17 @@
                                         parts.forEach(v => {
                                             v = v.toUpperCase();
                                             
-                                            // Bỏ qua tháng hiện tại vì sẽ quét trực tiếp từ giao diện bên dưới
                                             if (m !== month) {
-                                                // QUÉT NGÀY ĐÃ NGHỈ (NBL)
-                                                if (v === 'NBL' || v === 'NBL/2') {
+                                                // QUÉT NGÀY ĐÃ NGHỈ NBL HOẶC LK
+                                                if (v === 'NBL' || v === 'NBL/2' || v === 'LK' || v === 'LK/2') {
                                                     initNBLStat(nv, name, tenKhoa);
-                                                    if (v === 'NBL') {
-                                                        nblDetails[nv].usedDays.push(`${day}/${m}`);
-                                                        nblDetails[nv].totalUsed += 1;
-                                                    } else if (v === 'NBL/2') {
-                                                        nblDetails[nv].usedDays.push(`${day}/${m} (0.5)`);
-                                                        nblDetails[nv].totalUsed += 0.5;
-                                                    }
+                                                    let isHalf = (v === 'NBL/2' || v === 'LK/2');
+                                                    let suffix = isHalf ? " (0.5)" : "";
+                                                    nblDetails[nv].usedDays.push(`${day}/${m} [${v}]${suffix}`);
+                                                    nblDetails[nv].totalUsed += (isHalf ? 0.5 : 1);
                                                 }
 
-                                                // QUÉT NGÀY ĐI LÀM LỄ (Cộng NBL) - CHỈ NHẬN + VÀ -
+                                                // QUÉT NGÀY ĐI LÀM LỄ TÍCH LŨY VÀO NBL (+, -, LLK, LLK/2)
                                                 if (isLe) {
                                                     if (v === '+') {
                                                         initNBLStat(nv, name, tenKhoa);
@@ -4051,6 +4052,16 @@
                                                         nblDetails[nv].earnedDays.push(`${day}/${m} (+0.5)`);
                                                         nblDetails[nv].totalEarned += 0.5;
                                                     }
+                                                }
+                                                // Làm thêm Lễ Dân tộc (Không phụ thuộc Lễ toàn quốc)
+                                                if (v === 'LLK') {
+                                                    initNBLStat(nv, name, tenKhoa);
+                                                    nblDetails[nv].earnedDays.push(`${day}/${m} [LLK] (+1)`);
+                                                    nblDetails[nv].totalEarned += 1;
+                                                } else if (v === 'LLK/2') {
+                                                    initNBLStat(nv, name, tenKhoa);
+                                                    nblDetails[nv].earnedDays.push(`${day}/${m} [LLK] (+0.5)`);
+                                                    nblDetails[nv].totalEarned += 0.5;
                                                 }
                                             }
                                         });
@@ -4088,17 +4099,19 @@
                         parts.forEach(v => {
                             v = v.toUpperCase();
                             
-                            // QUÉT NGÀY ĐÃ NGHỈ (NBL)
-                            if (v === 'NBL' || v === 'NBL/2') {
+                            // QUÉT NGÀY ĐÃ NGHỈ NBL HOẶC LK
+                            if (v === 'NBL' || v === 'NBL/2' || v === 'LK' || v === 'LK/2') {
                                 initNBLStat(maNV, hoTen, tenKhoa);
-                                let dateStr = v === 'NBL' ? `${day}/${month}` : `${day}/${month} (0.5)`;
+                                let isHalf = (v === 'NBL/2' || v === 'LK/2');
+                                let suffix = isHalf ? " (0.5)" : "";
+                                let dateStr = `${day}/${month} [${v}]${suffix}`;
                                 if (!nblDetails[maNV].usedDays.includes(dateStr)) {
                                     nblDetails[maNV].usedDays.push(dateStr);
-                                    nblDetails[maNV].totalUsed += (v === 'NBL' ? 1 : 0.5);
+                                    nblDetails[maNV].totalUsed += (isHalf ? 0.5 : 1);
                                 }
                             }
 
-                            // QUÉT NGÀY ĐI LÀM LỄ (Cộng NBL) - CHỈ NHẬN + VÀ -
+                            // QUÉT NGÀY ĐI LÀM LỄ TÍCH LŨY VÀO NBL (+, -, LLK, LLK/2)
                             if (isLe) {
                                 if (v === '+') {
                                     initNBLStat(maNV, hoTen, tenKhoa);
@@ -4114,6 +4127,22 @@
                                         nblDetails[maNV].earnedDays.push(dateStr);
                                         nblDetails[maNV].totalEarned += 0.5;
                                     }
+                                }
+                            }
+                            // Làm thêm Lễ Dân tộc
+                            if (v === 'LLK') {
+                                initNBLStat(maNV, hoTen, tenKhoa);
+                                let dateStr = `${day}/${month} [LLK] (+1)`;
+                                if (!nblDetails[maNV].earnedDays.includes(dateStr)) {
+                                    nblDetails[maNV].earnedDays.push(dateStr);
+                                    nblDetails[maNV].totalEarned += 1;
+                                }
+                            } else if (v === 'LLK/2') {
+                                initNBLStat(maNV, hoTen, tenKhoa);
+                                let dateStr = `${day}/${month} [LLK] (+0.5)`;
+                                if (!nblDetails[maNV].earnedDays.includes(dateStr)) {
+                                    nblDetails[maNV].earnedDays.push(dateStr);
+                                    nblDetails[maNV].totalEarned += 0.5;
                                 }
                             }
                         });
