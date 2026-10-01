@@ -543,25 +543,14 @@
         let currentUser = null;
         let isPrintingMode = false; // Cờ theo dõi trạng thái đang in để ẩn hiện hàng trống
 
-        // DANH SÁCH NGÀY LỄ CỐ ĐỊNH
-        // DANH SÁCH NGÀY LỄ CỐ ĐỊNH VÀ TẾT ÂM LỊCH TỚI 2030
-        const FIXED_HOLIDAYS = [
-            '01-01', '04-30', '05-01', '09-02', '09-03',
-            // 2024
-            '2024-02-08', '2024-02-09', '2024-02-10', '2024-02-11', '2024-02-12', '2024-02-13', '2024-02-14', '2024-04-18',
-            // 2025
-            '2025-01-28', '2025-01-29', '2025-01-30', '2025-01-31', '2025-02-01', '2025-02-02', '2025-02-03', '2025-04-07',
-            // 2026
-            '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-04-26',
-            // 2027
-            '2027-02-04', '2027-02-05', '2027-02-06', '2027-02-07', '2027-02-08', '2027-02-09', '2027-02-10', '2027-02-11', '2027-02-12', '2027-04-16',
-            // 2028
-            '2028-01-24', '2028-01-25', '2028-01-26', '2028-01-27', '2028-01-28', '2028-01-29', '2028-01-30', '2028-01-31', '2028-04-04',
-            // 2029
-            '2029-02-11', '2029-02-12', '2029-02-13', '2029-02-14', '2029-02-15', '2029-02-16', '2029-02-17', '2029-02-18', '2029-04-23',
-            // 2030
-            '2030-02-01', '2030-02-02', '2030-02-03', '2030-02-04', '2030-02-05', '2030-02-06', '2030-02-07', '2030-02-08', '2030-04-11'
-        ];
+        // THÊM 2 HÀM NÀY ĐỂ KHẮC PHỤC LỖI "is not defined"
+        function showGlobalLoading() {
+            // Có thể dùng thông báo thay cho màn hình mờ đen nếu không có sẵn thẻ div global-loading bên HTML
+            document.getElementById('loading-screen').classList.remove('hidden');
+        }
+        function hideGlobalLoading() {
+            document.getElementById('loading-screen').classList.add('hidden');
+        }
 
         const ROLE_MAP = {
             'KS': 'Kỹ sư', 'BS': 'Bác sĩ', 'DD': 'Điều dưỡng', 'NHS': 'Nữ hộ sinh',
@@ -897,16 +886,25 @@
 
                     const [
                         { data: khoa }, { data: users }, { data: cauHinhGia },
-                        { data: shiftsFast }, { data: phieuBoiDuongFast }
+                        { data: shiftsFast }, { data: phieuBoiDuongFast },
+                        { data: ngayLeFast } // Thêm truy vấn bảng NgayLe
                     ] = await Promise.all([
                         fetchAllSupabase('KhoaPhong'),
                         fetchAllSupabase('NhanVien'),
                         fetchAllSupabase('CauHinhGia'),
                         fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startOfMonth, endDate: endOfMonth }),
-                        fetchAllSupabase('PhieuBoiDuong', '*', { type: 'eq', column: 'Nam', value: currentYear })
+                        fetchAllSupabase('PhieuBoiDuong', '*', { type: 'eq', column: 'Nam', value: currentYear }),
+                        fetchAllSupabase('NgayLe') // Gọi API lấy ngày lễ
                     ]);
 
                     if (cauHinhGia && cauHinhGia.length > 0) MOCK_DB.cauHinhGia = cauHinhGia[0];
+
+                    // Xử lý lưu mảng ngày lễ từ Database (Lấy định dạng YYYY-MM-DD)
+                    if (ngayLeFast) {
+                        MOCK_DB.ngayLe = ngayLeFast.map(item => normalizeDateStr(item.Ngay));
+                    } else {
+                        MOCK_DB.ngayLe = [];
+                    }
 
                     if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
                     if (users) {
@@ -1066,8 +1064,42 @@
         // QUẢN LÝ IN ẤN (TỰ ĐỘNG LỌC HÀNG TRỐNG KHI IN)
         // ==========================================
         function handlePrint() {
+            // ===============================================
+            // FIX LỖI: THU THẬP DỮ LIỆU TỪ INPUT VÀO BỘ NHỚ
+            // TRƯỚC KHI CHUYỂN SANG CHẾ ĐỘ IN ĐỂ KHÔNG BỊ MẤT
+            // ===============================================
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+
+            if (phieu) {
+                let noteData = parseGhiChu(phieu.GhiChu);
+                if (!noteData.rates) noteData.rates = {};
+
+                // Lấy tạm giá trị từ các input hiện hành
+                document.querySelectorAll('.days-input').forEach(daysInput => {
+                    const id = daysInput.getAttribute('data-id');
+                    noteData.rates[id] = daysInput.value.trim();
+                });
+                document.querySelectorAll('.nights-input').forEach(nightsInput => {
+                    const id = nightsInput.getAttribute('data-id');
+                    const nights = nightsInput.value;
+                    if (nights !== null && nights !== "") noteData.rates[id] = nights;
+                });
+                document.querySelectorAll('.rate-input').forEach(rateInput => {
+                    const id = rateInput.getAttribute('data-id');
+                    const rate = rateInput.value;
+                    if (rate) noteData.rates[id] = rate;
+                });
+
+                // Cập nhật lại chuỗi JSON tạm thời cho biến
+                phieu.GhiChu = JSON.stringify(noteData);
+            }
+
+            // Gán cờ và vẽ lại giao diện in
             isPrintingMode = true;
-            generateReport(); // Re-render lại HTML loại bỏ hoàn toàn các hàng trống để rowspan chính xác
+            generateReport(); 
 
             // Đợi 100ms để trình duyệt kịp cập nhật DOM rồi mới mở hộp thoại Print
             setTimeout(() => {
@@ -1654,9 +1686,21 @@
             const userShifts = {};
             shiftsInMonth.forEach(s => {
                 let pcRaw = (s.PhanCa || '24h').toLowerCase().trim();
+                let tenCa = (s.TenCa || '').toLowerCase().trim();
 
-                // NẾU LÀ CA 12H NGÀY THÌ BỎ QUA, KHÔNG TÍNH BỒI DƯỠNG
-                if (pcRaw === 'ngày' || pcRaw === 'ngay') return;
+                // LỌC CA KHÔNG PHẢI LÀ TRỰC DỰA TRÊN TÊN CA HOẶC PHÂN CA LÀ NGÀY
+                if (
+                    pcRaw === 'ngày' || 
+                    pcRaw === 'ngay' || 
+                    tenCa.includes('chào cờ') || 
+                    tenCa.includes('chao co') || 
+                    tenCa.includes('đóng dấu') || 
+                    tenCa.includes('dong dau') ||
+                    tenCa.includes('hành chính') ||
+                    tenCa.includes('hc')
+                ) {
+                    return; // Bỏ qua ca này, tiếp tục kiểm tra ca khác của người đó
+                }
 
                 // Gắn nhãn phân loại (Đêm hoặc 24h)
                 let pcKey = (pcRaw === 'đêm' || pcRaw === 'dem') ? 'Đêm' : '24h';
@@ -1680,9 +1724,9 @@
                 const d = new Date(s.NgayTruc + "T12:00:00");
                 const dayOfWeek = d.getDay();
                 const dateNum = d.getDate();
-                const shortDateStr = s.NgayTruc.substring(5); // "MM-DD"
 
-                let isHoliday = FIXED_HOLIDAYS.includes(s.NgayTruc) || FIXED_HOLIDAYS.includes(shortDateStr);
+                // Lấy danh sách ngày lễ đã được tải từ SQL (bảng NgayLe)
+                let isHoliday = MOCK_DB.ngayLe.includes(s.NgayTruc);
 
                 if (isHoliday) {
                     if (!userShifts[uniqueKey].holidays.includes(dateNum)) userShifts[uniqueKey].holidays.push(dateNum);
