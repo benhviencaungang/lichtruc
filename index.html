@@ -1973,7 +1973,9 @@
                     if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
                 } else {
                     const options = currentUser.KhoaList.map(k => {
-                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                        // Sửa tại đây: Đảm bảo lấy đúng TenKhoa hiển thị thay vì MaKhoa
+                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); 
+                        return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
                     }).join('');
                     if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
                 }
@@ -2036,7 +2038,9 @@
                     if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
                 } else {
                     const options = currentUser.KhoaList.map(k => {
-                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                        // Sửa tại đây: Đảm bảo lấy đúng TenKhoa hiển thị thay vì MaKhoa
+                        const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); 
+                        return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
                     }).join('');
                     if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
                 }
@@ -2113,7 +2117,6 @@
                     });
                     MOCK_DB.users = processDisplayNames(rawUsers);
                 }
-
                 // Cập nhật lại Dropdown nếu đang đứng ở màn hình có dropdown
                 if (currentUser) {
                     const sel = document.getElementById('user-khoa-selector');
@@ -2123,6 +2126,14 @@
                         const opts = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
                         if (sel && sel.options.length <= 1) sel.innerHTML = opts;
                         if (xemSel && xemSel.options.length <= 1) xemSel.innerHTML = opts;
+                    } else {
+                         // THÊM ĐOẠN NÀY VÀO ĐỂ CẬP NHẬT TÊN KHOA CHO USER_KHOA VÀ ADMIN_KHOA SAU KHI LOAD DATA
+                         const opts = currentUser.KhoaList.map(k => {
+                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); 
+                            return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                        }).join('');
+                        if (sel) sel.innerHTML = opts;
+                        if (xemSel) xemSel.innerHTML = opts;
                     }
                     checkAndRenderNotifications();
                     refreshCurrentView();
