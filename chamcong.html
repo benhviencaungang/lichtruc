@@ -145,7 +145,21 @@
             body.print-blank-mode td {
                 background-color: transparent !important;
             }
-
+            /* --- CHẶN IN KHI CHƯA DUYỆT --- */
+            body.print-blocked #print-workspace {
+                display: none !important;
+            }
+            body.print-blocked::before {
+                content: "BẢNG CHẤM CÔNG CHƯA ĐƯỢC DUYỆT. KHÔNG HỢP LỆ ĐỂ IN!" !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                height: 100vh !important;
+                font-size: 24pt !important;
+                font-family: sans-serif !important;
+                color: black !important;
+                text-align: center !important;
+            }
             /* --- KẾT THÚC CODE MỚI --- */
         }
 
@@ -464,7 +478,12 @@
                 <i data-lucide="file" class="w-4 h-4 mr-2"></i> In bảng trắng
             </button>
             <!-- --- KẾT THÚC CODE MỚI --- -->
-
+            <!-- NÚT MỚI: HƯỚNG DẪN CHẤM CÔNG -->
+            <button id="btn-guide" onclick="openGuideModal()"
+                class="px-4 py-2 bg-sky-600 text-white rounded-lg flex items-center shadow hover:bg-sky-700 transition font-medium whitespace-nowrap shrink-0"
+                title="Xem hướng dẫn quy tắc chấm công">
+                <i data-lucide="book-open" class="w-4 h-4 mr-2"></i> Hướng dẫn
+            </button>
             <button id="btn-print" onclick="window.print()"
                 class="px-6 py-2 bg-blue-600 text-white rounded-lg flex items-center shadow hover:bg-blue-700 transition font-medium whitespace-nowrap shrink-0"
                 title="In Bảng Chấm Công (A4 Ngang)">
@@ -531,6 +550,7 @@
                             <p>CT : Công tác</p>
                             <p>CT/2: Công tác 1/2 ngày</p>
                             <p>LT: Làm thêm ngày (+Phép)</p>
+                            <p>LK/2: Nghĩ tết dân tộc 1/2 ngày</p>
                         </div>
                         <div class="w-1/3">
                             <p>P: Nghỉ phép</p>
@@ -543,6 +563,7 @@
                             <p>LT/2: Làm thêm 1/2 ngày</p>
                             <p>NBL: Nghỉ bù Lễ</p>
                             <p>NBL/2: Nghỉ bù Lễ 1/2</p>
+                            <p>LK: Nghĩ tết dân tộc</p>
                         </div>
                         <div class="w-1/3">
                             <p>T24: Trực 24/24</p>
@@ -825,6 +846,74 @@
             </div>
         </div>
     </div>
+    <!-- MODAL HƯỚNG DẪN CHẤM CÔNG -->
+    <div id="guide-modal" class="hidden fixed inset-0 bg-slate-900/50 z-[110] flex items-center justify-center fade-in no-print font-sans">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="bg-sky-50 px-6 py-4 border-b border-sky-100 flex justify-between items-center shrink-0">
+                <div>
+                    <h3 class="font-bold text-lg text-sky-800 flex items-center">
+                        <i data-lucide="book-open" class="w-5 h-5 mr-2"></i> Hướng dẫn & Quy định Chấm Công
+                    </h3>
+                    <p class="text-sm text-sky-600 mt-1">Các quy tắc tự động tích lũy phép và nghỉ bù của hệ thống.</p>
+                </div>
+                <button onclick="closeGuideModal()" class="text-sky-400 hover:text-sky-700 bg-white rounded p-1 shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-auto p-6 bg-slate-50 space-y-4">
+                
+                <!-- Khối 1: Ngày Lễ & Lễ dân tộc -->
+                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-red-600 mb-2 flex items-center"><i data-lucide="calendar" class="w-4 h-4 mr-2"></i>1. Quy định Ngày Lễ & Lễ Dân Tộc</h4>
+                    <ul class="list-disc pl-5 text-sm text-slate-700 space-y-2">
+                        <li><b>Đi làm ngày Lễ:</b> Nếu chấm <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">+</span> (1 ngày) hoặc <span class="font-bold text-blue-600 bg-blue-50 px-1 rounded">-</span> (nửa ngày) vào ngày Lễ, hệ thống sẽ tự động cộng tích lũy vào <span class="font-bold text-teal-600">Quỹ Nghỉ Bù Lễ (NBL)</span>. Xem tại nút <i>"Chi tiết NBL"</i>.</li>
+                        <li><b>Sử dụng quỹ NBL:</b> Khi nghỉ bù cho ngày lễ, sử dụng ký hiệu <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL</span> hoặc <span class="font-bold text-teal-600 bg-teal-50 px-1 rounded">NBL/2</span>.</li>
+                        <li><b>Lễ Dân Tộc:</b> Sử dụng ký hiệu <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK</span> hoặc <span class="font-bold text-indigo-700 bg-indigo-50 px-1 rounded">LK/2</span>. Hệ thống ghi nhận được nghỉ hưởng lương và <b>không trừ vào quỹ phép năm</b> (khác với PT, PC).</li>
+                    </ul>
+                </div>
+
+                <!-- Khối 2: Làm thêm cuối tuần -->
+                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-teal-700 mb-2 flex items-center"><i data-lucide="briefcase" class="w-4 h-4 mr-2"></i>2. Quy định Làm thêm cuối tuần (T7, CN)</h4>
+                    <ul class="list-disc pl-5 text-sm text-slate-700 space-y-2">
+                        <li><b>Chấm làm thêm:</b> Nếu đi làm thêm giờ vào T7, CN (không phải ngày Lễ), sử dụng ký hiệu <span class="font-bold text-teal-800 bg-teal-100 px-1 rounded">LT</span> (1 ngày) hoặc <span class="font-bold text-teal-800 bg-teal-100 px-1 rounded">LT/2</span> (nửa ngày).</li>
+                        <li>Hệ thống sẽ <b>tự động cộng thêm ngày Nghỉ Bù (NB)</b> tương ứng. Tổng quỹ Nghỉ Bù sẽ được hiển thị tại bảng <i>"QL Nghỉ Phép"</i>.</li>
+                        <li><b>Sử dụng nghỉ bù:</b> Chấm <span class="font-bold text-yellow-700 bg-yellow-100 px-1 rounded">NB</span> hoặc <span class="font-bold text-yellow-700 bg-yellow-100 px-1 rounded">NB/2</span> để trừ vào quỹ làm thêm này.</li>
+                    </ul>
+                </div>
+
+                <!-- Khối 3: Trực và Ra Trực (Theo câu lệnh SQL) -->
+                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-blue-700 mb-2 flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-2"></i>3. Quy định Tích lũy Nghỉ Bù (NB) qua Ca Trực</h4>
+                    <p class="text-sm text-slate-600 mb-3 italic">Dữ liệu được tự động tính toán dựa trên ngày Trực và Ra Trực:</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-red-50 p-3 rounded border border-red-100 text-sm">
+                            <h5 class="font-bold text-red-800 mb-1 border-b border-red-200 pb-1">A. Trực vào Ngày Lễ</h5>
+                            <ul class="list-disc pl-4 text-red-900 mt-2 space-y-1">
+                                <li>Trực <span class="font-bold bg-white px-1 rounded">T24</span> ngày Lễ: Cộng <b>1 ngày bù</b>.</li>
+                                <li>Ra trực <span class="font-bold bg-white px-1 rounded">RT</span> ngay Lễ: Cộng thêm <b>1 ngày bù</b>.</li>
+                                <li class="text-xs italic mt-1">(T24 Lễ + RT thường = 1 ngày; T24 thường + RT Lễ = 1 ngày; T24 Lễ + RT Lễ = 2 ngày bù)</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-blue-50 p-3 rounded border border-blue-100 text-sm">
+                            <h5 class="font-bold text-blue-800 mb-1 border-b border-blue-200 pb-1">B. Trực Cuối Tuần (Thứ 6, Thứ 7)</h5>
+                            <ul class="list-disc pl-4 text-blue-900 mt-2 space-y-1">
+                                <li>Áp dụng chung cho <b>tất cả các Khoa/Phòng</b>.</li>
+                                <li>Chỉ Trực <span class="font-bold bg-white px-1 rounded">T24</span> rơi vào Thứ 6 hoặc Thứ 7 được cộng <b>1 ngày bù</b>.</li>
+                                <li class="text-xs italic mt-1">(Trực T12N, T12D không được cộng ngày bù).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="p-4 border-t border-slate-200 bg-white flex justify-end shrink-0">
+                <button onclick="closeGuideModal()" class="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition shadow-sm">Đã hiểu / Đóng</button>
+            </div>
+        </div>
+    </div>
     <script>
         lucide.createIcons();
 
@@ -870,7 +959,7 @@
         });
 
         // Thêm 'O/2' vào danh sách ca nửa ngày
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2'];
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -902,7 +991,9 @@
             { id: 'LT', name: 'Làm thêm ngày (+Nghỉ bù) (LT)', bg: 'bg-teal-100 text-teal-800 font-bold' },
             { id: 'LT/2', name: 'Làm thêm 1/2 ngày (+Nghỉ bù) (LT/2)', bg: 'bg-teal-100 text-teal-800' },
             { id: 'PT', name: 'Nghỉ phép tang (PT)', bg: 'bg-gray-100 text-gray-700 font-bold' },
-            { id: 'PC', name: 'Nghỉ phép cưới (PC)', bg: 'bg-pink-50 text-pink-600 font-bold' }
+            { id: 'PC', name: 'Nghỉ phép cưới (PC)', bg: 'bg-pink-50 text-pink-600 font-bold' },
+            { id: 'LK', name: 'Nghỉ tết dân tộc (LK)', bg: 'bg-indigo-50 text-indigo-700 font-bold' },
+            { id: 'LK/2', name: 'Nghỉ tết dân tộc 1/2 ngày (LK/2)', bg: 'bg-indigo-50 text-indigo-700' }
         ];
 
         function isHoliday(day, month, year) {
@@ -1230,12 +1321,11 @@
                                         else if (v === 'NB') usedNb += 1; else if (v === 'NB/2') usedNb += 0.5;
                                         else if (v === 'LT') earnedNb += 1; else if (v === 'LT/2') earnedNb += 0.5;
 
-                                        if (isLe) {
-                                            if (v === 'T24') earnedNb += 1;
-                                            else if (v === 'RT' && !isPrevLe) earnedNb += 1;
+                                    if (isLe) {
+                                            if (v === 'T24') earnedNb += 1; 
+                                            else if (v === 'RT') earnedNb += 1; 
                                         } else if (dw === 5 || dw === 6) {
-                                            if (isBccHSCC && v === 'T24') earnedNb += 1;
-                                            else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
+                                            if (v === 'T24') earnedNb += 1;
                                         }
                                     });
                                 }
@@ -1268,13 +1358,12 @@
                             else if (v === 'NB') usedNb += 1; else if (v === 'NB/2') usedNb += 0.5;
                             else if (v === 'LT') earnedNb += 1; else if (v === 'LT/2') earnedNb += 0.5;
 
-                            if (isLe) {
-                                if (v === 'T24') earnedNb += 1;
-                                else if (v === 'RT' && !isPrevLe) earnedNb += 1;
-                            } else if (dw === 5 || dw === 6) {
-                                if (isBccHSCC && v === 'T24') earnedNb += 1;
-                                else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) earnedNb += 1;
-                            }
+                        if (isLe) {
+                                            if (v === 'T24') earnedNb += 1; 
+                                            else if (v === 'RT') earnedNb += 1; 
+                                        } else if (dw === 5 || dw === 6) {
+                                            if (v === 'T24') earnedNb += 1;
+                                        }
                         });
                     });
                 }
@@ -1454,6 +1543,15 @@
         }
 
         document.addEventListener('keydown', function (e) {
+            // --- BẮT SỰ KIỆN CTRL + P ĐỂ CHẶN IN NẾU CHƯA DUYỆT ---
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+                if (currentOverallStatus !== 'Đã duyệt' && !document.body.classList.contains('print-blank-mode')) {
+                    e.preventDefault();
+                    showToast("Không thể in! Bảng chấm công chưa được phê duyệt.", "error");
+                    return;
+                }
+            }
+
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
 
             if (e.ctrlKey || e.metaKey) {
@@ -1465,6 +1563,23 @@
                     pasteShift();
                 }
             }
+        });
+
+        // --- XỬ LÝ CHẶN IN TỪ MENU TRÌNH DUYỆT (File -> Print) ---
+        window.addEventListener('beforeprint', function(e) {
+            // Cho phép in nếu là chế độ "In bảng trắng"
+            if (document.body.classList.contains('print-blank-mode')) return;
+
+            // Nếu chưa duyệt, gán class chặn hiển thị dữ liệu
+            if (currentOverallStatus !== 'Đã duyệt') {
+                document.body.classList.add('print-blocked');
+                setTimeout(() => showToast("Bảng chưa duyệt, dữ liệu in đã bị ẩn!", "error"), 100);
+            }
+        });
+
+        window.addEventListener('afterprint', function(e) {
+            // Gỡ bỏ class chặn sau khi hộp thoại in đóng lại
+            document.body.classList.remove('print-blocked');
         });
 
         let confirmActionFn = null;
@@ -2408,8 +2523,8 @@
                     if (val === 'Ô' || val === 'O^') om += 1;
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
-                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2'].includes(val)) khac += 0.5;
+                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL', 'LK'].includes(val)) khac += 1;
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2', 'LK/2'].includes(val)) khac += 0.5;
                 });
             });
 
@@ -4090,6 +4205,17 @@
             } finally {
                 document.getElementById('loading-screen').classList.add('hidden');
             }
+        }
+        // ==========================================
+        // HÀM MỞ / ĐÓNG MODAL HƯỚNG DẪN CHẤM CÔNG
+        // ==========================================
+        function openGuideModal() {
+            document.getElementById('guide-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeGuideModal() {
+            document.getElementById('guide-modal').classList.add('hidden');
         }
             window.onload = () => {
                 document.getElementById('loading-screen').classList.remove('hidden');
