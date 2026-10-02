@@ -1392,10 +1392,41 @@
                     const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
                     const isChieuHalf = chieuVal !== '';
 
-                    // BẮT BUỘC CHỌN 2 BUỔI CHO MỌI TRƯỜNG HỢP NỬA NGÀY, NGOẠI TRỪ LT/2
+                    const selectedCells = document.querySelectorAll('.cell-selected');
+                    const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
+
+                    const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+                    const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
+
+                    // Mặc định cho phép lưu 1 buổi nếu là LT/2
+                    let allowSingleHalfDay = (sangVal === 'LT/2' || chieuVal === 'LT/2');
+
+                    // Thêm ngoại lệ: Khoa CNK chấm "-" vào Thứ 7, Chủ nhật
+                    if (!allowSingleHalfDay && (sangVal === '-' || chieuVal === '-')) {
+                        let isAllCNKWeekend = true;
+                        cellsToUpdate.forEach(cell => {
+                            if (!cell) return;
+                            const tr = cell.closest('tr');
+                            const maKhoa = tr ? (tr.getAttribute('data-khoa') || '').toUpperCase() : '';
+                            const cellIndex = Array.from(tr.children).indexOf(cell);
+                            const day = cellIndex - 1; // Index 0 là STT, 1 là Họ Tên -> Cột ngày bắt đầu từ index 2
+                            
+                            const dw = new Date(year, month - 1, day).getDay(); // 0 là CN, 6 là T7
+                            
+                            // Nếu có ô nào không phải khoa CNK hoặc không phải cuối tuần thì hủy ngoại lệ
+                            if (!(maKhoa.includes('CNK') && (dw === 0 || dw === 6))) {
+                                isAllCNKWeekend = false;
+                            }
+                        });
+                        if (isAllCNKWeekend) {
+                            allowSingleHalfDay = true;
+                        }
+                    }
+
+                    // BẮT BUỘC CHỌN 2 BUỔI CHO MỌI TRƯỜNG HỢP NỬA NGÀY, TRỪ CÁC NGOẠI LỆ TRÊN
                     if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
-                        if (sangVal !== 'LT/2' && chieuVal !== 'LT/2') {
-                            showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày!", "warning");
+                        if (!allowSingleHalfDay) {
+                            showToast("Bạn phải chọn công cho CẢ 2 BUỔI (Sáng và Chiều) khi chấm nửa ngày! (Trừ LT/2 hoặc khoa CNK trực cuối tuần)", "warning");
                             return;
                         }
                     }
@@ -1406,9 +1437,6 @@
                     } else if (chieuVal && !sangVal) {
                         finalVal = `; ${chieuVal}`;
                     }
-
-                    const selectedCells = document.querySelectorAll('.cell-selected');
-                    const cellsToUpdate = selectedCells.length > 0 ? selectedCells : [activeInputCell];
 
                     cellsToUpdate.forEach(cell => {
                         if (!cell) return;
