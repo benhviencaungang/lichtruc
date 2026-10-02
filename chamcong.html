@@ -392,7 +392,7 @@
             </select>
 
             <select id="filter-khoa" onchange="handleFilterChange()"
-                class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium hidden h-[38px]">
+                class="border border-purple-300 rounded px-3 py-2 outline-none focus:border-purple-500 shrink-0 bg-purple-50 text-purple-800 font-medium h-[38px]">
                 <option value="ALL">-- Toàn viện --</option>
             </select>
 
@@ -1754,9 +1754,11 @@
             const btnLeaveStats = document.getElementById('btn-leave-stats');
             const btnExportExcel = document.getElementById('btn-export-excel');
             const btnLeaveConfig = document.getElementById('btn-leave-config');
-            const btnHolidayConfig = document.getElementById('btn-holiday-config'); // <--- Thêm dòng này
+            const btnHolidayConfig = document.getElementById('btn-holiday-config'); 
+            const btnNBLDetails = document.getElementById('btn-nbl-details'); 
+            
             const isAdminAll = isGlobalAdmin();
-            const btnNBLDetails = document.getElementById('btn-nbl-details'); // <--- THÊM DÒNG NÀY
+
             if (currentUser && (currentUser.Role === 'Admin_KHTH' || currentUser.Role === 'Admin_Khoa')) {
                 if (btnLeaveStats) btnLeaveStats.classList.remove('hidden');
                 if (btnNBLDetails) btnNBLDetails.classList.remove('hidden');
@@ -1772,17 +1774,27 @@
             }
 
             if (isAdminAll) {
+                // Hiển thị và cập nhật danh sách cho Admin KHTH / Admin Toàn Viện
                 filterKhoa.classList.remove('hidden');
+                filterKhoa.disabled = false;
+                
                 if (btnLeaveConfig) btnLeaveConfig.classList.remove('hidden');
                 if (btnHolidayConfig) btnHolidayConfig.classList.remove('hidden');
-                let optionsHtml = '<option value="ALL">-- Toàn viện (Tất cả) --</option>';
-                let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
-                sortedKhoa.forEach(k => {
-                    optionsHtml += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`;
-                });
-                filterKhoa.innerHTML = optionsHtml;
+                
+                // Đảm bảo MOCK_DB.khoa đã có dữ liệu trước khi map
+                if (MOCK_DB.khoa && MOCK_DB.khoa.length > 0) {
+                    let optionsHtml = '<option value="ALL">-- Toàn viện (Tất cả) --</option>';
+                    let sortedKhoa = [...MOCK_DB.khoa].sort((a, b) => a.TenKhoa.localeCompare(b.TenKhoa, 'vi'));
+                    sortedKhoa.forEach(k => {
+                        optionsHtml += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`;
+                    });
+                    filterKhoa.innerHTML = optionsHtml;
+                }
             } else {
+                // Khóa hoặc ẩn đối với tài khoản cấp Khoa
                 filterKhoa.classList.add('hidden');
+                filterKhoa.disabled = true;
+                
                 if (btnLeaveConfig) btnLeaveConfig.classList.add('hidden');
                 if (btnHolidayConfig) btnHolidayConfig.classList.add('hidden');
             }
@@ -2373,8 +2385,11 @@
 
                 showToast("Đã tải dữ liệu tháng hiện tại.", "success");
 
+                // THÊM DÒNG NÀY ĐỂ ĐẢM BẢO CHẮC CHẮN RENDER FILTER SAU KHI TẢI DATA KHOA XONG
+                initKhoaFilter();
+
                 // THAY ĐỔI Ở ĐÂY: Xóa initUI() và gọi generateReport()
-                generateReport(); 
+                generateReport();
                 
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('control-panel').classList.remove('hidden');
