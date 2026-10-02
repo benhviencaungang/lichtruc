@@ -2330,9 +2330,9 @@
             hasUnsavedChanges = false;
 
             try {
-                const today = getVNTime();
-                const currentYear = today.getFullYear();
-                const currentMonth = today.getMonth() + 1;
+                // Lấy chính xác tháng/năm đang hiển thị trên giao diện
+                const currentMonth = parseInt(document.getElementById('sel-month').value);
+                const currentYear = parseInt(document.getElementById('sel-year').value);
 
                 const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
                 const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
@@ -2372,8 +2372,9 @@
 
                 showToast("Đã tải dữ liệu tháng hiện tại.", "success");
 
-                // Kích hoạt UI
-                initUI();
+                // THAY ĐỔI Ở ĐÂY: Xóa initUI() và gọi generateReport()
+                generateReport(); 
+                
                 document.getElementById('loading-screen').classList.add('hidden');
                 document.getElementById('control-panel').classList.remove('hidden');
                 document.getElementById('print-workspace').classList.remove('hidden');
@@ -2432,7 +2433,7 @@
 
             initKhoaFilter();
             buildStaticTableHeaders();
-            generateReport();
+            //generateReport();
         }
         function initUI() {
             const today = getVNTime();
@@ -4256,12 +4257,14 @@
         function closeGuideModal() {
             document.getElementById('guide-modal').classList.add('hidden');
         }
-            window.onload = () => {
-                document.getElementById('loading-screen').classList.remove('hidden');
-                if (checkAuth()) {
-                    loadDataFromGAS();
-                }
-            };
+            // Thay thế sự kiện window.onload cũ thành:
+        window.onload = () => {
+            document.getElementById('loading-screen').classList.remove('hidden');
+            if (checkAuth()) {
+                initUI(); // 1. Chạy logic setup tháng/năm (lùi tháng nếu < mùng 5) trước
+                loadDataFromGAS(); // 2. Tải dữ liệu theo tháng/năm vừa setup
+            }
+        };
     </script>
 </body>
 
