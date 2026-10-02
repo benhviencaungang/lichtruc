@@ -2054,7 +2054,7 @@
 
                                                             if (isLe) {
                                                                 if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
-                                                                else if (v === 'RT' && !isPrevLe) dbYearlyStats[nv].earnedNb += 1;
+                                                                else if (v === 'RT') dbYearlyStats[nv].earnedNb += 1;
                                                             } else if (dw === 5 || dw === 6) {
                                                                 if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
                                                                 else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
@@ -2108,7 +2108,7 @@
 
                                         if (isLe) {
                                             if (v === 'T24') currentEarnedNb += 1;
-                                            else if (v === 'RT' && !isPrevLe) currentEarnedNb += 1;
+                                            else if (v === 'RT') currentEarnedNb += 1;
                                         } else if (dw === 5 || dw === 6) {
                                             if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
                                             else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
@@ -2137,7 +2137,7 @@
 
                                                     if (isLe) {
                                                         if (v === 'T24') oldEarnedNb += 1;
-                                                        else if (v === 'RT' && !isPrevLe) oldEarnedNb += 1;
+                                                        else if (v === 'RT') oldEarnedNb += 1;
                                                     } else if (dw === 5 || dw === 6) {
                                                         if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
                                                         else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
@@ -3754,7 +3754,7 @@
 
                                                         if (isLe) {
                                                             if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
-                                                            else if (v === 'RT' && !isPrevLe) dbYearlyStats[nv].earnedNb += 1;
+                                                            else if (v === 'RT') dbYearlyStats[nv].earnedNb += 1;
                                                         } else if (dw === 5 || dw === 6) {
                                                             if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
                                                             else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
@@ -3813,7 +3813,7 @@
 
                                     if (isLe) {
                                         if (v === 'T24') currentEarnedNb += 1;
-                                        else if (v === 'RT' && !isPrevLe) currentEarnedNb += 1;
+                                        else if (v === 'RT') currentEarnedNb += 1;
                                     } else if (dw === 5 || dw === 6) {
                                         if (isRowHSCC && v === 'T24') currentEarnedNb += 1;
                                         else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) currentEarnedNb += 1;
@@ -3842,7 +3842,7 @@
 
                                                 if (isLe) {
                                                     if (v === 'T24') oldEarnedNb += 1;
-                                                    else if (v === 'RT' && !isPrevLe) oldEarnedNb += 1;
+                                                    else if (v === 'RT') oldEarnedNb += 1;
                                                 } else if (dw === 5 || dw === 6) {
                                                     if (isRowHSCC && v === 'T24') oldEarnedNb += 1;
                                                     else if (!isRowHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) oldEarnedNb += 1;
