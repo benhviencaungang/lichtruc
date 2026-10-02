@@ -877,9 +877,9 @@
                 lucide.createIcons();
 
                 try {
-                    const today = new Date();
-                    const currentYear = today.getFullYear();
-                    const currentMonth = today.getMonth() + 1;
+                    // Lấy chính xác tháng và năm đang hiển thị trên thanh công cụ
+                    const currentMonth = parseInt(document.getElementById('sel-month').value);
+                    const currentYear = parseInt(document.getElementById('sel-year').value);
 
                     const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
                     const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
@@ -923,7 +923,12 @@
                         }));
                     }
 
-                    initUI();
+                    initKhoaFilter();
+                    if (document.getElementById('sel-khoa').options.length > 0) {
+                        generateReport();
+                    }
+                    
+                    // Tắt màn hình chờ và bật giao diện chính lên
                     document.getElementById('loading-screen').classList.add('hidden');
                     document.getElementById('control-panel').classList.remove('hidden');
                     document.getElementById('print-workspace').classList.remove('hidden');
@@ -936,7 +941,7 @@
             }
 
 
-        function initUI() {
+        function initUIDates() {
             const today = new Date();
             let defaultMonth = today.getMonth() + 1;
             let defaultYear = today.getFullYear();
@@ -947,7 +952,7 @@
                     defaultYear -= 1;
                 }
             }
-            // Tự động sinh danh sách năm (từ 2024 đến năm hiện tại + 1)
+            
             const yearSelect = document.getElementById('sel-year');
             yearSelect.innerHTML = '';
             const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
@@ -960,15 +965,17 @@
 
             document.getElementById('sel-month').value = defaultMonth;
 
-            // Chọn năm mặc định nếu có trong danh sách
             let yearExists = Array.from(yearSelect.options).some(opt => parseInt(opt.value) === defaultYear);
             if (yearExists) {
                 yearSelect.value = defaultYear;
             } else {
                 yearSelect.value = today.getFullYear();
             }
+        }
 
+        function initKhoaFilter() {
             const selKhoa = document.getElementById('sel-khoa');
+            const prevKhoa = selKhoa.value; // Giữ lại lựa chọn cũ nếu có
             let dsKhoa = MOCK_DB.khoa || [];
 
             const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
@@ -982,10 +989,13 @@
 
             selKhoa.innerHTML = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
 
+            // Phục hồi lại khoa đã chọn sau khi render lại danh sách
+            if (prevKhoa && Array.from(selKhoa.options).some(o => o.value === prevKhoa)) {
+                selKhoa.value = prevKhoa;
+            }
+
             if (isKeToan) document.getElementById('btn-settings').classList.remove('hidden');
             else document.getElementById('btn-settings').classList.add('hidden');
-
-            if (dsKhoa.length > 0) generateReport();
         }
 
        // ==========================================
@@ -1892,7 +1902,10 @@
 
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
-            if (checkAuth()) loadDataFromGAS();
+            if (checkAuth()) {
+                initUIDates(); // Cài đặt ngày tháng trước
+                loadDataFromGAS(); // Tải dữ liệu khớp với ngày tháng đó
+            }
         };
 
     </script>
