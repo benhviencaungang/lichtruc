@@ -2688,6 +2688,9 @@
 
                 buildMenu();
 
+                // THÊM DÒNG NÀY: Tải dữ liệu toàn hệ thống ngay sau khi đăng nhập thành công
+                await loadDataFromGAS();
+
                 // 3. Render dữ liệu vào các thẻ select
                 const sel = document.getElementById('user-khoa-selector');
                 const xemSel = document.getElementById('xem-khoa-selector');
