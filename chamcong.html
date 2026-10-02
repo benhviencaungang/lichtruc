@@ -1129,7 +1129,7 @@
             else if (cleanTen.includes('taxe') || cleanTen.includes('baove') || cleanTen.includes('diennuoc') || cleanTen.includes('tochuchanh') || cleanTen.includes('tchc') || ['TAIXE', 'BAOVE', 'DN'].includes(upperMa)) {
                 let pObj = findKhoaInDB(['tochuchanhchinh', 'tochuchanhchanh', 'tchc']);
                 if (pObj) { parentMa = pObj.MaKhoa; parentTen = pObj.TenKhoa; }
-                else { parentMa = 'TCHC'; parentTen = 'TỔ CHỨC HÀNH CHÍNH'; }
+                else { parentMa = 'TOCHUCHANHCHANH'; parentTen = 'TỔ CHỨC HÀNH CHÍNH'; }
             }
 
             return { ma: parentMa, ten: parentTen };
