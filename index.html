@@ -653,7 +653,7 @@
                                 class="w-full px-3 py-2 pl-9 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
                             <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
                         </div>
-                        <button onclick="openUserModal()"
+                        <button id="btn-add-user" onclick="openUserModal()"
                             class="w-full sm:w-auto px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 flex items-center justify-center shadow whitespace-nowrap">
                             <i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Thêm Nhân viên
                         </button>
@@ -2852,6 +2852,19 @@
             }
             else if (viewId === 'view-admin-users') {
                 const filterSelect = document.getElementById('admin-user-khoa-filter');
+                const btnAddUser = document.getElementById('btn-add-user');
+                
+                // Kiểm tra quyền: Chỉ Admin KHTH
+                const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
+                
+                if (btnAddUser) {
+                    if (isFullAdmin) {
+                        btnAddUser.classList.remove('hidden');
+                    } else {
+                        btnAddUser.classList.add('hidden');
+                    }
+                }
+
                 if (currentUser.Role === 'Admin_KHTH') {
                     let opts = `<option value="ALL">Tất cả khoa/phòng</option>`;
                     MOCK_DB.khoa.forEach(k => { opts += `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`; });
@@ -3691,7 +3704,8 @@
                     }
                 }
 
-                const deleteBtn = (currentUser && currentUser.Role === 'Admin_KHTH')
+                const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
+                const deleteBtn = isFullAdmin
                     ? `<button onclick="deleteUser('${u.MaNV}')" class="text-red-400 hover:text-red-600 p-1" title="Xóa"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`
                     : '';
 
@@ -3721,6 +3735,10 @@
         }
 
         function openUserModal(maNV = null) {
+            const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
+            if (!maNV && !isFullAdmin) {
+                return showToast("Bạn không có quyền thêm nhân viên mới!", "error");
+            }
             const isKhoaAdmin = currentUser && currentUser.Role === 'Admin_Khoa';
 
             populateDeptDropdown();
@@ -3828,11 +3846,13 @@
             let existingUser = {};
 
             const formMode = document.getElementById('form-mode').value;
-
-            if (formMode === 'edit') {
-                existingUser = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV)) || {};
+            const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
+            
+            if (formMode === 'add' && !isFullAdmin) {
+                return showToast("Bạn không có quyền thêm nhân viên mới!", "error");
             }
 
+            // BỔ SUNG LẠI DÒNG KIỂM TRA QUYỀN ADMIN KHOA NÀY
             if (currentUser && currentUser.Role === 'Admin_Khoa') {
                 if (formMode === 'edit') {
                     if (existingUser.MaNV) {
@@ -3934,6 +3954,10 @@
         }
 
         function deleteUser(maNV) {
+            const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
+            if (!isFullAdmin) {
+                return showToast("Bạn không có quyền xóa nhân viên!", "error");
+            }
             showConfirmModal("Xác nhận xóa", `Bạn có chắc muốn xóa nhân viên có mã: ${maNV}? Hành động này không thể hoàn tác!`, async () => {
                 showGlobalLoading(); // Bật màn hình chờ khóa thao tác
                 try {
