@@ -3000,7 +3000,7 @@
             }
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            await syncWithGAS('sync_NhanVien', MOCK_DB.users);
+            await syncWithGAS('sync_NhanVien', [currentUser]);
 
             document.getElementById('user-fullname').textContent = currentUser.HoTen;
             showToast("Đã lưu cập nhật Hồ sơ cá nhân thành công!", "success");
@@ -3988,7 +3988,7 @@
             }
             closeUserModal(); 
             renderAdminUsersTable(); 
-            await syncWithGAS('sync_NhanVien', MOCK_DB.users);
+            await syncWithGAS('sync_NhanVien', [newUser]);
         }
 
         function deleteUser(maNV) {
@@ -5380,7 +5380,7 @@
                 if (action === 'Duyệt') {
                     // Thay đổi khoa của nhân viên trên bộ nhớ
                     nv.MaKhoa = reqData.denKhoa;
-                    await syncWithGAS('sync_NhanVien', MOCK_DB.users); // Đồng bộ lưu user
+                    await syncWithGAS('sync_NhanVien', [nv]); // Đồng bộ lưu user
 
                     tb.TrangThaiDoiCa = 'Đã duyệt';
                     tb.TieuDe = `✅ ĐÃ DUYỆT CHUYỂN KHOA`;
