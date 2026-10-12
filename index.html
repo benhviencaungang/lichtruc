@@ -2005,7 +2005,7 @@
                 const initialLoading = document.getElementById('initial-loading');
                 if (initialLoading) initialLoading.classList.remove('hidden');
                 try {
-                    const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, Username, Password, Role, NgayNghi, CoTruc, SDT, Email, CCCD, ChungChiHS, NgayVaoLam, BHXH, CCHN');
+                    const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, Username, Password, Role, NgayNghi, CoTruc, SDT, Email, CCCD, ChungChiHS, NgayVaoLam, BHXH, CCHN, dantoc');
                     if (users) {
                         MOCK_DB.users = users.map(u => ({ ...u, MaNV: String(u.MaNV).trim() }));
                         MOCK_DB.users = processDisplayNames(MOCK_DB.users);
@@ -2366,9 +2366,12 @@
 
         // --- CÁC HÀM XỬ LÝ ĐỒNG BỘ NGẦM ---
         function startAutoSync() {
-            if (autoSyncInterval) clearInterval(autoSyncInterval);
-            autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
-        }
+                // Luôn xóa interval nếu có để đảm bảo không có tiến trình chạy ngầm
+                if (autoSyncInterval) clearInterval(autoSyncInterval);
+
+                // ĐÃ TẮT CHỨC NĂNG TỰ ĐỘNG ĐỒNG BỘ MỖI 15 GIÂY
+                // autoSyncInterval = setInterval(silentBackgroundSync, AUTO_SYNC_TIME);
+            }
 
         function stopAutoSync() {
             if (autoSyncInterval) clearInterval(autoSyncInterval);
@@ -2514,7 +2517,7 @@
                     processedData = payloadData.map(u => ({
                         MaNV: String(u.MaNV),
                         HoTen: u.HoTen || "",
-                        dantoc: u.DanToc || "", // <--- THÊM DÒNG NÀY VÀO TRONG PHẦN MAP RETURN CỦA BẢNG NHÂN VIÊN
+                        dantoc: u.DanToc || u.dantoc || "", // <--- THÊM DÒNG NÀY VÀO TRONG PHẦN MAP RETURN CỦA BẢNG NHÂN VIÊN
                         MaKhoa: u.MaKhoa || "",
                         ChucDanh: u.ChucDanh || "",
                         SDT: u.SDT || "",
@@ -2990,7 +2993,11 @@
             currentUser.Password = finalPassword;
 
             const idx = MOCK_DB.users.findIndex(u => String(u.MaNV) === String(currentUser.MaNV));
-            if (idx > -1) MOCK_DB.users[idx] = currentUser;
+            if (idx > -1) {
+                // Hợp nhất dữ liệu mới vào DB cũ, bảo toàn các cột không có trong form như DanToc
+                MOCK_DB.users[idx] = { ...MOCK_DB.users[idx], HoTen: newHoTen, SDT: newSdt, Email: newEmail, CCCD: newCccd, BHXH: newBhxh, CCHN: newCchn, Password: finalPassword };
+                currentUser = MOCK_DB.users[idx]; // Cập nhật lại cache
+            }
 
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             await syncWithGAS('sync_NhanVien', MOCK_DB.users);
@@ -3797,7 +3804,7 @@
                     document.getElementById('u-cccd').value = user.CCCD || ""; 
                     document.getElementById('u-bhxh').value = user.BHXH || "";
                     document.getElementById('u-cchn').value = user.CCHN || "";
-                    document.getElementById('u-dantoc').value = user.DanToc || "";
+                    document.getElementById('u-dantoc').value = user.DanToc || user.dantoc || "";
 
                     // ĐÃ SỬA: Gán định dạng chuẩn để input date nhận diện được
                     document.getElementById('u-ngayvaolam').value = user.NgayVaoLam ? normalizeDateStr(user.NgayVaoLam) : "";
@@ -3870,6 +3877,10 @@
             let finalKhoas = selectedKhoas.join(', ');
             let userRole = document.getElementById('u-role').value;
             let existingUser = {};
+            if (document.getElementById('form-mode').value === 'edit') {
+                // Tìm lại dữ liệu cũ của nhân viên để không bị đè mất các trường ẩn
+                existingUser = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV)) || {};
+            }
 
             const formMode = document.getElementById('form-mode').value;
             const isFullAdmin = currentUser && currentUser.Role === 'Admin_KHTH';
