@@ -197,6 +197,60 @@
                 color: transparent !important;
             }
         }
+        /* --- TỐI ƯU HÓA MOBILE & BẢNG CUỘN NGANG --- */
+        .table-responsive {
+            width: 100%;
+            -webkit-overflow-scrolling: touch; /* Cuộn mượt trên iOS */
+        }
+        
+        @media (max-width: 1024px) {
+            /* Cố định cột đầu tiên trên điện thoại */
+            .sticky-col {
+                position: sticky !important;
+                left: 0;
+                z-index: 20 !important;
+                box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1), inset -1px 0 0 #e2e8f0 !important;
+            }
+            .sticky-col-header {
+                z-index: 30 !important; /* Ưu tiên đè lên các ô ở dưới */
+                background-color: #f8fafc !important;
+            }
+            .sticky-col-body {
+                background-color: #f8fafc !important;
+            }
+            
+            /* Tinh chỉnh Modal không bị tràn lề */
+            .modal-content-mobile {
+                max-width: 95vw !important;
+                max-height: 90vh !important;
+                margin: 0 auto;
+            }
+        }
+            /* --- TỐI ƯU HÓA KHUNG CHỨA POPUP (CHỐNG TRÀN MÀN HÌNH) --- */
+            .modal-container {
+                max-height: 90vh !important; /* Chiều cao tối đa bằng 90% màn hình */
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-body-scroll {
+                overflow-y: auto; /* Cho phép cuộn dọc nội dung bên trong */
+                -webkit-overflow-scrolling: touch; /* Cuộn mượt trên mobile */
+                flex: 1;
+                padding: 1.25rem;
+            }
+            .modal-footer-fixed {
+                flex-shrink: 0;
+                padding: 1rem 1.25rem;
+                background-color: #f8fafc; /* Màu nền xám nhạt */
+                border-top: 1px solid #e2e8f0;
+            }
+            @media (max-width: 1024px) {
+            .sticky-col-header, .sticky-col-body {
+                /* Tạo viền phải giả để tách biệt rõ ràng cột đứng im và phần cuộn */
+                box-shadow: 3px 0 5px -2px rgba(0,0,0,0.15) !important;
+                border-right: 1px solid #cbd5e1 !important;
+            }
+        }
     </style>
 </head>
 
@@ -827,27 +881,32 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col md:flex-row flex-1 gap-4 min-h-0 relative overflow-hidden"
-                    id="schedule-workspace">
-                    <div class="w-full md:w-1/4 h-1/4 md:h-auto bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden shrink-0"
+                <div class="flex flex-col md:flex-row flex-1 gap-3 md:gap-4 min-h-0 relative overflow-hidden" id="schedule-workspace">
+                    <!-- KHUNG NHÂN SỰ ĐÃ TỐI ƯU MOBILE (Cuộn ngang, chiếm ít chiều cao) -->
+                    <div class="w-full md:w-1/4 max-h-[16vh] md:max-h-none md:h-auto bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden shrink-0"
                         id="panel-nhansu">
-                        <div class="p-2 md:p-3 border-b bg-slate-50 flex justify-between items-center">
-                            <h4 class="font-bold text-sm text-slate-700"><i data-lucide="users"
-                                    class="w-4 h-4 inline mr-1"></i> Nhân sự tham gia trực</h4>
-                            <span class="text-[10px] text-slate-400 md:hidden bg-slate-200 px-1.5 py-0.5 rounded">Cuộn
-                                ngang để xem</span>
+                        <div class="p-2 md:p-3 border-b bg-slate-50 flex justify-between items-center shrink-0">
+                            <h4 class="font-bold text-sm text-slate-700"><i data-lucide="users" class="w-4 h-4 inline mr-1"></i> Nhân sự
+                                trực</h4>
+                            <span
+                                class="text-[10px] text-medical-600 font-medium md:hidden bg-medical-50 border border-medical-200 px-1.5 py-0.5 rounded shadow-sm">Vuốt
+                                để chọn &rarr;</span>
                         </div>
-                        <div class="p-2 overflow-x-auto md:overflow-y-auto overflow-y-hidden md:overflow-x-hidden flex-1 flex md:block space-x-2 md:space-x-0 md:space-y-4 no-scrollbar items-start"
-                            id="danh-sach-nhan-vien-khoa"></div>
-                        <div class="hidden md:block p-2 bg-blue-50 text-xs text-blue-700 text-center border-t"><i>*
-                                Click ô lịch, sau đó click tên để thêm</i></div>
+                        <div class="p-2 overflow-x-auto md:overflow-y-auto overflow-y-hidden md:overflow-x-hidden flex-1 flex md:flex-col space-x-0 md:space-y-4 no-scrollbar items-center md:items-stretch"
+                            id="danh-sach-nhan-vien-khoa">
+                            <!-- JS Sinh HTML -->
+                        </div>
+                        <div class="hidden md:block p-2 bg-blue-50 text-xs text-blue-700 text-center border-t shrink-0"><i>* Click ô
+                                lịch, sau đó click tên để thêm</i></div>
                     </div>
+                
+                    <!-- KHUNG BẢNG LỊCH TRỰC (Có class table-responsive) -->
                     <div class="w-full md:w-3/4 flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden relative"
                         id="panel-grid">
                         <div id="selection-overlay"
                             class="hidden absolute top-2 right-2 bg-yellow-100 border border-yellow-400 text-yellow-800 text-xs px-3 py-1 rounded shadow z-10 font-medium animate-pulse">
                             Đang chọn...</div>
-                        <div class="overflow-y-auto overflow-x-auto flex-1 p-0">
+                        <div class="overflow-y-auto overflow-x-auto flex-1 p-0 table-responsive">
                             <table class="w-full text-sm text-left border-collapse min-w-[600px] md:min-w-0">
                                 <thead class="text-xs text-slate-600 bg-slate-100 uppercase sticky top-0 z-10 shadow-sm"
                                     id="khoa-schedule-thead">
@@ -952,38 +1011,43 @@
                         <h3 class="font-bold text-lg text-slate-800">Quản lý & Phê duyệt Lịch</h3>
                         <p class="text-sm text-slate-500 mt-1">Duyệt lịch từng khoa để tạo thành Master Schedule</p>
                     </div>
-                    <div
-                        class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 lg:space-x-3 w-full lg:w-auto overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-                        <div class="flex items-center">
-                            <span class="text-sm font-medium mr-2 whitespace-nowrap">Chọn tuần:</span>
+                    <!-- Tối ưu Toolbar vuốt ngang trên Mobile -->
+                    <div class="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 no-scrollbar whitespace-nowrap">
+                        <div class="flex items-center shrink-0">
+                            <span class="text-sm font-medium mr-2">Chọn tuần:</span>
                             <input type="date" id="admin-tuan-bat-dau"
-                                class="border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-medical-500 w-full"
+                                class="border border-slate-300 rounded px-3 py-2 text-sm outline-none focus:border-medical-500 w-36"
                                 onchange="renderAdminApprovalTable()">
                         </div>
-
-                        <!-- Nút Chốt lịch mới thêm -->
+                    
+                        <!-- Các nút bấm giữ nguyên như cũ -->
                         <button id="btn-chot-lich" onclick="toggleChotLich()"
-                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow flex justify-center items-center transition whitespace-nowrap"
+                            class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 shadow flex justify-center items-center transition shrink-0"
                             title="Hiển thị Lịch Tổng hợp cho User Khoa xem">
-                            <i data-lucide="lock-open" class="w-4 h-4 mr-2"></i> Chốt Lịch & Công Bố
+                            <i data-lucide="lock-open" class="w-4 h-4 mr-2"></i> Chốt Lịch
                         </button>
-                        <div class="w-px h-6 bg-slate-300 mx-1 hidden sm:block"></div>
-                        <!-- Nút đồng bộ G-Calendar cho Admin KHTH -->
+                        <div class="w-px h-6 bg-slate-300 mx-1 hidden sm:block shrink-0"></div>
                         <button onclick="syncToGoogleCalendar()"
-                            class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 shadow flex justify-center items-center transition whitespace-nowrap"
-                            title="Gửi lịch trực đến Email của tất cả nhân sự toàn viện">
-                            <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i> Đồng bộ Email Toàn viện
+                            class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 shadow flex justify-center items-center transition shrink-0">
+                            <i data-lucide="calendar-plus" class="w-4 h-4 mr-2"></i> Đồng bộ Email
                         </button>
                         <button onclick="switchView('view-master-print')"
-                            class="px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 shadow flex justify-center items-center transition whitespace-nowrap">
-                            <i data-lucide="eye" class="w-4 h-4 mr-2"></i> Xem Bản In Toàn Viện
+                            class="px-4 py-2 bg-medical-600 text-white rounded-lg hover:bg-medical-700 shadow flex justify-center items-center transition shrink-0">
+                            <i data-lucide="eye" class="w-4 h-4 mr-2"></i> Xem Bản In
                         </button>
                     </div>
                 </div>
                 <div
                     class="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 overflow-x-auto overflow-y-auto">
-                    <table class="w-full text-sm text-left min-w-[700px]">
+                    <table class="w-full text-sm text-left min-w-[700px] table-responsive">
                         <thead class="text-xs text-slate-600 bg-slate-50 uppercase sticky top-0 border-b z-10">
+                            <tr>
+                                <th class="px-6 py-3 sticky-col sticky-col-header">Khoa / Phòng</th>
+                                <th class="px-6 py-3 text-center">Trạng thái</th>
+                                <th class="px-6 py-3">Hệ thống Cảnh báo</th>
+                                <th class="px-6 py-3 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
                         <tbody id="admin-approval-body"></tbody>
                     </table>
                 </div>
@@ -1201,140 +1265,160 @@
         </div>
     </div>
 
-    <!-- MODAL QUẢN LÝ NHÂN VIÊN (DÀNH CHO ADMIN KHTH HOẶC ADMIN KHOA) -->
+    <!-- MODAL QUẢN LÝ NHÂN VIÊN (ĐÃ TỐI ƯU CUỘN VÀ CHỐNG TRÀN MÀN HÌNH) -->
     <div id="user-modal"
-        class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-            <div class="bg-slate-50 px-6 py-4 border-b flex justify-between items-center">
-                <h3 class="font-bold text-lg text-slate-800" id="user-modal-title">Thêm Nhân viên</h3>
+        class="hidden fixed inset-0 bg-slate-900/50 z-[60] flex items-center justify-center fade-in no-print p-2 md:p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden modal-container">
+            <div class="bg-slate-50 px-4 py-3 md:px-6 md:py-4 border-b flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-base md:text-lg text-slate-800" id="user-modal-title">Thêm Nhân viên</h3>
                 <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"
                         class="w-5 h-5"></i></button>
             </div>
-            <form onsubmit="saveUser(event)" class="p-6 space-y-4">
-                <input type="hidden" id="form-mode" value="add">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã NV (Tự động) <span
-                                class="text-red-500">*</span></label>
-                        <input type="text" id="u-manv"
-                            class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed"
-                            required readonly title="Mã NV tự động 9 số, không thể sửa.">
-                    </div>
-                    <div><label class="block text-xs font-medium text-slate-600 mb-1">Họ và Tên <span
-                                class="text-red-500">*</span></label><input type="text" id="u-hoten"
-                            class="w-full px-3 py-2 border rounded-lg text-sm" required></div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng (Chọn nhiều) <span
-                                class="text-red-500">*</span></label>
-                        <div id="u-khoa-container"
-                            class="max-h-24 overflow-y-auto border border-slate-300 rounded-lg p-2 text-sm space-y-1">
+    
+            <form onsubmit="saveUser(event)" class="flex flex-col flex-1 min-h-0 overflow-hidden">
+                <!-- KHU VỰC CUỘN DỌC -->
+                <div class="modal-body-scroll space-y-4">
+                    <input type="hidden" id="form-mode" value="add">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mã NV (Tự động) <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="u-manv"
+                                class="w-full px-3 py-2 border bg-slate-50 text-slate-500 font-bold rounded-lg text-sm uppercase cursor-not-allowed"
+                                required readonly title="Mã NV tự động 9 số, không thể sửa.">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Họ và Tên <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="u-hoten"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                required>
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Chức danh</label>
-                        <select id="u-chucdanh" class="w-full px-3 py-2 border rounded-lg text-sm">
-                            <!-- JS generate từ Bảng LoaiCaTruc -->
-                        </select>
+    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Khoa / Phòng (Chọn nhiều) <span
+                                    class="text-red-500">*</span></label>
+                            <div id="u-khoa-container"
+                                class="max-h-24 overflow-y-auto border border-slate-300 rounded-lg p-2 text-sm space-y-1">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Chức danh</label>
+                            <select id="u-chucdanh"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"></select>
+                        </div>
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Dân tộc</label>
-                    <select id="u-dantoc" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
-                        <!-- Dữ liệu sẽ được render bằng JS -->
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại</label>
-                    <input type="text" id="u-sdt" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: 090...">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
-                    <input type="email" id="u-email" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none" placeholder="VD: user@gmail.com">
-                </div>
-            </div>
-
-                <!-- BỔ SUNG NGÀY VÀO LÀM & TICK CÓ TRỰC -->
-                <div class="grid grid-cols-2 gap-4 mt-2">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Ngày vào làm</label>
-                        <input type="date" id="u-ngayvaolam"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Dân tộc</label>
+                            <select id="u-dantoc"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Số điện thoại</label>
+                            <input type="text" id="u-sdt"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                placeholder="VD: 090...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                            <input type="email" id="u-email"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                placeholder="VD: user@gmail.com">
+                        </div>
                     </div>
-                    <div class="flex items-center mt-5">
+    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Ngày vào làm</label>
+                            <input type="date" id="u-ngayvaolam"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                        </div>
+                        <div class="flex items-center md:mt-5">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="u-cotruc"
+                                    class="w-4 h-4 text-medical-600 rounded focus:ring-medical-500" checked>
+                                <span class="text-sm font-medium text-slate-700">Có tham gia trực</span>
+                            </label>
+                        </div>
+                    </div>
+    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="u-cccd"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                placeholder="Đúng 12 số...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
+                            <input type="text" id="u-bhxh"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                placeholder="Nhập BHXH...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">CCHN</label>
+                            <input type="text" id="u-cchn"
+                                class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
+                                placeholder="Nhập số CCHN...">
+                        </div>
+                    </div>
+    
+                    <div class="bg-red-50 p-3 rounded-lg border border-red-100">
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="u-cotruc"
-                                class="w-4 h-4 text-medical-600 rounded focus:ring-medical-500" checked>
-                            <span class="text-sm font-medium text-slate-700">Có tham gia trực</span>
+                            <input type="checkbox" id="u-danghi" class="w-4 h-4 text-red-600 rounded focus:ring-red-500"
+                                onchange="document.getElementById('wrap-ngaynghi').classList.toggle('hidden', !this.checked)">
+                            <span class="text-sm font-bold text-red-700">Đã nghỉ việc</span>
                         </label>
-                    </div>
-                </div>
-
-                <!-- MỚI THÊM: CCCD, BHXH và CCHN -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Số CCCD <span
-                                class="text-red-500">*</span></label>
-                        <input type="text" id="u-cccd"
-                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none"
-                            placeholder="Đúng 12 số...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Mã số BHXH</label>
-                        <input type="text" id="u-bhxh" class="w-full px-3 py-2 border rounded-lg text-sm"
-                            placeholder="Nhập BHXH...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">CCHN</label>
-                        <input type="text" id="u-cchn" class="w-full px-3 py-2 border rounded-lg text-sm"
-                            placeholder="Nhập số CCHN...">
-                    </div>
-                </div>
-
-                <!-- BỔ SUNG TRẠNG THÁI NGHỈ VIỆC -->
-                <div class="bg-red-50 p-3 rounded-lg border border-red-100 mt-3">
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="u-danghi" class="w-4 h-4 text-red-600 rounded focus:ring-red-500"
-                            onchange="document.getElementById('wrap-ngaynghi').classList.toggle('hidden', !this.checked)">
-                        <span class="text-sm font-bold text-red-700">Đã nghỉ việc</span>
-                    </label>
-                    <div id="wrap-ngaynghi" class="hidden mt-2">
-                        <label class="block text-xs font-medium text-red-600 mb-1">Chọn ngày nghỉ</label>
-                        <input type="date" id="u-ngaynghi"
-                            class="w-full px-3 py-2 border border-red-200 rounded-lg text-sm outline-none">
-                    </div>
-                </div>
-
-                <div class="bg-slate-50 p-4 rounded-lg border mt-2">
-                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Tài khoản & Phân quyền</h4>
-                    <div class="grid grid-cols-2 gap-4 mb-3">
-                        <div><label class="block text-xs font-medium text-slate-600 mb-1">Tên đăng nhập</label><input
-                                type="text" id="u-username" class="w-full px-3 py-2 border rounded-lg text-sm"></div>
-                        <div><label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu</label><input
-                                type="password" id="u-password" class="w-full px-3 py-2 border rounded-lg text-sm">
+                        <div id="wrap-ngaynghi" class="hidden mt-2">
+                            <label class="block text-xs font-medium text-red-600 mb-1">Chọn ngày nghỉ</label>
+                            <input type="date" id="u-ngaynghi"
+                                class="w-full px-3 py-2 border border-red-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-red-500">
                         </div>
                     </div>
-                    <div class="flex items-center justify-between">
-                        <label class="text-sm font-medium text-slate-700">Quyền truy cập:</label>
-                        <select id="u-role" class="px-3 py-1.5 border rounded outline-none text-sm">
-                            <option value="User_Khoa">Nhân viên / Khoa</option>
-                            <option value="Admin_Khoa">Admin Quản lý Khoa</option>
-                            <option value="Admin_KHTH">Admin KHTH</option>
-                        </select>
+    
+                    <div class="bg-slate-50 p-4 rounded-lg border">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-3">Tài khoản & Phân quyền</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div><label class="block text-xs font-medium text-slate-600 mb-1">Tên đăng nhập</label><input
+                                    type="text" id="u-username"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                            </div>
+                            <div><label class="block text-xs font-medium text-slate-600 mb-1">Mật khẩu</label><input
+                                    type="password" id="u-password"
+                                    class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-medical-500 outline-none">
+                            </div>
+                        </div>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <label class="text-sm font-medium text-slate-700">Quyền truy cập:</label>
+                            <select id="u-role"
+                                class="w-full md:w-auto px-3 py-1.5 border rounded outline-none text-sm focus:ring-2 focus:ring-medical-500">
+                                <option value="User_Khoa">Nhân viên / Khoa</option>
+                                <option value="Admin_Khoa">Admin Quản lý Khoa</option>
+                                <option value="Admin_KHTH">Admin KHTH</option>
+                            </select>
+                        </div>
+                    </div>
+    
+                    <div class="flex items-center pb-2">
+                        <input type="checkbox" id="u-cchs" class="w-4 h-4 text-medical-600 rounded focus:ring-medical-500">
+                        <label class="ml-2 block text-sm font-medium text-slate-700 cursor-pointer">Nhân sự có chứng chỉ Hồi
+                            Sức</label>
                     </div>
                 </div>
-                <div class="flex items-center mt-2">
-                    <input type="checkbox" id="u-cchs" class="w-4 h-4 text-medical-600 rounded">
-                    <label class="ml-2 block text-sm text-slate-700">Nhân sự có chứng chỉ Hồi Sức</label>
-                </div>
-                <div class="flex justify-end space-x-3 pt-4 border-t mt-4">
+    
+                <!-- KHU VỰC NÚT BẤM CỐ ĐỊNH -->
+                <div class="modal-footer-fixed flex justify-end space-x-3">
                     <button type="button" onclick="closeUserModal()"
-                        class="px-4 py-2 text-sm bg-slate-100 rounded-lg hover:bg-slate-200">Hủy</button>
+                        class="px-4 py-2 text-sm bg-slate-200 font-medium text-slate-700 rounded-lg hover:bg-slate-300 w-full md:w-auto transition">Hủy</button>
                     <button type="submit"
-                        class="px-4 py-2 text-sm text-white bg-medical-600 rounded-lg flex items-center shadow hover:bg-medical-700"><i
-                            data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu</button>
+                        class="px-4 py-2 text-sm text-white font-medium bg-medical-600 rounded-lg flex justify-center items-center shadow hover:bg-medical-700 w-full md:w-auto transition">
+                        <i data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu
+                    </button>
                 </div>
             </form>
         </div>
@@ -4168,8 +4252,14 @@
             let html = '';
             for (let ma in nhomNhanSu) {
                 if (nhomNhanSu[ma].users.length > 0) {
-                    html += `<div class="text-xs font-bold text-slate-400 mt-0 md:mt-4 mb-1 md:mb-2 uppercase md:block inline-block mr-2 md:mr-0 self-center align-middle">${nhomNhanSu[ma].ten}</div>`;
-                    html += nhomNhanSu[ma].users.map(u => `<div onclick="assignToSelectedCell('${u.MaNV}', '${u.ChucDanh}')" class="px-3 py-1.5 md:p-2 bg-white border border-slate-300 md:border-transparent md:border rounded-full md:rounded shadow-sm inline-flex md:flex cursor-pointer hover:border-medical-500 hover:bg-medical-50 mb-0 md:mb-2 text-xs md:text-sm mr-2 md:mr-0 whitespace-nowrap shrink-0">${u.TenHienThi || u.HoTen}</div>`).join('');
+                    // Dàn theo hàng ngang trên Mobile, hàng dọc trên PC
+                    html += `<div class="flex md:flex-col items-center md:items-start border-r md:border-r-0 md:border-b border-slate-200 pr-3 mr-3 md:pr-0 md:mr-0 md:pb-2 shrink-0">`;
+                    html += `<div class="text-[10px] md:text-xs font-bold text-slate-400 uppercase mr-2 md:mr-0 md:mb-2 whitespace-nowrap">${nhomNhanSu[ma].ten}</div>`;
+                    html += `<div class="flex md:flex-wrap gap-2">`;
+                    html += nhomNhanSu[ma].users.map(u =>
+                        `<div onclick="assignToSelectedCell('${u.MaNV}', '${u.ChucDanh}')" class="px-3 py-1.5 bg-white border border-slate-200 rounded-full md:rounded shadow-sm cursor-pointer hover:border-medical-500 hover:text-medical-700 hover:bg-medical-50 text-xs md:text-sm whitespace-nowrap shrink-0 transition-colors font-medium">${u.TenHienThi || u.HoTen}</div>`
+                    ).join('');
+                    html += `</div></div>`;
                 }
             }
 
@@ -4189,7 +4279,7 @@
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
             if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
 
-            let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-24 text-center">Ngày</th>`;
+            let theadHtml = '<tr><th class="px-4 py-3 border-b border-r w-24 text-center sticky-col sticky-col-header">Ngày</th>';
             rolesInKhoa.forEach(r => {
                 let tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
                 theadHtml += `<th class="px-4 py-3 border-b border-r min-w-[150px]">${tenRole}</th>`;
@@ -4203,7 +4293,7 @@
             for (let i = 0; i < 7; i++) {
                 const dateISO = dates[i]; const d = new Date(dateISO + "T12:00:00"); const disp = `${d.getDate()}/${d.getMonth() + 1}`;
                 const shifts = localShifts.filter(s => s.NgayTruc === dateISO);
-                html += `<tr class="border-b transition"><td class="px-4 py-4 border-r align-top text-center bg-slate-50"><div class="font-bold">${days[i]}</div><div class="text-xs text-slate-500">${disp}</div></td>`;
+                html += '<tr class="border-b transition"><td class="px-4 py-4 border-r align-top text-center sticky-col sticky-col-body"><div class="font-bold">' + days[i] + '</div><div class="text-xs text-slate-500">' + disp + '</div></td>';
                 rolesInKhoa.forEach(r => {
                     const shiftsRole = shifts.filter(s => s.ChucDanh === r);
                     html += `<td class="px-4 py-2 border-r align-top ${lock ? '' : 'cursor-pointer hover:bg-medical-50'}" onclick="${lock ? '' : `selectCell('${dateISO}','${r}',this)`}"><div class="min-h-[50px] content-start">${renderChips(shiftsRole, lock)}</div></td>`;
@@ -4754,7 +4844,7 @@
                         btn = btnView + `<span class="text-xs text-red-500 italic ml-2" title="${phieu.GhiChu}">Khoa đang sửa...</span>`;
                     }
                 }
-                return `<tr class="border-b"><td class="px-6 py-4 font-bold text-slate-700">${tenKhoaDisplay}</td><td class="px-6 py-4">${st}</td><td class="px-6 py-4">${warn}</td><td class="px-6 py-4 text-right flex justify-end items-center">${btn}</td></tr>`;
+                return '<tr class="border-b"><td class="px-6 py-4 font-bold text-slate-700 sticky-col sticky-col-body">' + tenKhoaDisplay + '</td><td class="px-6 py-4 text-center">' + st + '</td><td class="px-6 py-4">' + warn + '</td><td class="px-6 py-4 text-right flex justify-end items-center">' + btn + '</td></tr>';
             }).join('');
             lucide.createIcons();
         }
@@ -4933,7 +5023,7 @@
                 { type: 'single', name: 'Bảo vệ', maKhoas: ['BAOVE'], roles: ['ALL'] }
             ];
 
-            let thead1 = `<tr><th class="border border-slate-800 p-1 w-12" rowspan="2">THỨ</th>`;
+            let thead1 = '<tr><th class="border border-slate-800 p-1 w-12 sticky-col sticky-col-header" rowspan="2">THỨ</th>';
             let thead2 = `<tr>`;
 
             officialOrder.forEach(col => {
@@ -4963,7 +5053,7 @@
                 const dObj = new Date(dateISO + "T12:00:00");
 
                 const shiftsToDay = MOCK_DB.shifts.filter(s => s.NgayTruc === dateISO);
-                let rowHtml = `<tr><td class="border border-slate-800 p-1 font-bold whitespace-nowrap text-[10px]">${days[i]}<br/><span class="font-normal">${String(dObj.getDate()).padStart(2, '0')}/${String(dObj.getMonth() + 1).padStart(2, '0')}</span></td>`;
+                let rowHtml = '<tr><td class="border border-slate-800 p-1 font-bold whitespace-nowrap text-[10px] sticky-col sticky-col-body">' + days[i] + '<br/><span class="font-normal">' + String(dObj.getDate()).padStart(2, '0') + '/' + String(dObj.getMonth() + 1).padStart(2, '0') + '</span></td>';
 
                 officialOrder.forEach(col => {
                     if (col.type === 'single') {
@@ -5089,7 +5179,7 @@
             const usersInKhoa = MOCK_DB.users.filter(u => (u.MaKhoa || "").split(',').map(s => s.trim()).includes(currentUser.ActiveKhoa) && u.CoTruc !== false && !u.NgayNghi);
             let rolesInKhoa = [...new Set(usersInKhoa.map(u => u.ChucDanh))].filter(r => r !== 'Quản lý');
                 if (rolesInKhoa.length === 0) rolesInKhoa = ['BS', 'DD']; rolesInKhoa.sort((a, b) => a === 'BS' ? -1 : 1);
-            let theadHtml = `<tr><th class="px-4 py-3 border-b border-r w-32 text-center">Thứ / Ngày</th>`;
+            let theadHtml = '<tr><th class="px-4 py-3 border-b border-r w-32 text-center sticky-col sticky-col-header">Thứ / Ngày</th>';
             rolesInKhoa.forEach(r => {
                 let tenRole = MOCK_DB.loaiCa.find(lc => lc.MaLoaiCa === r)?.TenRole || r;
 
@@ -5101,7 +5191,7 @@
             for (let i = 0; i < 7; i++) {
                 const dateISO = weekDates[i]; const dObj = new Date(dateISO + "T12:00:00"); const disp = `${dObj.getDate()}/${dObj.getMonth() + 1}`;
                 const shifts = MOCK_DB.shifts.filter(s => s.MaKhoa === currentUser.ActiveKhoa && s.NgayTruc === dateISO);
-                html += `<tr class="border-b transition hover:bg-slate-50"><td class="px-4 py-4 border-r align-top text-center"><div class="font-bold">${days[i]}</div><div class="text-xs text-slate-500">${disp}</div></td>`;
+                html += '<tr class="border-b transition hover:bg-slate-50"><td class="px-4 py-4 border-r align-top text-center sticky-col sticky-col-body"><div class="font-bold">' + days[i] + '</div><div class="text-xs text-slate-500">' + disp + '</div></td>';
                 rolesInKhoa.forEach(r => {
                     const shiftsRole = shifts.filter(s => s.ChucDanh === r);
                     const renderStatic = (arr) => arr.length === 0 ? '<span class="text-slate-400 italic text-xs p-1">Trống</span>' : arr.map(s => {
