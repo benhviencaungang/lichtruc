@@ -2085,16 +2085,8 @@
                 document.getElementById('login-screen').classList.add('hidden');
                 await checkAutoLogin(); 
             } else {
-                // Chưa đăng nhập: CHỈ tải nhân viên để đăng nhập, không tải dữ liệu thừa
+                // ĐÃ SỬA BẢO MẬT: Không tải toàn bộ bảng NhanVien trước khi đăng nhập nữa
                 const initialLoading = document.getElementById('initial-loading');
-                if (initialLoading) initialLoading.classList.remove('hidden');
-                try {
-                    const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, Username, Password, Role, NgayNghi, CoTruc, SDT, Email, CCCD, ChungChiHS, NgayVaoLam, BHXH, CCHN, dantoc');
-                    if (users) {
-                        MOCK_DB.users = users.map(u => ({ ...u, MaNV: String(u.MaNV).trim() }));
-                        MOCK_DB.users = processDisplayNames(MOCK_DB.users);
-                    }
-                } catch (e) { console.error(e); }
                 if (initialLoading) initialLoading.classList.add('hidden');
             }
         });
@@ -2162,8 +2154,29 @@
                 const { data: loaiCa } = await _supabase.from('LoaiCaTruc').select('*');
                 const { data: cauHinhKySo } = await _supabase.from('CauHinhKySo').select('*');
                 
-                // NHỊP 2: Tải danh sách nhân viên VÀ Dân Tộc
-                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, SDT, Email, Username, Password, Role, CCCD, ChungChiHS, NgayVaoLam, CoTruc, BHXH, CCHN, NgayNghi, dantoc');
+                // NHỊP 2: Tải danh sách nhân viên VÀ Dân Tộc (ĐÃ SỬA PHÂN QUYỀN BẢO MẬT)
+                let users = [];
+                if (currentUser.Role === 'Admin_KHTH') {
+                    // Admin KHTH: Tải toàn bộ thông tin
+                    const { data } = await _supabase.from('NhanVien').select('*');
+                    users = data;
+                } else {
+                    // Khoa khác: Tải thông tin CƠ BẢN của toàn viện (để hiện tên xếp lịch, không có password/CCCD/SĐT)
+                    const { data: basicUsers } = await _supabase.from('NhanVien')
+                        .select('MaNV, HoTen, MaKhoa, ChucDanh, Role, ChungChiHS, NgayVaoLam, CoTruc, NgayNghi, dantoc');
+                    
+                    // Tải thông tin CHI TIẾT (Full) chỉ cho các nhân viên thuộc khoa của mình
+                    const orQuery = currentUser.KhoaList.map(k => `MaKhoa.ilike.%${k}%`).join(',');
+                    const { data: detailUsers } = await _supabase.from('NhanVien').select('*').or(orQuery);
+
+                    if (basicUsers) {
+                        // Gộp dữ liệu: Ai thuộc khoa mình thì lấy bản full, ai khác khoa thì lấy bản basic
+                        users = basicUsers.map(basic => {
+                            const detail = (detailUsers || []).find(d => String(d.MaNV) === String(basic.MaNV));
+                            return detail ? detail : basic;
+                        });
+                    }
+                }
                 const { data: danTocData } = await _supabase.from('dm_dan_toc').select('*');
                 
                 // NHỊP 3: Tải dữ liệu giao dịch (Chỉ giới hạn trong khoảng thời gian cần thiết)
@@ -2262,25 +2275,45 @@
             if (!currentUser || isPushingData || hasUnsavedChanges) return;
 
             try {
+                // ÁP DỤNG HÀM TẢI FULL DỮ LIỆU
                 const responses = await Promise.all([
-                    _supabase.from('KhoaPhong').select('*').limit(10000),
-                    _supabase.from('NhanVien').select('*').limit(10000),
-                    _supabase.from('LoaiCaTruc').select('*').limit(10000),
-                    _supabase.from('PhieuLichTruc').select('*').limit(10000),
-                    _supabase.from('ChiTietLichTruc').select('*').limit(50000),
-                    _supabase.from('ThongBao').select('*').limit(10000),
+                    fetchAllSupabase('KhoaPhong'),
+                    fetchAllSupabase('LoaiCaTruc'),
+                    fetchAllSupabase('PhieuLichTruc'),
+                    fetchAllSupabase('ChiTietLichTruc'),
+                    fetchAllSupabase('ThongBao'),
                     _supabase.from('LichSuThaoTac').select('*').order('ThoiGian', { ascending: false }).limit(200),
-                    _supabase.from('CauHinhKySo').select('*').limit(10000)
+                    fetchAllSupabase('CauHinhKySo')
                 ]);
+
+                // XỬ LÝ NHÂN VIÊN RIÊNG ĐỂ BẢO MẬT
+                let usersData = [];
+                if (currentUser.Role === 'Admin_KHTH') {
+                    const res = await fetchAllSupabase('NhanVien');
+                    usersData = res.data || [];
+                } else {
+                    const resBasic = await fetchAllSupabase('NhanVien', 'MaNV, HoTen, MaKhoa, ChucDanh, Role, ChungChiHS, NgayVaoLam, CoTruc, NgayNghi, dantoc');
+                    const orQuery = currentUser.KhoaList.map(k => `MaKhoa.ilike.%${k}%`).join(',');
+                    const { data: detailUsers } = await _supabase.from('NhanVien').select('*').or(orQuery).limit(2000);
+                    
+                    if (resBasic.data) {
+                        usersData = resBasic.data.map(basic => {
+                            const detail = (detailUsers || []).find(d => String(d.MaNV) === String(basic.MaNV));
+                            return detail ? detail : basic;
+                        });
+                    }
+                }
 
                 const hasError = responses.some(res => res.error);
                 if (hasError) return;
 
                 const [
-                    { data: khoa }, { data: users }, { data: loaiCa },
+                    { data: khoa }, { data: loaiCa },
                     { data: phieu }, { data: shifts }, { data: thongBao },
                     { data: auditLogs }, { data: cauHinhKySo }
                 ] = responses;
+                
+                let users = usersData;
 
                 if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
 
@@ -2720,106 +2753,73 @@
             btn.classList.add('opacity-70', 'cursor-not-allowed');
             lucide.createIcons();
 
-            // DÒNG QUAN TRỌNG: Ép trình duyệt vẽ icon xoay ngay lập tức trước khi tính toán
-            await new Promise(resolve => setTimeout(resolve, 50));
-
-            // NẾU MOCK_DB.users chưa kịp tải, thử gọi lại DB một lần nữa để chắc chắn
-            if (!MOCK_DB.users || MOCK_DB.users.length === 0) {
-                try {
-                    const { data } = await _supabase.from('NhanVien').select('*');
-                    if (data && data.length > 0) {
-                        let rawUsers = data.map(u => ({
-                            ...u,
-                            MaNV: String(u.MaNV).trim(),
-                            MaKhoa: u.MaKhoa ? String(u.MaKhoa).trim() : "",
-                            ChucDanh: u.ChucDanh ? String(u.ChucDanh).trim() : "",
-                            ChungChiHS: String(u.ChungChiHS).toUpperCase() === 'TRUE' || u.ChungChiHS === true,
-                            CoTruc: u.CoTruc === null || u.CoTruc === true || String(u.CoTruc).toUpperCase() !== 'FALSE',
-                            NgayVaoLam: u.NgayVaoLam ? normalizeDateStr(u.NgayVaoLam) : "",
-                            NgayNghi: u.NgayNghi ? normalizeDateStr(u.NgayNghi) : ""
-                        }));
-                        MOCK_DB.users = processDisplayNames(rawUsers);
-                    } else {
-                        showToast("Hệ thống vẫn đang tải dữ liệu. Vui lòng đợi thêm vài giây!", "warning");
-                        resetLoginButton(btn, originalText);
-                        return;
-                    }
-                } catch (err) {
-                    showToast("Lỗi kết nối máy chủ! Vui lòng thử lại.", "error");
-                    resetLoginButton(btn, originalText);
-                    return;
-                }
-            }
-
             const u = document.getElementById('username').value.toLowerCase().trim();
-
-            // XỬ LÝ SO SÁNH PASSWORD AN TOÀN (Kể cả khi Password trong DB bị trống/null)
             const p = document.getElementById('password').value.trim();
-            const user = MOCK_DB.users.find(x => {
-                const dbUser = String(x.Username || "").toLowerCase().trim();
-                const dbPass = String(x.Password || "").trim();
-                return dbUser === u && dbPass === p;
-            });
 
-            if (user) {
-                if (user.NgayNghi) {
+            try {
+                // ĐÃ SỬA BẢO MẬT: Truy vấn trực tiếp tài khoản từ Supabase, không tải toàn bộ DB
+                const { data, error } = await _supabase.from('NhanVien')
+                    .select('*')
+                    .ilike('Username', u)
+                    .eq('Password', p);
+
+                if (data && data.length > 0) {
+                    const user = data[0];
+                    if (user.NgayNghi) {
+                        resetLoginButton(btn, originalText);
+                        return showToast("Tài khoản này đã nghỉ việc, không thể đăng nhập!", "error");
+                    }
+
+                    currentUser = user;
+                    currentUser.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
+                    currentUser.ActiveKhoa = currentUser.KhoaList[0] || 'KHTH';
+
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                    document.getElementById('login-screen').classList.add('hidden');
+                    const sidebar = document.getElementById('sidebar');
+                    sidebar.classList.remove('hidden', '-translate-x-full');
+                    sidebar.classList.add('flex');
+                    document.getElementById('main-content').classList.remove('hidden');
+
+                    document.getElementById('user-fullname').textContent = user.HoTen;
+                    document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
+
+                    buildMenu();
+                    
+                    // Bắt đầu tải dữ liệu (sẽ được phân quyền bên trong hàm này)
+                    await loadDataFromGAS();
+
+                    const sel = document.getElementById('user-khoa-selector');
+                    const xemSel = document.getElementById('xem-khoa-selector');
+                    if (user.Role === 'Admin_KHTH') {
+                        const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
+                        const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
+                        if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                        switchView('view-dashboard');
+                    } else {
+                        const options = currentUser.KhoaList.map(k => {
+                            const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); 
+                            return `<option value="${k}">${found ? found.TenKhoa : k}</option>`;
+                        }).join('');
+                        if (sel) sel.innerHTML = options; if (xemSel) xemSel.innerHTML = options;
+                        switchView('view-khoa-schedule');
+                    }
+
+                    const hasNotifs = checkAndRenderNotifications();
+                    if (hasNotifs) {
+                        document.getElementById('notif-panel').classList.remove('translate-x-full');
+                    }
+
+                    startAutoSync();
+                    logActivity("Đăng nhập hệ thống");
                     resetLoginButton(btn, originalText);
-                    return showToast("Tài khoản này đã nghỉ việc, không thể đăng nhập!", "error");
-                }
-
-                currentUser = user;
-                currentUser.KhoaList = user.MaKhoa ? user.MaKhoa.split(',').map(s => s.trim()) : [];
-                currentUser.ActiveKhoa = currentUser.KhoaList[0] || 'KHTH';
-
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-                // 1. TRUY XUẤT LIỀN: Ẩn form đăng nhập và hiện khung Main UI ngay lập tức
-                document.getElementById('login-screen').classList.add('hidden');
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.remove('hidden');
-                sidebar.classList.add('flex');
-                document.getElementById('main-content').classList.remove('hidden');
-
-                document.getElementById('user-fullname').textContent = user.HoTen;
-                document.getElementById('user-role').textContent = (currentUser.Role === 'Admin_KHTH' ? "Admin KHTH" : (currentUser.Role === 'Admin_Khoa' ? "Quản lý: " : "Phụ trách: ")) + currentUser.KhoaList.join(', ');
-
-                buildMenu();
-
-                // THÊM DÒNG NÀY: Tải dữ liệu toàn hệ thống ngay sau khi đăng nhập thành công
-                await loadDataFromGAS();
-
-                // 3. Render dữ liệu vào các thẻ select
-                const sel = document.getElementById('user-khoa-selector');
-                const xemSel = document.getElementById('xem-khoa-selector');
-
-                if (user.Role === 'Admin_KHTH') {
-                    const dsKhoa = MOCK_DB.khoa.filter(k => k.MaKhoa !== 'KHTH');
-                    const options = dsKhoa.map(k => `<option value="${k.MaKhoa}">${k.TenKhoa}</option>`).join('');
-                    if (sel) sel.innerHTML = options;
-                    if (xemSel) xemSel.innerHTML = options;
-
-                    currentUser.ActiveKhoa = dsKhoa.length > 0 ? dsKhoa[0].MaKhoa : 'ALL';
-                    switchView('view-dashboard');
                 } else {
-                    const options = currentUser.KhoaList.map(k => { const found = MOCK_DB.khoa.find(d => d.MaKhoa === k); return `<option value="${k}">${found ? found.TenKhoa : k}</option>`; }).join('');
-                    if (sel) sel.innerHTML = options;
-                    if (xemSel) xemSel.innerHTML = options;
-                    switchView('view-khoa-schedule');
+                    showToast("Sai tài khoản hoặc mật khẩu!", "error");
+                    resetLoginButton(btn, originalText);
                 }
-
-                const hasNotifs = checkAndRenderNotifications();
-                if (hasNotifs) {
-                    const panel = document.getElementById('notif-panel');
-                    panel.classList.remove('translate-x-full');
-                }
-
-                startAutoSync();
-                logActivity("Đăng nhập hệ thống");
-
-                // Đặt lại nút đề phòng user đăng xuất ra lại
-                resetLoginButton(btn, originalText);
-            } else {
-                showToast("Sai tài khoản hoặc mật khẩu!", "error");
+            } catch (err) {
+                showToast("Lỗi kết nối máy chủ! Vui lòng thử lại.", "error");
                 resetLoginButton(btn, originalText);
             }
         }
@@ -5520,4 +5520,4 @@
     </script>
 </body>
 
-</html>
+</html> 
