@@ -2174,6 +2174,7 @@
                 let uiDataByKhoa = extractGridData();
                 let errorUsers = [];
                 let negativeUserIds = [];
+                let negativeNBLUsers = [];
 
                 if (status === 'Nháp' || status === 'Chờ duyệt' || status === 'Đã duyệt') {
                     let hasLeaveInUI = false;
@@ -2366,6 +2367,11 @@
                         });
                     }
                 }
+                // BẮT ĐẦU QUÉT NBL ÂM
+                if (status === 'Nháp' || status === 'Chờ duyệt' || status === 'Đã duyệt') {
+                    document.getElementById('loading-text').innerText = "Đang kiểm tra quỹ Nghỉ Bù Lễ (NBL)...";
+                    negativeNBLUsers = await getNegativeNBLUsers(year, month, uiDataByKhoa);
+                }
 
                 const proceedToSave = async (dataToSave) => {
                     isSaving = true;
@@ -2476,36 +2482,55 @@
                 };
 
                 const showStandardModalAndSave = (dataToSave) => {
-                    if (status === 'Nháp') {
-                        proceedToSave(dataToSave);
-                    } else if (status === 'Chờ duyệt') {
+                // Xây dựng đoạn nội dung cảnh báo NBL
+                let nblWarningText = "";
+                if (negativeNBLUsers.length > 0) {
+                    if (status === 'Nháp' || status === 'Chờ duyệt') {
+                        nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\n(Ghi chú: Có thể Tổ chức Hành chính sẽ không duyệt!)`;
+                    } else if (status === 'Đã duyệt') {
+                        nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\nBạn có muốn duyệt bảng chấm công này không rùi mới xác nhận?`;
+                    }
+                }
+
+                if (status === 'Nháp') {
+                    if (negativeNBLUsers.length > 0) {
+                        // Ép hiện Modal xác nhận nếu có người bị âm NBL khi lưu nháp
                         showConfirmModal(
-                            "Xác nhận Trình Duyệt",
-                            "Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?",
+                            "Cảnh báo Âm Nghỉ Bù Lễ",
+                            `Bạn đang lưu nháp.` + nblWarningText + `\n\nBạn có muốn tiếp tục lưu không?`,
                             async () => { await proceedToSave(dataToSave); }
                         );
-                    } else if (status === 'Đã duyệt') {
-                        const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
-                        const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-                        const msg = isBulk
-                            ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?"
-                            : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
-
-                        showConfirmModal("Xác nhận Phê duyệt", msg, async () => {
-                            await proceedToSave(dataToSave);
-                        });
-                    } else if (status === 'Trả lại') {
-                        const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
-                        const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-                        const msg = isBulk
-                            ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?"
-                            : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
-
-                        showConfirmModal("Từ chối / Trả lại", msg, async () => {
-                            await proceedToSave(dataToSave);
-                        });
+                    } else {
+                        proceedToSave(dataToSave);
                     }
-                };
+                } else if (status === 'Chờ duyệt') {
+                    showConfirmModal(
+                        "Xác nhận Trình Duyệt",
+                        `Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?` + nblWarningText,
+                        async () => { await proceedToSave(dataToSave); }
+                    );
+                } else if (status === 'Đã duyệt') {
+                    const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+                    const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+                    const msg = isBulk
+                        ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?"
+                        : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
+
+                    showConfirmModal("Xác nhận Phê duyệt", msg + nblWarningText, async () => {
+                        await proceedToSave(dataToSave);
+                    });
+                } else if (status === 'Trả lại') {
+                    const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+                    const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+                    const msg = isBulk
+                        ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?"
+                        : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
+
+                    showConfirmModal("Từ chối / Trả lại", msg, async () => {
+                        await proceedToSave(dataToSave);
+                    });
+                }
+            };
 
                 document.getElementById('loading-screen').classList.add('hidden');
                 isSaving = false;
@@ -2896,7 +2921,99 @@
             });
             return dataByKhoa;
         } // <-- ĐÃ SỬA: Thêm dấu đóng ngoặc bị thiếu ở đây
+        // HÀM MỚI: Quét kiểm tra các trường hợp Âm Nghỉ Bù Lễ (NBL)
+        async function getNegativeNBLUsers(year, month, currentUIDataByKhoa) {
+            let nblDetails = {};
+            const initNBLStat = (nv, name) => {
+                if (!nblDetails[nv]) {
+                    nblDetails[nv] = { name: name, totalEarned: 0, totalUsed: 0 };
+                }
+            };
 
+            // Tạo danh sách các nhân viên ĐANG HIỂN THỊ trên UI
+            // để CHỈ quét dữ liệu của những người này
+            let activeUserIds = new Set();
+            for (let parentMk in currentUIDataByKhoa) {
+                for (let nv in currentUIDataByKhoa[parentMk]) {
+                    activeUserIds.add(String(nv));
+                }
+            }
+
+            // Lấy dữ liệu bảng chấm công của cả năm từ DB
+            const { data: yearBccRaw } = await fetchAllSupabase('BangChamCong', 'MaBang, MaKhoa, Thang, Nam, DuLieu', { type: 'eq', column: 'Nam', value: year });
+            const yearBcc = yearBccRaw || [];
+
+            // 1. Quét DB các tháng khác (bỏ qua tháng hiện tại vì đang được chỉnh sửa trên UI)
+            for (let m = 1; m <= 12; m++) {
+                if (m === month) continue; 
+                let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
+                savedBccs.forEach(b => {
+                    try {
+                        let data = JSON.parse(b.DuLieu);
+                        for (let nv in data) {
+                            // CHỈ QUÉT NẾU NHÂN VIÊN ĐANG HIỂN THỊ TRÊN GIAO DIỆN
+                            if (!activeUserIds.has(String(nv))) continue;
+
+                            let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(nv));
+                            let name = userObj ? userObj.HoTen : nv;
+                            for (let day in data[nv].days) {
+                                let valStr = data[nv].days[day];
+                                if (!valStr) continue;
+                                const isLe = isHoliday(day, m, year, nv);
+                                let parts = parseShifts(valStr);
+                                parts.forEach(v => {
+                                    v = v.toUpperCase();
+                                    if (v === 'NBL' || v === 'NBL/2') {
+                                        initNBLStat(nv, name);
+                                        nblDetails[nv].totalUsed += (v === 'NBL/2' ? 0.5 : 1);
+                                    }
+                                    if (isLe) {
+                                        if (v === '+') { initNBLStat(nv, name); nblDetails[nv].totalEarned += 1; }
+                                        else if (v === '-') { initNBLStat(nv, name); nblDetails[nv].totalEarned += 0.5; }
+                                    }
+                                });
+                            }
+                        }
+                    } catch(e) {}
+                });
+            }
+
+            // 2. Quét dữ liệu giao diện của tháng hiện tại (chưa lưu)
+            for (let parentMk in currentUIDataByKhoa) {
+                let uiGrid = currentUIDataByKhoa[parentMk];
+                for (let nv in uiGrid) {
+                    let userObj = MOCK_DB.users.find(u => String(u.MaNV) === String(nv));
+                    let name = userObj ? userObj.HoTen : nv;
+                    for (let day = 1; day <= 31; day++) {
+                        let valStr = uiGrid[nv].days[day];
+                        if (!valStr) continue;
+                        const isLe = isHoliday(day, month, year, nv);
+                        let parts = parseShifts(valStr);
+                        parts.forEach(v => {
+                            v = v.toUpperCase();
+                            if (v === 'NBL' || v === 'NBL/2') {
+                                initNBLStat(nv, name);
+                                nblDetails[nv].totalUsed += (v === 'NBL/2' ? 0.5 : 1);
+                            }
+                            if (isLe) {
+                                if (v === '+') { initNBLStat(nv, name); nblDetails[nv].totalEarned += 1; }
+                                else if (v === '-') { initNBLStat(nv, name); nblDetails[nv].totalEarned += 0.5; }
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 3. Lọc ra danh sách những người bị âm NBL
+            let negativeUsers = [];
+            for (let nv in nblDetails) {
+                let remain = nblDetails[nv].totalEarned - nblDetails[nv].totalUsed;
+                if (remain < 0) {
+                    negativeUsers.push(`- ${nblDetails[nv].name} (Âm ${Math.abs(remain)} ngày)`);
+                }
+            }
+            return negativeUsers;
+        }
         function getTenString(fullName) {
             if (!fullName) return { ten: "", hoDem: "" };
             let parts = fullName.trim().split(" ");
