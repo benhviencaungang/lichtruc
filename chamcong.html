@@ -1111,6 +1111,7 @@
             { id: 'T12D', name: 'Trực 12/24 Đêm (T12D)', bg: 'bg-indigo-100 text-indigo-700' },
             { id: 'Rt', name: 'Ra trực (Rt)', bg: 'bg-green-100 text-green-700' },
             { id: 'Rt/2', name: 'Ra trực nửa ngày (Rt/2)', bg: 'bg-green-100 text-green-700' },
+            { id: 'Rt12', name: 'Ra trực 12h (Rt12)', bg: 'bg-green-100 text-green-700' },
             { id: 'P', name: 'Nghỉ phép (P)', bg: 'bg-yellow-100 text-yellow-700' },
             { id: 'P/2', name: 'Nghỉ phép nửa ngày (P/2)', bg: 'bg-yellow-100 text-yellow-700' },
             { id: 'Nb', name: 'Nghỉ bù (Nb)', bg: 'bg-yellow-100 text-yellow-700' },
@@ -1317,9 +1318,14 @@
 
         function renderShiftOptions(selectEle, allowedTypes, maNV = null) {
             let userDantoc = null;
+            let isHSCC = false; // <-- Thêm biến kiểm tra khoa HSCC
+
             if (maNV) {
                 const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
-                if (user) userDantoc = String(user.dantoc || '').trim().toLowerCase();
+                if (user) {
+                    userDantoc = String(user.dantoc || '').trim().toLowerCase();
+                    isHSCC = String(user.MaKhoa || '').toUpperCase().includes('HSCC'); // <-- Kiểm tra khoa
+                }
             }
             const isKhmer = userDantoc === 'khơ-me';
 
@@ -1329,6 +1335,9 @@
                 if (['LK', 'LK/2', 'LLK', 'LLK/2'].includes(sym.id.toUpperCase())) {
                     if (!isKhmer) return;
                 }
+
+                // <-- THÊM LOGIC: Chỉ hiện Rt12 nếu là khoa HSCC
+                if (sym.id.toUpperCase() === 'RT12' && !isHSCC) return; 
 
                 const isHalf = HALF_DAY_SYMBOLS.includes(sym.id);
                 if (allowedTypes === 'all' || (allowedTypes === 'half' && isHalf) || (allowedTypes === 'full' && !isHalf)) {
@@ -2820,7 +2829,7 @@
 
                     // Sửa dòng này:
                     if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL', 'LK', 'KL'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2', 'LK/2', 'KL/2'].includes(val)) khac += 0.5;
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2', 'LK/2', 'KL/2', 'RT12'].includes(val)) khac += 0.5;
                 });
             });
 
@@ -3446,7 +3455,7 @@
                                     if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
 
                                     // Sửa dòng này (lưu ý hàm này đang thiếu vài mã so với recalcRow, bạn thêm KL vào là được):
-                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'KL'].includes(v)) khac += 1;
+                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'KL', 'RT12'].includes(v)) khac += 1;
                                     if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'KL/2'].includes(v)) khac += 0.5;
                                 });
                             }
