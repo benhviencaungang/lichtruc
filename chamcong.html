@@ -604,6 +604,7 @@
                             <p>NBL: Nghỉ bù Lễ</p>
                             <p>NBL/2: Nghỉ bù Lễ 1/2</p>
                             <p>LK: Nghĩ tết dân tộc</p>
+                            <p>KL: Nghỉ không lương</p>
                         </div>
                         <div class="w-1/3">
                             <p>T24: Trực 24/24</p>
@@ -617,6 +618,7 @@
                             <p>PT: Nghỉ phép tang</p>
                             <p>PC: Nghỉ phép cưới</p>
                             <p>LLK: Làm thêm lễ dân tộc</p>
+                            <p>KL/2: Nghỉ k.lương 1/2</p>
                         </div>
                     </div>
                 </div>
@@ -1099,8 +1101,7 @@
             }
         });
 
-        // Thêm 'O/2' vào danh sách ca nửa ngày
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2', 'LLK/2'];
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2', 'LLK/2', 'KL/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -1119,7 +1120,9 @@
             { id: 'Ô', name: 'Nghỉ ốm (Ô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'Cô', name: 'Con ốm mẹ nghỉ (Cô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'O', name: 'Nghỉ không lý do (O)', bg: 'bg-red-100 text-red-700 font-bold' },
-            { id: 'O/2', name: 'Nghỉ không lý do 1/2 ngày (O/2)', bg: 'bg-red-100 text-red-700' }, // <--- MỚI THÊM NẰM Ở ĐÂY
+            { id: 'O/2', name: 'Nghỉ không lý do 1/2 ngày (O/2)', bg: 'bg-red-100 text-red-700' }, 
+            { id: 'KL', name: 'Nghỉ không lương (KL)', bg: 'bg-gray-200 text-gray-700 font-bold' },
+            { id: 'KL/2', name: 'Nghỉ không lương 1/2 ngày (KL/2)', bg: 'bg-gray-200 text-gray-700' },
             { id: 'H', name: 'Đi học (H)', bg: '' },
             { id: 'CT', name: 'Công tác (CT)', bg: '' },
             { id: 'CT/2', name: 'Công tác 1/2 ngày (CT/2)', bg: '' },
@@ -2815,8 +2818,9 @@
                     if (val === 'Ô' || val === 'O^') om += 1;
                     if (val === 'Ô/2' || val === 'O^/2') om += 0.5;
 
-                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL', 'LK'].includes(val)) khac += 1;
-                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2', 'LK/2'].includes(val)) khac += 0.5;
+                    // Sửa dòng này:
+                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'NBL', 'LK', 'KL'].includes(val)) khac += 1;
+                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'NBL/2', 'LK/2', 'KL/2'].includes(val)) khac += 0.5;
                 });
             });
 
@@ -3441,8 +3445,9 @@
                                     if (v === 'Ô' || v === 'O^') om += 1;
                                     if (v === 'Ô/2' || v === 'O^/2') om += 0.5;
 
-                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC'].includes(v)) khac += 1;
-                                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2'].includes(v)) khac += 0.5;
+                                    // Sửa dòng này (lưu ý hàm này đang thiếu vài mã so với recalcRow, bạn thêm KL vào là được):
+                                    if (['L', 'HS', 'H', 'CT', 'CÔ', 'O', 'PT', 'PC', 'KL'].includes(v)) khac += 1;
+                                    if (['H/2', 'CT/2', 'CÔ/2', 'L/2', 'O/2', 'KL/2'].includes(v)) khac += 0.5;
                                 });
                             }
 
