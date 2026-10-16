@@ -5458,41 +5458,73 @@
                 hideGlobalLoading();
             }
         }
-
         // --- ADMIN TỔ CHỨC HÀNH CHÍNH DUYỆT CHUYỂN KHOA ---
-        async function duyetChuyenKhoa(maTB, action) {
-            showGlobalLoading();
-            try {
-                const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
-                const reqData = JSON.parse(tb.DataDoiCa);
-                const nv = MOCK_DB.users.find(u => u.MaNV === reqData.maNV);
+            async function duyetChuyenKhoa(maTB, action) {
+                showGlobalLoading();
+                try {
+                    const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                    const reqData = JSON.parse(tb.DataDoiCa);
+                    const nv = MOCK_DB.users.find(u => u.MaNV === reqData.maNV);
+                    const today = new Date().toISOString().split('T')[0];
 
-                if (action === 'Duyệt') {
-                    // Thay đổi khoa của nhân viên trên bộ nhớ
-                    nv.MaKhoa = reqData.denKhoa;
-                    await syncWithGAS('sync_NhanVien', [nv]); // Đồng bộ lưu user
+                    // 1. TÌM VÀ ẨN THÔNG BÁO "TIẾP NHẬN NHÂN SỰ" (Chờ duyệt) CỦA KHOA NHẬN
+                    MOCK_DB.thongBao.forEach(t => {
+                        if (t.NguoiNhan === reqData.denKhoa && t.TieuDe === 'THÔNG BÁO TIẾP NHẬN NHÂN SỰ') {
+                            // Kiểm tra linh hoạt hơn: Nếu nội dung có chứa tên NV thì ẩn đi
+                            if (t.NoiDung.includes(nv.HoTen) || t.NoiDung.includes(nv.TenHienThi || '')) {
+                                let yesterday = new Date();
+                                yesterday.setDate(yesterday.getDate() - 1);
+                                t.NgayKetThuc = yesterday.toISOString().split('T')[0];
+                            }
+                        }
+                    });
 
-                    tb.TrangThaiDoiCa = 'Đã duyệt';
-                    tb.TieuDe = `✅ ĐÃ DUYỆT CHUYỂN KHOA`;
-                    tb.NoiDung = `Tổ chức hành chính đã DUYỆT chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
+                    if (action === 'Duyệt') {
+                        const tuKhoa = nv.MaKhoa; // Lưu lại khoa cũ
+                        // Thay đổi khoa của nhân viên trên bộ nhớ
+                        nv.MaKhoa = reqData.denKhoa;
+                        await syncWithGAS('sync_NhanVien', [nv]); // Đồng bộ lưu user
 
-                    showToast("Đã duyệt chuyển khoa thành công!", "success");
-                } else {
-                    tb.TrangThaiDoiCa = 'Từ chối';
-                    tb.TieuDe = `❌ TỪ CHỐI CHUYỂN KHOA`;
-                    tb.NoiDung = `Tổ chức hành chính đã TỪ CHỐI yêu cầu chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
+                        // Cập nhật thông báo của THCH
+                        tb.TrangThaiDoiCa = 'Đã duyệt';
+                        tb.TieuDe = `✅ ĐÃ DUYỆT CHUYỂN KHOA`;
+                        tb.NoiDung = `Tổ chức hành chính đã DUYỆT chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
 
-                    showToast("Đã từ chối chuyển khoa!", "warning");
+                        // 2. PHÁT THÔNG BÁO HOÀN TẤT CHO 3 KHOA: THCH, Khoa Chuyển, Khoa Nhận
+                        const thongBaoHoanTat = {
+                            TieuDe: `✅ HOÀN TẤT CHUYỂN KHOA NHÂN SỰ`,
+                            NoiDung: `Nhân sự ${nv.HoTen} đã được duyệt chuyển từ khoa ${tuKhoa} sang khoa ${reqData.denKhoa}.`,
+                            NgayBatDau: today,
+                            NgayKetThuc: getSundayOfWeek(today)
+                        };
+
+                        MOCK_DB.thongBao.push({ MaTB: "TB_CK_DONE1_" + Date.now(), NguoiNhan: "TOCHUCHANHCHANH", ...thongBaoHoanTat });
+                        if (tuKhoa && tuKhoa !== "TOCHUCHANHCHANH") {
+                            MOCK_DB.thongBao.push({ MaTB: "TB_CK_DONE2_" + Date.now(), NguoiNhan: tuKhoa, ...thongBaoHoanTat });
+                        }
+                        if (reqData.denKhoa && reqData.denKhoa !== "TOCHUCHANHCHANH" && reqData.denKhoa !== tuKhoa) {
+                            MOCK_DB.thongBao.push({ MaTB: "TB_CK_DONE3_" + Date.now(), NguoiNhan: reqData.denKhoa, ...thongBaoHoanTat });
+                        }
+
+                        showToast("Đã duyệt chuyển khoa thành công!", "success");
+                    } else {
+                        tb.TrangThaiDoiCa = 'Từ chối';
+                        tb.TieuDe = `❌ TỪ CHỐI CHUYỂN KHOA`;
+                        tb.NoiDung = `Tổ chức hành chính đã TỪ CHỐI yêu cầu chuyển nhân viên ${nv.HoTen} sang khoa ${reqData.denKhoa}.`;
+
+                        showToast("Đã từ chối chuyển khoa!", "warning");
+                    }
+
+                    await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
+                    renderAdminThongBaoTable();
+                    checkAndRenderNotifications();
+                    refreshCurrentView();
+                } catch (err) {
+                    showToast("Có lỗi hệ thống khi duyệt!", "error");
+                } finally {
+                    hideGlobalLoading();
                 }
-
-                await syncWithGAS('sync_ThongBao', MOCK_DB.thongBao);
-                refreshCurrentView();
-            } catch (err) {
-                showToast("Có lỗi hệ thống khi duyệt!", "error");
-            } finally {
-                hideGlobalLoading();
             }
-        }
         //cập nhật
         async function fetchDataForWeek(mondayStr) {
             showGlobalLoading();
