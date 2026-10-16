@@ -996,8 +996,11 @@
                             <h5 class="font-bold text-red-800 mb-1 border-b border-red-200 pb-1">A. Trực vào Ngày Lễ
                             </h5>
                             <ul class="list-disc pl-4 text-red-900 mt-2 space-y-1">
-                                <li>Trực <span class="font-bold bg-white px-1 rounded">T24</span> ngày Lễ (bao gồm cả Lễ
-                                    Dân tộc Khơ-me từ T2-T6): Cộng <b>1 ngày bù</b>.</li>
+                                <li>Trực <span class="font-bold bg-white px-1 rounded">T24</span> ngày Lễ (bao gồm cả Lễ Dân tộc Khơ-me từ T2-T6): Cộng
+                                    <b>1 ngày bù</b>.<br>
+                                    <span class="text-red-700 font-medium italic">* Đặc biệt: Nếu Trực T24 vào ngày Lễ rơi đúng vào <b>Thứ 6</b> thì
+                                        được cộng <b>2 ngày bù</b>.</span>
+                                </li>
                                 <li>Ra trực <span class="font-bold bg-white px-1 rounded">RT</span> ngay Lễ (bao gồm cả
                                     Lễ Dân tộc Khơ-me từ T2-T6): Cộng thêm <b>1 ngày bù</b>.</li>
                                 <li class="text-xs italic mt-1">(Lưu ý: Các ca trực T12N, T12D trong ngày lễ dân tộc
@@ -2270,9 +2273,12 @@
                                                         else if (v === 'LT/2') dbYearlyStats[nv].earnedNb += 0.5;
 
                                                         if (isLe) {
-                                                            if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                            if (v === 'T24') {
+                                                                dbYearlyStats[nv].earnedNb += (dw === 5) ? 2 : 1;
+                                                            }
                                                             else if (v === 'RT') dbYearlyStats[nv].earnedNb += 1;
-                                                        } else if (dw === 5 || dw === 6) {
+                                                        }
+                                                        else if (dw === 5 || dw === 6) {
                                                             if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
                                                             else if (!isBccHSCC && (v === 'T24' || v === 'T12N' || v === 'T12D')) dbYearlyStats[nv].earnedNb += 1;
                                                         }
@@ -4119,7 +4125,9 @@
                                                 }
 
                                                 if (isLe) {
-                                                    if (v === 'T24') dbYearlyStats[nv].earnedNb += 1;
+                                                    if (v === 'T24') {
+                                                        dbYearlyStats[nv].earnedNb += (dw === 5) ? 2 : 1;
+                                                    }
                                                     else if (v === 'RT') dbYearlyStats[nv].earnedNb += 1;
                                                 } else if (dw === 5 || dw === 6) {
                                                     if (isBccHSCC && v === 'T24') dbYearlyStats[nv].earnedNb += 1;
