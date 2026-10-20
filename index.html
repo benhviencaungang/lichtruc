@@ -3501,23 +3501,41 @@
             document.getElementById('notif-panel').classList.toggle('translate-x-full');
         }
         async function duyetDoiCa(maTB) {
-            showGlobalLoading(); // Hiện màn hình chờ
-            try {
-                const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
-                const swapData = JSON.parse(tb.DataDoiCa);
-
-                // 1. Cập nhật thẳng vào lịch toàn viện
-                const targetShift = MOCK_DB.shifts.find(s => s.MaChiTiet === swapData.maChiTiet);
-                if (targetShift) {
-                    targetShift.MaNV = String(swapData.tNV);
+                showGlobalLoading(); // Hiện màn hình chờ
+                try {
+                    const tb = MOCK_DB.thongBao.find(t => t.MaTB === maTB);
+                    const swapData = JSON.parse(tb.DataDoiCa);
                     const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
-                    if (tUser) targetShift.ChucDanh = tUser.ChucDanh;
-                    await syncWithGAS('sync_ChiTietLichTruc', MOCK_DB.shifts); // Đồng bộ ca trực mới
-                }
 
-                // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
+                    // 1. Truy vấn trực tiếp từ CSDL Supabase để đảm bảo luôn lấy được ca trực (tránh lỗi do khác tuần)
+                    const { data: shiftData, error } = await _supabase
+                        .from('ChiTietLichTruc')
+                        .select('*')
+                        .eq('MaChiTiet', swapData.maChiTiet)
+                        .single();
+
+                    if (shiftData) {
+                        // Cập nhật thông tin nhân viên mới vào ca trực
+                        shiftData.MaNV = String(swapData.tNV);
+                        if (tUser) shiftData.ChucDanh = tUser.ChucDanh;
+
+                        // Đồng bộ CHÍNH XÁC ca trực này lên máy chủ (thay vì đẩy toàn bộ mảng DB)
+                        await syncWithGAS('sync_ChiTietLichTruc', [shiftData]);
+
+                        // Cập nhật lại vào giao diện nếu người dùng đang đứng ở tuần đó
+                        const targetShiftLocal = MOCK_DB.shifts.find(s => s.MaChiTiet === swapData.maChiTiet);
+                        if (targetShiftLocal) {
+                            targetShiftLocal.MaNV = String(swapData.tNV);
+                            if (tUser) targetShiftLocal.ChucDanh = tUser.ChucDanh;
+                        }
+                    } else {
+                        showToast("Lỗi: Không tìm thấy ca trực gốc trên máy chủ!", "error");
+                        hideGlobalLoading();
+                        return;
+                    }
+
+            // --- TÌM THÔNG TIN ĐỂ HIỂN THỊ CHỮ ---
                 const sUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.sNV));
-                const tUser = MOCK_DB.users.find(u => String(u.MaNV) === String(swapData.tNV));
                 const sName = sUser ? (sUser.TenHienThi || sUser.HoTen) : swapData.sNV;
                 const tName = tUser ? (tUser.TenHienThi || tUser.HoTen) : swapData.tNV;
                 const formattedDate = swapData.sDate.split('-').reverse().join('/');
