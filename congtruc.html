@@ -463,7 +463,8 @@
             <div class="text-center mb-6 mt-8">
                 <h1 class="font-bold text-xl uppercase" id="main-report-title">PHIẾU BỒI DƯỠNG TRỰC KHOA</h1>
                 <p class="mt-2 font-medium italic">(KỂ TỪ ĐÊM <span id="lbl-start-date">.../.../......</span> ĐẾN ĐÊM
-                    <span id="lbl-end-date">.../.../......</span>)</p>
+                    <span id="lbl-end-date">.../.../......</span>)
+                </p>
             </div>
 
             <!-- BẢNG DỮ LIỆU -->
@@ -729,106 +730,106 @@
         });
         // --- HÀM LẤY DỮ LIỆU TỐI ƯU TỪ SUPABASE ---
         async function syncWithGAS(actionName, payloadData) {
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0)) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu để bảo vệ dữ liệu.", "error");
+                return;
+            }
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+
+                // Đảm bảo processedData luôn là mảng đối với các bảng chuẩn
+                let processedData = payloadData;
+                if (tableName !== 'CauHinhGia' && !Array.isArray(processedData)) {
+                    processedData = [processedData];
+                }
+
+                // Xử lý riêng cho Cấu hình giá (đối tượng đơn)
+                if (tableName === 'CauHinhGia') {
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(payloadData);
+                    if (upsertError) throw upsertError;
                     return;
                 }
 
-                try {
-                    const tableName = actionName.replace('sync_', '');
-
-                    // Đảm bảo processedData luôn là mảng đối với các bảng chuẩn
-                    let processedData = payloadData;
-                    if (tableName !== 'CauHinhGia' && !Array.isArray(processedData)) {
-                        processedData = [processedData];
-                    }
-
-                    // Xử lý riêng cho Cấu hình giá (đối tượng đơn)
-                    if (tableName === 'CauHinhGia') {
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(payloadData);
-                        if (upsertError) throw upsertError;
-                        return;
-                    }
-
-                    // Đẩy dữ liệu lên Supabase theo từng block nhỏ để tránh quá tải
-                    const chunkSize = 500;
-                    for (let i = 0; i < processedData.length; i += chunkSize) {
-                        const chunk = processedData.slice(i, i + chunkSize);
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
-                        if (upsertError) throw upsertError;
-                    }
-
-                } catch (e) {
-                    console.error("Lỗi đồng bộ Supabase:", e);
-                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+                // Đẩy dữ liệu lên Supabase theo từng block nhỏ để tránh quá tải
+                const chunkSize = 500;
+                for (let i = 0; i < processedData.length; i += chunkSize) {
+                    const chunk = processedData.slice(i, i + chunkSize);
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                    if (upsertError) throw upsertError;
                 }
+
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
             }
-            async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
-                let allData = [];
-                let from = 0;
-                const step = 1000;
-                while (true) {
-                    let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
+        }
+        async function fetchAllSupabase(tableName, selectQuery = '*', filter = null) {
+            let allData = [];
+            let from = 0;
+            const step = 1000;
+            while (true) {
+                let query = _supabase.from(tableName).select(selectQuery).range(from, from + step - 1);
 
-                    // THÊM BỘ LỌC ĐỂ GIẢM TẢI (Tăng tốc độ tải trang)
-                    if (filter) {
-                        if (filter.type === 'date_range') {
-                            query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
-                        } else if (filter.type === 'eq') {
-                            query = query.eq(filter.column, filter.value);
-                        }
-                    }
-
-                    const { data, error } = await query;
-                    if (error) return { data: allData, error };
-                    if (data && data.length > 0) {
-                        allData.push(...data);
-                        if (data.length < step) break;
-                        from += step;
-                    } else {
-                        break;
+                // THÊM BỘ LỌC ĐỂ GIẢM TẢI (Tăng tốc độ tải trang)
+                if (filter) {
+                    if (filter.type === 'date_range') {
+                        query = query.gte(filter.column, filter.startDate).lte(filter.column, filter.endDate);
+                    } else if (filter.type === 'eq') {
+                        query = query.eq(filter.column, filter.value);
                     }
                 }
-                return { data: allData, error: null };
+
+                const { data, error } = await query;
+                if (error) return { data: allData, error };
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    if (data.length < step) break;
+                    from += step;
+                } else {
+                    break;
+                }
             }
+            return { data: allData, error: null };
+        }
 
         async function syncWithGAS(actionName, payloadData) {
-                if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
-                    console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
-                    showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu.", "error");
-                    return;
-                }
-
-                try {
-                    const tableName = actionName.replace('sync_', '');
-                    let processedData = payloadData;
-
-                    // Xử lý riêng cho Cấu hình giá (congtruc.html) - Đây là Object, không phải Array
-                    if (tableName === 'CauHinhGia') {
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
-                        if (upsertError) throw upsertError;
-                        return; // Thoát ra ngay để không chạy xuống block Array bên dưới
-                    }
-
-                    // Đảm bảo processedData luôn là mảng đối với các bảng chuẩn còn lại
-                    if (!Array.isArray(processedData)) {
-                        processedData = [processedData];
-                    }
-
-                    // Đẩy dữ liệu lên Supabase theo từng block nhỏ
-                    const chunkSize = 500;
-                    for (let i = 0; i < processedData.length; i += chunkSize) {
-                        const chunk = processedData.slice(i, i + chunkSize);
-                        const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
-                        if (upsertError) throw upsertError;
-                    }
-
-                } catch (e) {
-                    console.error("Lỗi đồng bộ Supabase:", e);
-                    showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
-                }
+            if (!payloadData || (Array.isArray(payloadData) && payloadData.length === 0 && actionName !== 'sync_CauHinhPhep')) {
+                console.error("CẢNH BÁO: Dữ liệu tải lên rỗng. Chặn thao tác lưu để bảo vệ Database!");
+                showToast("Lỗi hệ thống: Dữ liệu rỗng, đã chặn thao tác lưu.", "error");
+                return;
             }
+
+            try {
+                const tableName = actionName.replace('sync_', '');
+                let processedData = payloadData;
+
+                // Xử lý riêng cho Cấu hình giá (congtruc.html) - Đây là Object, không phải Array
+                if (tableName === 'CauHinhGia') {
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(processedData);
+                    if (upsertError) throw upsertError;
+                    return; // Thoát ra ngay để không chạy xuống block Array bên dưới
+                }
+
+                // Đảm bảo processedData luôn là mảng đối với các bảng chuẩn còn lại
+                if (!Array.isArray(processedData)) {
+                    processedData = [processedData];
+                }
+
+                // Đẩy dữ liệu lên Supabase theo từng block nhỏ
+                const chunkSize = 500;
+                for (let i = 0; i < processedData.length; i += chunkSize) {
+                    const chunk = processedData.slice(i, i + chunkSize);
+                    const { error: upsertError } = await _supabase.from(tableName).upsert(chunk);
+                    if (upsertError) throw upsertError;
+                }
+
+            } catch (e) {
+                console.error("Lỗi đồng bộ Supabase:", e);
+                showToast("Lỗi mạng: Không thể lưu lên máy chủ. Vui lòng kiểm tra lại kết nối!", "error");
+            }
+        }
 
         // --- HÀM TẠO TÊN VIẾT TẮT ---
         function processDisplayNames(usersList) {
@@ -868,77 +869,85 @@
             return usersList;
         }
 
-        
+
         async function loadDataFromGAS() {
-                document.getElementById('loading-screen').classList.remove('hidden');
-                document.getElementById('retry-btn-container').classList.add('hidden');
-                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
-                document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
-                lucide.createIcons();
+            document.getElementById('loading-screen').classList.remove('hidden');
+            document.getElementById('retry-btn-container').classList.add('hidden');
+            document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-600 mb-4"></i>`;
+            document.getElementById('loading-text').innerHTML = "Đang tải dữ liệu mới nhất từ máy chủ...";
+            lucide.createIcons();
 
-                try {
-                    // Lấy chính xác tháng và năm đang hiển thị trên thanh công cụ
-                    const currentMonth = parseInt(document.getElementById('sel-month').value);
-                    const currentYear = parseInt(document.getElementById('sel-year').value);
+            try {
+                // Lấy chính xác tháng và năm đang hiển thị trên thanh công cụ
+                const currentMonth = parseInt(document.getElementById('sel-month').value);
+                const currentYear = parseInt(document.getElementById('sel-year').value);
 
-                    const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-                    const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
+                const startOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+                const endOfMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}-31`;
 
-                    const [
-                        { data: khoa }, { data: users }, { data: cauHinhGia },
-                        { data: shiftsFast }, { data: phieuBoiDuongFast },
-                        { data: ngayLeFast } // Thêm truy vấn bảng NgayLe
-                    ] = await Promise.all([
-                        fetchAllSupabase('KhoaPhong'),
-                        fetchAllSupabase('NhanVien'),
-                        fetchAllSupabase('CauHinhGia'),
-                        fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startOfMonth, endDate: endOfMonth }),
-                        fetchAllSupabase('PhieuBoiDuong', '*', { type: 'eq', column: 'Nam', value: currentYear }),
-                        fetchAllSupabase('NgayLe') // Gọi API lấy ngày lễ
-                    ]);
+                const [
+                    { data: khoa }, { data: users }, { data: cauHinhGia },
+                    { data: shiftsFast }, { data: phieuBoiDuongFast },
+                    { data: ngayLeFast } // Thêm truy vấn bảng NgayLe
+                ] = await Promise.all([
+                    fetchAllSupabase('KhoaPhong'),
+                    fetchAllSupabase('NhanVien'),
+                    fetchAllSupabase('CauHinhGia'),
+                    fetchAllSupabase('ChiTietLichTruc', '*', { type: 'date_range', column: 'NgayTruc', startDate: startOfMonth, endDate: endOfMonth }),
+                    fetchAllSupabase('PhieuBoiDuong', '*', { type: 'eq', column: 'Nam', value: currentYear }),
+                    fetchAllSupabase('NgayLe') // Gọi API lấy ngày lễ
+                ]);
 
-                    if (cauHinhGia && cauHinhGia.length > 0) MOCK_DB.cauHinhGia = cauHinhGia[0];
+                if (cauHinhGia && cauHinhGia.length > 0) MOCK_DB.cauHinhGia = cauHinhGia[0];
+                // Phân tách ngày Lễ và ngày Tết từ Database
+                // Lọc bỏ các ngày lễ Dân tộc (Ví dụ: Tết dân tộc Khơ-me) khỏi danh sách Lễ/Tết được tính tiền trực
+                MOCK_DB.ngayLe = [];
+                if (ngayLeFast) {
+                    ngayLeFast.forEach(item => {
+                        const ngayChuan = normalizeDateStr(item.Ngay);
+                        const tenLe = (item.Ten || item.MoTa || "").toLowerCase();
+                        const loaiLe = (item.Loai || "").toLowerCase();
 
-                    // Xử lý lưu mảng ngày lễ từ Database (Lấy định dạng YYYY-MM-DD)
-                    if (ngayLeFast) {
-                        MOCK_DB.ngayLe = ngayLeFast.map(item => normalizeDateStr(item.Ngay));
-                    } else {
-                        MOCK_DB.ngayLe = [];
-                    }
-
-                    if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
-                    if (users) {
-                        let rawUsers = users.map(u => ({ ...u, MaNV: String(u.MaNV).trim(), HoTen: String(u.HoTen).trim() }));
-                        MOCK_DB.users = processDisplayNames(rawUsers);
-                    } else {
-                        MOCK_DB.users = [];
-                    }
-
-                    MOCK_DB.phieuBoiDuong = phieuBoiDuongFast || [];
-
-                    if (shiftsFast) {
-                        MOCK_DB.shifts = shiftsFast.map(s => ({
-                            ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(),
-                            ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc)
-                        }));
-                    }
-
-                    initKhoaFilter();
-                    if (document.getElementById('sel-khoa').options.length > 0) {
-                        generateReport();
-                    }
-                    
-                    // Tắt màn hình chờ và bật giao diện chính lên
-                    document.getElementById('loading-screen').classList.add('hidden');
-                    document.getElementById('control-panel').classList.remove('hidden');
-                    document.getElementById('print-workspace').classList.remove('hidden');
-                } catch (e) {
-                    document.getElementById('retry-btn-container').classList.remove('hidden');
-                    document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
-                    document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
-                    lucide.createIcons();
+                        // Nếu là Lễ Dân tộc (chứa chữ "dân tộc", "khơ-me"...) thì BỎ QUA, không đưa vào mảng ngayLe
+                        if (!tenLe.includes('dân tộc') && !loaiLe.includes('khơ-me') && !loaiLe.includes('dân tộc')) {
+                            MOCK_DB.ngayLe.push(ngayChuan);
+                        }
+                    });
                 }
+
+                if (khoa) MOCK_DB.khoa = khoa.map(k => ({ ...k, MaKhoa: String(k.MaKhoa).trim() }));
+                if (users) {
+                    let rawUsers = users.map(u => ({ ...u, MaNV: String(u.MaNV).trim(), HoTen: String(u.HoTen).trim() }));
+                    MOCK_DB.users = processDisplayNames(rawUsers);
+                } else {
+                    MOCK_DB.users = [];
+                }
+
+                MOCK_DB.phieuBoiDuong = phieuBoiDuongFast || [];
+
+                if (shiftsFast) {
+                    MOCK_DB.shifts = shiftsFast.map(s => ({
+                        ...s, MaNV: String(s.MaNV).trim(), MaKhoa: String(s.MaKhoa).trim(),
+                        ChucDanh: String(s.ChucDanh).trim(), NgayTruc: normalizeDateStr(s.NgayTruc)
+                    }));
+                }
+
+                initKhoaFilter();
+                if (document.getElementById('sel-khoa').options.length > 0) {
+                    generateReport();
+                }
+
+                // Tắt màn hình chờ và bật giao diện chính lên
+                document.getElementById('loading-screen').classList.add('hidden');
+                document.getElementById('control-panel').classList.remove('hidden');
+                document.getElementById('print-workspace').classList.remove('hidden');
+            } catch (e) {
+                document.getElementById('retry-btn-container').classList.remove('hidden');
+                document.getElementById('loading-icon-wrapper').innerHTML = `<i data-lucide="wifi-off" class="w-10 h-10 text-red-500 mb-4"></i>`;
+                document.getElementById('loading-text').innerHTML = "Mất kết nối máy chủ!";
+                lucide.createIcons();
             }
+        }
 
 
         function initUIDates() {
@@ -952,7 +961,7 @@
                     defaultYear -= 1;
                 }
             }
-            
+
             const yearSelect = document.getElementById('sel-year');
             yearSelect.innerHTML = '';
             const maxYear = Math.max(defaultYear, today.getFullYear()) + 1;
@@ -998,33 +1007,33 @@
             else document.getElementById('btn-settings').classList.add('hidden');
         }
 
-       // ==========================================
+        // ==========================================
         // CÀI ĐẶT ĐƠN GIÁ MẶC ĐỊNH
         // ==========================================
         function getParsedDefaultRates() {
-                let defaultRates = {
-                    normWd: 65000, normWe: 84500, normHol: 117000,
-                    emWd: 48750, emWe: 63375, emHol: 87750,
-                    em24Wd: 97500, em24We: 126750, em24Hol: 175500
-                };
+            let defaultRates = {
+                normWd: 65000, normWe: 84500, normHol: 117000,
+                emWd: 48750, emWe: 63375, emHol: 87750,
+                em24Wd: 97500, em24We: 126750, em24Hol: 175500
+            };
 
-                // Đọc từ Database và map dữ liệu viết thường sang camelCase
-                if (MOCK_DB.cauHinhGia && MOCK_DB.cauHinhGia.id) {
-                    const db = MOCK_DB.cauHinhGia;
-                    return {
-                        normWd: db.normwd ?? db.normWd ?? defaultRates.normWd,
-                        normWe: db.normwe ?? db.normWe ?? defaultRates.normWe,
-                        normHol: db.normhol ?? db.normHol ?? defaultRates.normHol,
-                        emWd: db.emwd ?? db.emWd ?? defaultRates.emWd,
-                        emWe: db.emwe ?? db.emWe ?? defaultRates.emWe,
-                        emHol: db.emhol ?? db.emHol ?? defaultRates.emHol,
-                        em24Wd: db.em24wd ?? db.em24Wd ?? defaultRates.em24Wd,
-                        em24We: db.em24we ?? db.em24We ?? defaultRates.em24We,
-                        em24Hol: db.em24hol ?? db.em24Hol ?? defaultRates.em24Hol
-                    };
-                }
-                return defaultRates;
+            // Đọc từ Database và map dữ liệu viết thường sang camelCase
+            if (MOCK_DB.cauHinhGia && MOCK_DB.cauHinhGia.id) {
+                const db = MOCK_DB.cauHinhGia;
+                return {
+                    normWd: db.normwd ?? db.normWd ?? defaultRates.normWd,
+                    normWe: db.normwe ?? db.normWe ?? defaultRates.normWe,
+                    normHol: db.normhol ?? db.normHol ?? defaultRates.normHol,
+                    emWd: db.emwd ?? db.emWd ?? defaultRates.emWd,
+                    emWe: db.emwe ?? db.emWe ?? defaultRates.emWe,
+                    emHol: db.emhol ?? db.emHol ?? defaultRates.emHol,
+                    em24Wd: db.em24wd ?? db.em24Wd ?? defaultRates.em24Wd,
+                    em24We: db.em24we ?? db.em24We ?? defaultRates.em24We,
+                    em24Hol: db.em24hol ?? db.em24Hol ?? defaultRates.em24Hol
+                };
             }
+            return defaultRates;
+        }
 
         function openSettingsModal() {
             let rates = getParsedDefaultRates();
@@ -1045,31 +1054,31 @@
         function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
 
         async function saveSettings() {
-                // Thu thập giá trị từ modal và gán trường tên viết thường gửi lên Supabase
-                let rates = {
-                    id: 'global',
-                    normwd: parseInt(document.getElementById('setting-norm-wd').value) || 0,
-                    normwe: parseInt(document.getElementById('setting-norm-we').value) || 0,
-                    normhol: parseInt(document.getElementById('setting-norm-hol').value) || 0,
-                    emwd: parseInt(document.getElementById('setting-em-wd').value) || 0,
-                    emwe: parseInt(document.getElementById('setting-em-we').value) || 0,
-                    emhol: parseInt(document.getElementById('setting-em-hol').value) || 0,
-                    em24wd: parseInt(document.getElementById('setting-em24-wd').value) || 0,
-                    em24we: parseInt(document.getElementById('setting-em24-we').value) || 0,
-                    em24hol: parseInt(document.getElementById('setting-em24-hol').value) || 0
-                };
+            // Thu thập giá trị từ modal và gán trường tên viết thường gửi lên Supabase
+            let rates = {
+                id: 'global',
+                normwd: parseInt(document.getElementById('setting-norm-wd').value) || 0,
+                normwe: parseInt(document.getElementById('setting-norm-we').value) || 0,
+                normhol: parseInt(document.getElementById('setting-norm-hol').value) || 0,
+                emwd: parseInt(document.getElementById('setting-em-wd').value) || 0,
+                emwe: parseInt(document.getElementById('setting-em-we').value) || 0,
+                emhol: parseInt(document.getElementById('setting-em-hol').value) || 0,
+                em24wd: parseInt(document.getElementById('setting-em24-wd').value) || 0,
+                em24we: parseInt(document.getElementById('setting-em24-we').value) || 0,
+                em24hol: parseInt(document.getElementById('setting-em24-hol').value) || 0
+            };
 
-                // Cập nhật biến local
-                MOCK_DB.cauHinhGia = rates;
+            // Cập nhật biến local
+            MOCK_DB.cauHinhGia = rates;
 
-                // Đẩy lên Supabase
-                await syncWithGAS('sync_CauHinhGia', rates);
+            // Đẩy lên Supabase
+            await syncWithGAS('sync_CauHinhGia', rates);
 
-                // Đóng Modal và thông báo
-                closeSettingsModal();
-                showToast("Đã lưu Cấu hình giá thành công vào hệ thống!", "info");
-                generateReport();
-            }
+            // Đóng Modal và thông báo
+            closeSettingsModal();
+            showToast("Đã lưu Cấu hình giá thành công vào hệ thống!", "info");
+            generateReport();
+        }
         // ==========================================
         // QUẢN LÝ IN ẤN (TỰ ĐỘNG LỌC HÀNG TRỐNG KHI IN)
         // ==========================================
@@ -1109,7 +1118,7 @@
 
             // Gán cờ và vẽ lại giao diện in
             isPrintingMode = true;
-            generateReport(); 
+            generateReport();
 
             // Đợi 100ms để trình duyệt kịp cập nhật DOM rồi mới mở hộp thoại Print
             setTimeout(() => {
@@ -1252,45 +1261,45 @@
         }
 
         function updatePhieuStatus(status, reasonStr = "") {
-                const month = document.getElementById('sel-month').value;
-                const year = document.getElementById('sel-year').value;
-                const maKhoa = document.getElementById('sel-khoa').value;
-                let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
-                let currentData = parseGhiChu(phieu ? phieu.GhiChu : "");
-                currentData.reason = reasonStr;
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            let currentData = parseGhiChu(phieu ? phieu.GhiChu : "");
+            currentData.reason = reasonStr;
 
-                if (!phieu) {
-                    phieu = {
-                        MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
-                        TrangThai: status, NguoiDuyet: status.includes('duyệt') || status.includes('chốt') ? currentUser.MaNV : '',
-                        NgayDuyet: status.includes('duyệt') || status.includes('chốt') ? new Date().toISOString().split('T')[0] : '',
-                        GhiChu: JSON.stringify(currentData)
-                    };
-                    MOCK_DB.phieuBoiDuong.push(phieu);
-                } else {
-                    phieu.TrangThai = status;
-                    if (status.includes('duyệt') || status.includes('chốt')) {
-                        phieu.NguoiDuyet = currentUser.MaNV;
-                        phieu.NgayDuyet = new Date().toISOString().split('T')[0];
-                    }
-                    phieu.GhiChu = JSON.stringify(currentData);
+            if (!phieu) {
+                phieu = {
+                    MaPhieuBD: `PBD_${maKhoa}_${month}_${year}`, MaKhoa: maKhoa, Thang: month, Nam: year,
+                    TrangThai: status, NguoiDuyet: status.includes('duyệt') || status.includes('chốt') ? currentUser.MaNV : '',
+                    NgayDuyet: status.includes('duyệt') || status.includes('chốt') ? new Date().toISOString().split('T')[0] : '',
+                    GhiChu: JSON.stringify(currentData)
+                };
+                MOCK_DB.phieuBoiDuong.push(phieu);
+            } else {
+                phieu.TrangThai = status;
+                if (status.includes('duyệt') || status.includes('chốt')) {
+                    phieu.NguoiDuyet = currentUser.MaNV;
+                    phieu.NgayDuyet = new Date().toISOString().split('T')[0];
                 }
-                generateReport();
-
-                // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
-                const payload = [{
-                    MaPhieuBD: phieu.MaPhieuBD,
-                    MaKhoa: phieu.MaKhoa,
-                    Thang: parseInt(phieu.Thang),
-                    Nam: parseInt(phieu.Nam),
-                    TrangThai: phieu.TrangThai,
-                    NguoiDuyet: phieu.NguoiDuyet || null,
-                    NgayDuyet: phieu.NgayDuyet || null,
-                    GhiChu: phieu.GhiChu
-                }];
-
-                syncWithGAS('sync_PhieuBoiDuong', payload);
+                phieu.GhiChu = JSON.stringify(currentData);
             }
+            generateReport();
+
+            // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
+            const payload = [{
+                MaPhieuBD: phieu.MaPhieuBD,
+                MaKhoa: phieu.MaKhoa,
+                Thang: parseInt(phieu.Thang),
+                Nam: parseInt(phieu.Nam),
+                TrangThai: phieu.TrangThai,
+                NguoiDuyet: phieu.NguoiDuyet || null,
+                NgayDuyet: phieu.NgayDuyet || null,
+                GhiChu: phieu.GhiChu
+            }];
+
+            syncWithGAS('sync_PhieuBoiDuong', payload);
+        }
 
         function sendApprove() {
             let isResend = document.getElementById('badge-status').textContent.includes('Trả Lại');
@@ -1454,7 +1463,7 @@
         async function saveData(showToastMsg = true) {
             window.isSavingData = true; // Khóa auto-refresh ngầm
             showGlobalLoading(); // Bật loading màn hình đen
-            
+
             try {
                 const month = document.getElementById('sel-month').value;
                 const year = document.getElementById('sel-year').value;
@@ -1533,46 +1542,46 @@
 
         // HÀM ĐỒNG BỘ LẠI DỮ LIỆU LỊCH TRỰC (KHẮC PHỤC LỖI KHÔNG TỰ UPDATE DATA MỚI)
         function resetShiftData() {
-                showConfirmModal(
-                    "Đồng bộ lại Lịch trực",
-                    "Bạn có muốn XÓA BỎ các chỉnh sửa ngày/đêm thủ công trước đó và CẬP NHẬT LẠI theo lịch trực mới nhất từ phần mềm không?",
-                    () => {
-                        const month = document.getElementById('sel-month').value;
-                        const year = document.getElementById('sel-year').value;
-                        const maKhoa = document.getElementById('sel-khoa').value;
-                        let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            showConfirmModal(
+                "Đồng bộ lại Lịch trực",
+                "Bạn có muốn XÓA BỎ các chỉnh sửa ngày/đêm thủ công trước đó và CẬP NHẬT LẠI theo lịch trực mới nhất từ phần mềm không?",
+                () => {
+                    const month = document.getElementById('sel-month').value;
+                    const year = document.getElementById('sel-year').value;
+                    const maKhoa = document.getElementById('sel-khoa').value;
+                    let phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
 
-                        if (phieu) {
-                            let noteData = parseGhiChu(phieu.GhiChu);
-                            if (noteData.rates) {
-                                for (let key in noteData.rates) {
-                                    if (key.endsWith('_days') || key.endsWith('_n')) {
-                                        delete noteData.rates[key];
-                                    }
+                    if (phieu) {
+                        let noteData = parseGhiChu(phieu.GhiChu);
+                        if (noteData.rates) {
+                            for (let key in noteData.rates) {
+                                if (key.endsWith('_days') || key.endsWith('_n')) {
+                                    delete noteData.rates[key];
                                 }
                             }
-                            phieu.GhiChu = JSON.stringify(noteData);
-
-                            // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
-                            const payload = [{
-                                MaPhieuBD: phieu.MaPhieuBD,
-                                MaKhoa: phieu.MaKhoa,
-                                Thang: parseInt(phieu.Thang),
-                                Nam: parseInt(phieu.Nam),
-                                TrangThai: phieu.TrangThai,
-                                NguoiDuyet: phieu.NguoiDuyet || null,
-                                NgayDuyet: phieu.NgayDuyet || null,
-                                GhiChu: phieu.GhiChu
-                            }];
-
-                            syncWithGAS('sync_PhieuBoiDuong', payload);
                         }
-                        generateReport();
-                        showToast("Đã đồng bộ lại dữ liệu thành công!", "success");
+                        phieu.GhiChu = JSON.stringify(noteData);
+
+                        // TẠO PAYLOAD CHỈ CHỨA 1 OBJECT ĐỂ ĐẨY LÊN
+                        const payload = [{
+                            MaPhieuBD: phieu.MaPhieuBD,
+                            MaKhoa: phieu.MaKhoa,
+                            Thang: parseInt(phieu.Thang),
+                            Nam: parseInt(phieu.Nam),
+                            TrangThai: phieu.TrangThai,
+                            NguoiDuyet: phieu.NguoiDuyet || null,
+                            NgayDuyet: phieu.NgayDuyet || null,
+                            GhiChu: phieu.GhiChu
+                        }];
+
+                        syncWithGAS('sync_PhieuBoiDuong', payload);
                     }
-                );
-            }
-            async function handleFilterChange() {
+                    generateReport();
+                    showToast("Đã đồng bộ lại dữ liệu thành công!", "success");
+                }
+            );
+        }
+        async function handleFilterChange() {
             const month = parseInt(document.getElementById('sel-month').value);
             const year = parseInt(document.getElementById('sel-year').value);
 
@@ -1700,11 +1709,11 @@
 
                 // LỌC CA KHÔNG PHẢI LÀ TRỰC DỰA TRÊN TÊN CA HOẶC PHÂN CA LÀ NGÀY
                 if (
-                    pcRaw === 'ngày' || 
-                    pcRaw === 'ngay' || 
-                    tenCa.includes('chào cờ') || 
-                    tenCa.includes('chao co') || 
-                    tenCa.includes('đóng dấu') || 
+                    pcRaw === 'ngày' ||
+                    pcRaw === 'ngay' ||
+                    tenCa.includes('chào cờ') ||
+                    tenCa.includes('chao co') ||
+                    tenCa.includes('đóng dấu') ||
                     tenCa.includes('dong dau') ||
                     tenCa.includes('hành chính') ||
                     tenCa.includes('hc')
@@ -1735,14 +1744,19 @@
                 const dayOfWeek = d.getDay();
                 const dateNum = d.getDate();
 
-                // Lấy danh sách ngày lễ đã được tải từ SQL (bảng NgayLe)
-                let isHoliday = MOCK_DB.ngayLe.includes(s.NgayTruc);
+                // --- XỬ LÝ PHÂN LOẠI NGÀY TRỰC ---
+                const isLeTet = MOCK_DB.ngayLe.includes(s.NgayTruc);
 
-                if (isHoliday) {
+                if (!userShifts[uniqueKey].holidays) userShifts[uniqueKey].holidays = [];
+
+                if (isLeTet) {
+                    // Nếu là ngày Lễ/Tết đã được lọc (Lễ lớn)
                     if (!userShifts[uniqueKey].holidays.includes(dateNum)) userShifts[uniqueKey].holidays.push(dateNum);
                 } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    // Nếu rớt vào Thứ 7, CN
                     if (!userShifts[uniqueKey].weekends.includes(dateNum)) userShifts[uniqueKey].weekends.push(dateNum);
                 } else {
+                    // Ngày thường
                     if (!userShifts[uniqueKey].weekdays.includes(dateNum)) userShifts[uniqueKey].weekdays.push(dateNum);
                 }
             });
@@ -1758,14 +1772,13 @@
 
             for (let uniqueKey in userShifts) {
                 const u = userShifts[uniqueKey];
-                const maNV = uniqueKey; // Dùng uniqueKey làm ID lưu trữ cấu hình để không bị ghi đè
+                const maNV = uniqueKey;
 
-                // TỰ ĐỘNG XÁC ĐỊNH MỨC GIÁ DỰA TRÊN DỮ LIỆU CHỨ KHÔNG CẦN DROPDOWN
                 let userShiftType = '';
                 if (u.phanCa === 'Đêm') {
-                    userShiftType = 'em12'; // Trực 12h đêm -> giá em12
+                    userShiftType = 'em12';
                 } else {
-                    userShiftType = isEmergency ? 'em24' : 'norm'; // Trực 24h
+                    userShiftType = isEmergency ? 'em24' : 'norm';
                 }
 
                 let defWd = parsedDefRates.normWd, defWe = parsedDefRates.normWe, defHol = parsedDefRates.normHol;
@@ -1775,26 +1788,28 @@
                     defWd = parsedDefRates.em24Wd; defWe = parsedDefRates.em24We; defHol = parsedDefRates.em24Hol;
                 }
 
-                let autoDaysWd = formatDates(u.weekdays);
-                let autoDaysWe = formatDates(u.weekends);
-                let autoDaysHol = formatDates(u.holidays);
+                // GOM CHUNG LỄ VÀ TẾT VÀO 1 BIẾN DUY NHẤT (holidays)
+                let autoDaysWd = formatDates(u.weekdays || []);
+                let autoDaysWe = formatDates(u.weekends || []);
+                let autoDaysHol = formatDates(u.holidays || []);
 
                 let finalDaysWd = savedRates[`${maNV}_wd_days`] !== undefined ? savedRates[`${maNV}_wd_days`] : autoDaysWd;
                 let finalDaysWe = savedRates[`${maNV}_we_days`] !== undefined ? savedRates[`${maNV}_we_days`] : autoDaysWe;
                 let finalDaysHol = savedRates[`${maNV}_hol_days`] !== undefined ? savedRates[`${maNV}_hol_days`] : autoDaysHol;
 
-                let wdNights = savedRates[`${maNV}_wd_n`] !== undefined ? parseInt(savedRates[`${maNV}_wd_n`]) : u.weekdays.length;
-                let weNights = savedRates[`${maNV}_we_n`] !== undefined ? parseInt(savedRates[`${maNV}_we_n`]) : u.weekends.length;
-                let holNights = savedRates[`${maNV}_hol_n`] !== undefined ? parseInt(savedRates[`${maNV}_hol_n`]) : u.holidays.length;
+                let wdNights = savedRates[`${maNV}_wd_n`] !== undefined ? parseInt(savedRates[`${maNV}_wd_n`]) : (u.weekdays || []).length;
+                let weNights = savedRates[`${maNV}_we_n`] !== undefined ? parseInt(savedRates[`${maNV}_we_n`]) : (u.weekends || []).length;
+                let holNights = savedRates[`${maNV}_hol_n`] !== undefined ? parseInt(savedRates[`${maNV}_hol_n`]) : (u.holidays || []).length;
 
                 let rateWd = savedRates[`${maNV}_wd`] !== undefined ? savedRates[`${maNV}_wd`] : defWd;
                 let rateWe = savedRates[`${maNV}_we`] !== undefined ? savedRates[`${maNV}_we`] : defWe;
                 let rateHol = savedRates[`${maNV}_hol`] !== undefined ? savedRates[`${maNV}_hol`] : defHol;
 
+                // CHỈ CÒN 3 DÒNG: Ngày thường, T7-CN, Lễ Tết
                 let categories = [
                     { id: 'wd', label: 'Ngày thường', daysStr: finalDaysWd, nights: wdNights, rate: rateWd },
                     { id: 'we', label: 'T7, CN', daysStr: finalDaysWe, nights: weNights, rate: rateWe },
-                    { id: 'hol', label: 'Lễ, Tết', daysStr: finalDaysHol, nights: holNights, rate: rateHol }
+                    { id: 'hol', label: 'Ngày Lễ, Tết', daysStr: finalDaysHol, nights: holNights, rate: rateHol }
                 ];
 
                 let activeCats = [];
