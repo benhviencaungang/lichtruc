@@ -1176,12 +1176,18 @@
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
             const isOwner = currentUser.KhoaList.includes(maKhoa);
 
+           // ==========================================
+            // QUẢN LÝ NÚT IN: CHỈ ĐƯỢC IN KHI TCKT "ĐÃ CHỐT"
             // ==========================================
-            // MỞ NÚT IN CHO TẤT CẢ CÁC TRẠNG THÁI (Nếu có ca trực)
-            // ==========================================
-            btnPrint.disabled = false;
-            btnPrint.classList.remove('opacity-50', 'cursor-not-allowed');
-            btnPrint.title = "In phiếu Bồi dưỡng trực";
+            if (status === 'Đã chốt') {
+                btnPrint.disabled = false;
+                btnPrint.classList.remove('hidden', 'opacity-50', 'cursor-not-allowed');
+                btnPrint.title = "In phiếu Bồi dưỡng trực (A4)";
+            } else {
+                // Ẩn nút in nếu phiếu chưa chốt (áp dụng triệt để cho tất cả các quyền)
+                btnPrint.disabled = true;
+                btnPrint.classList.add('hidden'); 
+            }
 
             if (status === 'Nháp' || status === 'KHTH trả lại') {
                 badge.textContent = status === 'Nháp' ? "Chưa gửi KHTH" : "KHTH Trả Lại";
@@ -1368,9 +1374,18 @@
             let sum = 0;
             let totalNights = 0;
 
+            // Lấy trạng thái của phiếu hiện tại
+            const month = document.getElementById('sel-month').value;
+            const year = document.getElementById('sel-year').value;
+            const maKhoa = document.getElementById('sel-khoa').value;
+            const phieu = MOCK_DB.phieuBoiDuong.find(p => p.MaKhoa === maKhoa && p.Thang == month && p.Nam == year);
+            let status = phieu ? phieu.TrangThai : 'Nháp';
+
             const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const canViewMoney = isStrictKHTH || isTCKT; // Chỉ có KHTH và TCKT được xem tiền
+            
+            // Chỉ TCKT mới được xem tiền lúc chưa chốt. Khi đã chốt thì tất cả (gồm KHTH và Khoa) đều được xem.
+            const canViewMoney = isTCKT || status === 'Đã chốt';
 
             document.querySelectorAll('.rate-input').forEach(rateInput => {
                 const id = rateInput.getAttribute('data-id');
@@ -1675,7 +1690,9 @@
             const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
 
-            const canViewMoney = isStrictKHTH || isTCKT; // Chỉ Admin KHTH chính chủ và TCKT mới được xem tiền
+            // Chỉ TCKT được hiển thị tiền. KHTH và Khoa phòng chỉ được hiển thị khi trạng thái là 'Đã chốt'
+            const canViewMoney = isTCKT || status === 'Đã chốt';
+
 
             // XÁC ĐỊNH QUYỀN TRÊN GIAO DIỆN & IN ẤN THEO LOGIC MỚI
             // Khoa chỉ được sửa ngày khi đang là bản nháp / hoặc bị từ chối
