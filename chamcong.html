@@ -237,19 +237,24 @@
         input[type="number"]::-webkit-outer-spin-button {
             opacity: 1;
         }
+
         /* --- TỐI ƯU HÓA MOBILE & BẢNG CUỘN --- */
         .table-container {
             width: 100%;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* Cuộn mượt trên iOS */
+            -webkit-overflow-scrolling: touch;
+            /* Cuộn mượt trên iOS */
             padding-bottom: 10px;
         }
 
         /* Làm cho STT và Họ Tên đứng im khi cuộn ngang trên điện thoại */
         @media (max-width: 1024px) {
-            .table-custom th, .table-custom td {
+
+            .table-custom th,
+            .table-custom td {
                 white-space: nowrap;
             }
+
             .sticky-col-1 {
                 position: sticky !important;
                 left: 0;
@@ -257,13 +262,16 @@
                 z-index: 30;
                 box-shadow: inset -1px 0 0 black, inset 0 -1px 0 black;
             }
+
             .sticky-col-2 {
                 position: sticky !important;
-                left: 28px; /* Độ rộng của cột STT */
+                left: 28px;
+                /* Độ rộng của cột STT */
                 background-color: white !important;
                 z-index: 30;
-                box-shadow: 2px 0 5px -2px rgba(0,0,0,0.2), inset -1px 0 0 black, inset 0 -1px 0 black;
+                box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.2), inset -1px 0 0 black, inset 0 -1px 0 black;
             }
+
             /* Đẩy menu chọn ca không bị lố màn hình */
             #shift-picker-popover {
                 max-width: 90vw !important;
@@ -530,8 +538,9 @@
 
     <div class="flex-1 overflow-auto p-2 md:p-8 bg-slate-200 no-print-bg hidden" id="print-workspace">
         <!-- Đã bỏ min-w-[1250px] để không bị tràn trên điện thoại -->
-        <div class="w-full xl:w-max mx-auto bg-white shadow-xl border border-slate-200 p-2 md:p-8 print-area text-black">
-    
+        <div
+            class="w-full xl:w-max mx-auto bg-white shadow-xl border border-slate-200 p-2 md:p-8 print-area text-black">
+
             <div class="flex justify-between items-start mb-2 text-[9pt] md:text-[11pt]">
                 <div class="text-center w-1/3">
                     <p class="font-bold">SỞ Y TẾ VĨNH LONG</p>
@@ -545,14 +554,15 @@
                             id="lbl-month-year">01/2026</span></h1>
                 </div>
             </div>
-    
+
             <div
                 class="font-bold text-[10pt] md:text-[11pt] mb-1 flex flex-col md:flex-row md:justify-between md:items-end gap-1">
                 <span>Tổng số nhân viên : <span id="lbl-total-nv">0</span></span>
-                <span class="text-[10px] italic font-normal text-gray-500 no-print">* Kéo thả chuột để chọn nhiều ô, dùng
+                <span class="text-[10px] italic font-normal text-gray-500 no-print">* Kéo thả chuột để chọn nhiều ô,
+                    dùng
                     Ctrl+C và Ctrl+V để sao chép nhanh</span>
             </div>
-    
+
             <!-- Bọc bảng trong thẻ table-container để cuộn ngang trên điện thoại -->
             <div class="table-container">
                 <table class="w-full table-custom text-center">
@@ -920,10 +930,12 @@
                     </h3>
                     <!-- ĐOẠN ĐƯỢC CẬP NHẬT Ở ĐÂY -->
                     <p class="text-sm text-sky-600 mt-1">
-                        Các quy tắc tự động tích lũy phép và nghỉ bù của hệ thống theo 
-                        <a href="113.QĐ-BVĐKKV.pdf" target="_blank" class="text-blue-700 hover:text-blue-900 hover:underline font-bold bg-blue-100/50 px-1.5 py-0.5 rounded transition-colors" title="Nhấn để xem toàn văn Quyết định">
+                        Các quy tắc tự động tích lũy phép và nghỉ bù của hệ thống theo
+                        <a href="113.QĐ-BVĐKKV.pdf" target="_blank"
+                            class="text-blue-700 hover:text-blue-900 hover:underline font-bold bg-blue-100/50 px-1.5 py-0.5 rounded transition-colors"
+                            title="Nhấn để xem toàn văn Quyết định">
                             Quyết định 113/QĐ-BVĐKKV ngày 30/10/2026
-                        </a> 
+                        </a>
                         thực hiện chấm công.
                     </p>
                 </div>
@@ -947,7 +959,8 @@
                             sẽ tự động cộng
                             tích lũy vào <span class="font-bold text-teal-600">Quỹ Nghỉ Bù Lễ (NBL)</span>. Xem tại nút
                             <i>"Chi tiết
-                                NBL"</i>.</li>
+                                NBL"</i>.
+                        </li>
                         <li><b>Đối với nhân viên có trực:</b>
                             <ul class="list-circle pl-5 mt-1 space-y-1">
                                 <li>Đi trực vào ngày Lễ toàn quốc sẽ tự động cộng 1 ngày (hoặc nhiều hơn theo quy định)
@@ -1003,9 +1016,11 @@
                             <h5 class="font-bold text-red-800 mb-1 border-b border-red-200 pb-1">A. Trực vào Ngày Lễ
                             </h5>
                             <ul class="list-disc pl-4 text-red-900 mt-2 space-y-1">
-                                <li>Trực <span class="font-bold bg-white px-1 rounded">T24</span> ngày Lễ (bao gồm cả Lễ Dân tộc Khơ-me từ T2-T6): Cộng
+                                <li>Trực <span class="font-bold bg-white px-1 rounded">T24</span> ngày Lễ (bao gồm cả Lễ
+                                    Dân tộc Khơ-me từ T2-T6): Cộng
                                     <b>1 ngày bù</b>.<br>
-                                    <span class="text-red-700 font-medium italic">* Đặc biệt: Nếu Trực T24 vào ngày Lễ rơi đúng vào <b>Thứ 6</b> thì
+                                    <span class="text-red-700 font-medium italic">* Đặc biệt: Nếu Trực T24 vào ngày Lễ
+                                        rơi đúng vào <b>Thứ 6</b> thì
                                         được cộng <b>2 ngày bù</b>.</span>
                                 </li>
                                 <li>Ra trực <span class="font-bold bg-white px-1 rounded">RT</span> ngay Lễ (bao gồm cả
@@ -1111,7 +1126,7 @@
             }
         });
 
-        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2', 'LLK/2', 'KL/2'];
+        const HALF_DAY_SYMBOLS = ['-', 'Rt/2', 'Rt12', 'P/2', 'Nb/2', 'NBL/2', 'Ô/2', 'Cô/2', 'H/2', 'CT/2', 'LT/2', 'L/2', 'O/2', 'LK/2', 'LLK/2', 'KL/2'];
 
         const SYMBOLS_DICT = [
             { id: '+', name: 'Làm nguyên ngày (+)', bg: '' },
@@ -1131,7 +1146,7 @@
             { id: 'Ô', name: 'Nghỉ ốm (Ô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'Cô', name: 'Con ốm mẹ nghỉ (Cô)', bg: 'bg-orange-100 text-orange-700' },
             { id: 'O', name: 'Nghỉ không lý do (O)', bg: 'bg-red-100 text-red-700 font-bold' },
-            { id: 'O/2', name: 'Nghỉ không lý do 1/2 ngày (O/2)', bg: 'bg-red-100 text-red-700' }, 
+            { id: 'O/2', name: 'Nghỉ không lý do 1/2 ngày (O/2)', bg: 'bg-red-100 text-red-700' },
             { id: 'KL', name: 'Nghỉ không lương (KL)', bg: 'bg-gray-200 text-gray-700 font-bold' },
             { id: 'KL/2', name: 'Nghỉ không lương 1/2 ngày (KL/2)', bg: 'bg-gray-200 text-gray-700' },
             { id: 'H', name: 'Đi học (H)', bg: '' },
@@ -1347,7 +1362,7 @@
                 }
 
                 // <-- THÊM LOGIC: Chỉ hiện Rt12 nếu là khoa HSCC
-                if (sym.id.toUpperCase() === 'RT12' && !isHSCC) return; 
+                if (sym.id.toUpperCase() === 'RT12' && !isHSCC) return;
 
                 const isHalf = HALF_DAY_SYMBOLS.includes(sym.id);
                 if (allowedTypes === 'all' || (allowedTypes === 'half' && isHalf) || (allowedTypes === 'full' && !isHalf)) {
@@ -2507,55 +2522,55 @@
                 };
 
                 const showStandardModalAndSave = (dataToSave) => {
-                // Xây dựng đoạn nội dung cảnh báo NBL
-                let nblWarningText = "";
-                if (negativeNBLUsers.length > 0) {
-                    if (status === 'Nháp' || status === 'Chờ duyệt') {
-                        nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\n(Ghi chú: Có thể Tổ chức Hành chính sẽ không duyệt!)`;
-                    } else if (status === 'Đã duyệt') {
-                        nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\nBạn có muốn duyệt bảng chấm công này không rùi mới xác nhận?`;
-                    }
-                }
-
-                if (status === 'Nháp') {
+                    // Xây dựng đoạn nội dung cảnh báo NBL
+                    let nblWarningText = "";
                     if (negativeNBLUsers.length > 0) {
-                        // Ép hiện Modal xác nhận nếu có người bị âm NBL khi lưu nháp
+                        if (status === 'Nháp' || status === 'Chờ duyệt') {
+                            nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\n(Ghi chú: Có thể Tổ chức Hành chính sẽ không duyệt!)`;
+                        } else if (status === 'Đã duyệt') {
+                            nblWarningText = `\n\n⚠️ CẢNH BÁO: Phát hiện nhân sự ÂM Nghỉ Bù Lễ (NBL):\n${negativeNBLUsers.join('\n')}\nBạn có muốn duyệt bảng chấm công này không rùi mới xác nhận?`;
+                        }
+                    }
+
+                    if (status === 'Nháp') {
+                        if (negativeNBLUsers.length > 0) {
+                            // Ép hiện Modal xác nhận nếu có người bị âm NBL khi lưu nháp
+                            showConfirmModal(
+                                "Cảnh báo Âm Nghỉ Bù Lễ",
+                                `Bạn đang lưu nháp.` + nblWarningText + `\n\nBạn có muốn tiếp tục lưu không?`,
+                                async () => { await proceedToSave(dataToSave); }
+                            );
+                        } else {
+                            proceedToSave(dataToSave);
+                        }
+                    } else if (status === 'Chờ duyệt') {
                         showConfirmModal(
-                            "Cảnh báo Âm Nghỉ Bù Lễ",
-                            `Bạn đang lưu nháp.` + nblWarningText + `\n\nBạn có muốn tiếp tục lưu không?`,
+                            "Xác nhận Trình Duyệt",
+                            `Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?` + nblWarningText,
                             async () => { await proceedToSave(dataToSave); }
                         );
-                    } else {
-                        proceedToSave(dataToSave);
+                    } else if (status === 'Đã duyệt') {
+                        const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+                        const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+                        const msg = isBulk
+                            ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?"
+                            : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
+
+                        showConfirmModal("Xác nhận Phê duyệt", msg + nblWarningText, async () => {
+                            await proceedToSave(dataToSave);
+                        });
+                    } else if (status === 'Trả lại') {
+                        const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
+                        const isBulk = isGlobalAdmin() && filterVal === 'ALL';
+                        const msg = isBulk
+                            ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?"
+                            : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
+
+                        showConfirmModal("Từ chối / Trả lại", msg, async () => {
+                            await proceedToSave(dataToSave);
+                        });
                     }
-                } else if (status === 'Chờ duyệt') {
-                    showConfirmModal(
-                        "Xác nhận Trình Duyệt",
-                        `Sau khi trình, bảng sẽ bị KHÓA không thể chỉnh sửa nữa.\n\nBạn có chắc muốn gửi Bảng chấm công này đi duyệt?` + nblWarningText,
-                        async () => { await proceedToSave(dataToSave); }
-                    );
-                } else if (status === 'Đã duyệt') {
-                    const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
-                    const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-                    const msg = isBulk
-                        ? "Xác nhận PHÊ DUYỆT TẤT CẢ các bảng chấm công đang hiển thị trên màn hình?"
-                        : "Xác nhận PHÊ DUYỆT Bảng chấm công của đơn vị này?";
-
-                    showConfirmModal("Xác nhận Phê duyệt", msg + nblWarningText, async () => {
-                        await proceedToSave(dataToSave);
-                    });
-                } else if (status === 'Trả lại') {
-                    const filterVal = document.getElementById('filter-khoa') ? document.getElementById('filter-khoa').value : 'ALL';
-                    const isBulk = isGlobalAdmin() && filterVal === 'ALL';
-                    const msg = isBulk
-                        ? "CẢNH BÁO: Xác nhận TRẢ LẠI TẤT CẢ các bảng chấm công đang hiển thị để làm lại?"
-                        : "Xác nhận TRẢ LẠI Bảng chấm công của đơn vị này để yêu cầu làm lại?";
-
-                    showConfirmModal("Từ chối / Trả lại", msg, async () => {
-                        await proceedToSave(dataToSave);
-                    });
-                }
-            };
+                };
 
                 document.getElementById('loading-screen').classList.add('hidden');
                 isSaving = false;
@@ -2647,7 +2662,7 @@
 
                 // 2. Tải bảng Nhân viên (Tối ưu chỉ lấy các cột thực sự cần thiết)
                 // Thay thế đoạn _supabase.from('NhanVien')
-                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, NgayVaoLam, NgayNghi, CoTruc, Role, Username, Password, dantoc');
+                const { data: users } = await _supabase.from('NhanVien').select('MaNV, HoTen, MaKhoa, ChucDanh, NgayVaoLam, NgayNghi, CoTruc, Role, Username, Password, dantoc,CCHN');
                 MOCK_DB.users = users || [];
 
                 // 3. Tải bảng Lịch Trực (Chỉ tải theo ngày)
@@ -2971,7 +2986,7 @@
 
             // 1. Quét DB các tháng khác (bỏ qua tháng hiện tại vì đang được chỉnh sửa trên UI)
             for (let m = 1; m <= 12; m++) {
-                if (m === month) continue; 
+                if (m === month) continue;
                 let savedBccs = yearBcc.filter(b => parseInt(b.Nam) === year && parseInt(b.Thang) === m);
                 savedBccs.forEach(b => {
                     try {
@@ -3000,7 +3015,7 @@
                                 });
                             }
                         }
-                    } catch(e) {}
+                    } catch (e) { }
                 });
             }
 
@@ -3528,7 +3543,7 @@
             document.getElementById('export-excel-modal').classList.add('hidden');
         }
 
-        function processExportExcel() {
+        async function processExportExcel() {
             const fromDateStr = document.getElementById('export-from-date').value;
             const toDateStr = document.getElementById('export-to-date').value;
             const roleFilter = document.getElementById('export-role-filter').value;
@@ -3551,100 +3566,121 @@
             closeExportExcelModal();
             showToast("Đang thu thập và kết xuất dữ liệu...", "warning");
 
-            const filterKhoaEle = document.getElementById('filter-khoa');
-            const selectedKhoaFilter = filterKhoaEle && !filterKhoaEle.classList.contains('hidden') ? filterKhoaEle.value : 'ALL';
-            const isAdminAll = isGlobalAdmin();
-            let allowedKhoas = isAdminAll ? MOCK_DB.khoa.map(k => k.MaKhoa) : currentUser.KhoaList;
-            if (isAdminAll && selectedKhoaFilter !== 'ALL') {
-                allowedKhoas = [selectedKhoaFilter];
-            }
-
-            let allowedParentKhoas = [...new Set(allowedKhoas.map(mk => getParentKhoaInfo(mk).ma))];
-
-            let approvedOwnership = {};
-            MOCK_DB.bangChamCong.forEach(b => {
-                if (b.TrangThai === 'Đã duyệt' && b.DuLieu) {
-                    try {
-                        let parsed = JSON.parse(b.DuLieu);
-                        Object.keys(parsed).forEach(nv => {
-                            approvedOwnership[`${b.Thang}_${b.Nam}_${nv}`] = getParentKhoaInfo(b.MaKhoa).ma;
-                        });
-                    } catch (e) { }
-                }
-            });
-
-            let targetUserIds = new Set();
-
-            MOCK_DB.users.forEach(u => {
-                if (u.ChucDanh === 'Quản lý') return;
-
-                if (roleFilter === 'BS') {
-                    let cd = (u.ChucDanh || '').toUpperCase();
-                    if (!cd.includes('BS') && !cd.includes('BÁC SĨ') && !cd.includes('BAC SI')) {
-                        return;
-                    }
-                }
-
-                let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
-                let leaveDate = parseEmployeeDate(u.NgayNghi, true);
-
-                if (leaveDate <= dStart || joinDate > dEnd) return;
-
-                let maNVStr = String(u.MaNV);
-                let uKhoaGoc = getPrimaryKhoa(u.MaKhoa);
-                let currentParentMk = getParentKhoaInfo(uKhoaGoc).ma;
-
-                let isAllowed = allowedParentKhoas.includes(currentParentMk);
-
-                if (!isAllowed) {
-                    let tempD = new Date(dStart);
-                    while (tempD <= dEnd) {
-                        let m = tempD.getMonth() + 1;
-                        let y = tempD.getFullYear();
-                        let targetMk = approvedOwnership[`${m}_${y}_${maNVStr}`];
-                        if (targetMk && allowedParentKhoas.includes(targetMk)) {
-                            isAllowed = true;
-                            break;
-                        }
-                        tempD.setDate(tempD.getDate() + 1);
-                    }
-                }
-
-                if (isAllowed) {
-                    targetUserIds.add(maNVStr);
-                }
-            });
-
-            if (targetUserIds.size === 0) {
-                showToast("Không có nhân sự nào trong danh sách lọc để xuất!", "warning");
-                return;
-            }
-
-            let targetUsers = Array.from(targetUserIds).map(maNV => {
-                let u = MOCK_DB.users.find(x => String(x.MaNV) === maNV);
-                return u;
-            }).filter(u => u !== undefined);
+            // Lấy thông tin tháng/năm hiện tại trên UI để quét
+            const month = currentRenderedMonth || parseInt(document.getElementById('sel-month').value);
+            const year = currentRenderedYear || parseInt(document.getElementById('sel-year').value);
 
             function getMorningAfternoonReasons(symbolStr) {
-                if (!symbolStr) return { sang: "", chieu: "" };
-                let parts = symbolStr.includes(';') ? symbolStr.split(';') : [symbolStr];
-                const getName = (sym) => {
-                    if (!sym || sym.trim() === '') return "";
-                    let s = sym.trim();
-                    let found = SYMBOLS_DICT.find(x => x.id.toUpperCase() === s.toUpperCase());
-                    return found ? found.name.split(' (')[0].trim() : s;
+                if (!symbolStr) return { kyHieuSang: "", sang: "", kyHieuChieu: "", chieu: "", error: "" };
+
+                const DICT_MAP = {
+                    '+': 'Làm nguyên ngày',
+                    '-': 'Làm 1 buổi',
+                    'O': 'Nghỉ không lý do',
+                    'O/2': 'Nghỉ không lý do 1/2 ngày',
+                    'Ô': 'Nghỉ ốm',
+                    'Ô/2': 'Nghỉ ốm 1/2 ngày',
+                    'CÔ': 'Con ốm mẹ nghỉ',
+                    'CÔ/2': 'Nghỉ con ốm 1/2 ngày',
+                    'H': 'Đi học',
+                    'H/2': 'Đi học 1/2 ngày',
+                    'CT': 'Công tác',
+                    'CT/2': 'Công tác 1/2 ngày',
+                    'LT': 'Làm thêm ngày (+Phép)',
+                    'LT/2': 'Làm thêm 1/2 ngày',
+                    'LK': 'Nghỉ tết dân tộc',
+                    'LK/2': 'Nghỉ tết dân tộc 1/2 ngày',
+                    'LLK': 'Làm thêm lễ dân tộc',
+                    'LLK/2': 'Làm thêm lễ dân tộc 1/2 ngày',
+                    'P': 'Nghỉ phép',
+                    'P/2': 'Nghỉ phép 1/2 ngày',
+                    'L': 'Nghỉ lễ, tết',
+                    'L/2': 'Nghỉ lễ 1/2 ngày',
+                    'NB': 'Nghỉ bù',
+                    'NB/2': 'Nghỉ bù 1/2 ngày',
+                    'NBL': 'Nghỉ bù Lễ',
+                    'NBL/2': 'Nghỉ bù Lễ 1/2 ngày',
+                    'HS': 'Nghỉ hộ sản',
+                    'RT': 'Ra trực',
+                    'RT/2': 'Ra trực 1/2 ngày',
+                    'RT12': 'Ra trực 12h',
+                    'KL': 'Nghỉ không lương',
+                    'KL/2': 'Nghỉ k.lương 1/2',
+                    'T24': 'Trực 24/24',
+                    'T12N': 'Trực 12/24 ngày',
+                    'T12D': 'Trực 12/24 đêm',
+                    'PT': 'Nghỉ phép tang',
+                    'PC': 'Nghỉ phép cưới',
+                    'CN': 'Chủ Nhật',
+                    'T7': 'Thứ Bảy'
                 };
 
-                let res = { sang: "", chieu: "" };
+                let cleanStr = String(symbolStr || '').trim();
+                let parts = parseShifts(cleanStr);
+
+                let res = {
+                    kyHieuSang: '',
+                    sang: '',
+                    kyHieuChieu: '',
+                    chieu: '',
+                    kyHieuBoSung: '',
+                    kyHieuGoc: cleanStr,
+                    error: ''
+                };
+
+                if (parts.length === 0) {
+                    res.error = `Không thể phân tách ký hiệu: "${symbolStr}"`;
+                    return res;
+                }
+
+                const getName = (sym) => {
+                    if (!sym || sym === '') return "";
+                    let upperSym = sym.toUpperCase().trim();
+                    if (DICT_MAP[upperSym]) {
+                        return DICT_MAP[upperSym];
+                    } else {
+                        res.error += `Ký hiệu chưa được định nghĩa: "${sym}". `;
+                        return sym.trim();
+                    }
+                };
+
                 if (parts.length >= 2) {
+                    res.kyHieuSang = parts[0];
                     res.sang = getName(parts[0]);
+
+                    res.kyHieuChieu = parts[1];
                     res.chieu = getName(parts[1]);
-                } else {
-                    let sym = parts[0].trim();
-                    let isHalf = HALF_DAY_SYMBOLS.some(h => h.toUpperCase() === sym.toUpperCase());
+
+                    // Ghi nhận các ký hiệu thứ 3 trở đi
+                    if (parts.length > 2) {
+                        res.kyHieuBoSung = parts.slice(2).join('; ');
+                        res.error += `Có thêm ký hiệu: ${res.kyHieuBoSung}. `;
+                    }
+                } else if (parts.length === 1) {
+                    let sym = parts[0];
+                    let isHalf = HALF_DAY_SYMBOLS.some(
+                        h => h.toUpperCase() === sym.toUpperCase()
+                    );
+
                     if (isHalf) {
+                        res.kyHieuSang = sym;
                         res.sang = getName(sym);
                     } else {
+                        res.kyHieuSang = sym;
+                        res.kyHieuChieu = sym;
+                        res.sang = getName(sym);
+                        res.chieu = getName(sym);
+                    }
+                } else if (parts.length === 1) {
+                    let sym = parts[0];
+                    let isHalf = HALF_DAY_SYMBOLS.some(h => h.toUpperCase() === sym.toUpperCase());
+
+                    if (isHalf) {
+                        res.kyHieuSang = sym;
+                        res.sang = getName(sym);
+                    } else {
+                        res.kyHieuSang = sym;
+                        res.kyHieuChieu = sym;
                         res.sang = getName(sym);
                         res.chieu = getName(sym);
                     }
@@ -3652,109 +3688,103 @@
                 return res;
             }
 
-            let shiftsCache = {};
-            MOCK_DB.shifts.forEach(s => {
-                if (!s.NgayTruc) return;
-                const parts = s.NgayTruc.split('-');
-                if (parts.length === 3) {
-                    let y = parseInt(parts[0]);
-                    let m = parseInt(parts[1]);
-                    let d = parseInt(parts[2]);
-                    let key = `${y}-${m}-${d}`;
-                    if (!shiftsCache[key]) shiftsCache[key] = {};
-
-                    let pc = (s.PhanCa || '').toLowerCase().trim();
-                    let type = 'T24';
-                    if (pc === 'ngày' || pc === 'ngay') type = 'T12N';
-                    else if (pc === 'đêm' || pc === 'dem') type = 'T12D';
-
-                    shiftsCache[key][String(s.MaNV)] = type;
-                }
-            });
 
             let exportData = [];
-            let currDate = new Date(dStart);
-            let cachedSavedMonths = {};
 
-            while (currDate <= dEnd) {
-                let y = currDate.getFullYear();
-                let m = currDate.getMonth() + 1;
-                let d = currDate.getDate();
-                let dw = currDate.getDay();
-                let monthKey = `${y}-${m}`;
+            try {
+                // Duyệt từng tháng trong khoảng ngày được chọn
+                let current = new Date(
+                    dStart.getFullYear(),
+                    dStart.getMonth(),
+                    1
+                );
 
-                if (!cachedSavedMonths[monthKey]) {
-                    cachedSavedMonths[monthKey] = {};
-                    MOCK_DB.bangChamCong.forEach(b => {
-                        if (parseInt(b.Thang) === m && parseInt(b.Nam) === y && b.DuLieu) {
-                            try {
-                                let parsed = JSON.parse(b.DuLieu);
-                                for (let nv in parsed) {
-                                    if (!cachedSavedMonths[monthKey][nv]) cachedSavedMonths[monthKey][nv] = { days: {} };
-                                    for (let dayD in parsed[nv].days) {
-                                        if (parsed[nv].days[dayD]) cachedSavedMonths[monthKey][nv].days[dayD] = parsed[nv].days[dayD];
-                                    }
-                                }
-                            } catch (e) { }
+                while (current <= dEnd) {
+                    const y = current.getFullYear();
+                    const m = current.getMonth() + 1;
+
+                    // Lấy dữ liệu chấm công đúng tháng từ Supabase
+                    const { data: bangChamCong, error } = await _supabase
+                        .from('BangChamCong')
+                        .select('MaKhoa, Thang, Nam, DuLieu')
+                        .eq('Nam', y)
+                        .eq('Thang', m);
+
+                    if (error) throw error;
+
+                    (bangChamCong || []).forEach(b => {
+                        if (!b.DuLieu) return;
+
+                        let savedData;
+                        try {
+                            savedData = typeof b.DuLieu === 'string'
+                                ? JSON.parse(b.DuLieu)
+                                : b.DuLieu;
+                        } catch (e) {
+                            console.error('Lỗi đọc dữ liệu:', b.MaKhoa, m, y, e);
+                            return;
                         }
+
+                        Object.keys(savedData).forEach(maNV => {
+                            const userObj = MOCK_DB.users.find(
+                                u => String(u.MaNV) === String(maNV)
+                            );
+
+                            if (!userObj) return;
+
+                            if (roleFilter === 'BS') {
+                                const cd = (userObj.ChucDanh || '').toUpperCase();
+                                if (
+                                    !cd.includes('BS') &&
+                                    !cd.includes('BÁC SĨ') &&
+                                    !cd.includes('BAC SI')
+                                ) return;
+                            }
+
+                            const days = savedData[maNV].days || {};
+
+                            Object.keys(days).forEach(day => {
+                                const d = parseInt(day);
+                                const checkDate = new Date(y, m - 1, d);
+
+                                if (checkDate < dStart || checkDate > dEnd) return;
+
+                                const val = String(days[day] || '').trim();
+                                if (!val) return;
+
+                                const reasons = getMorningAfternoonReasons(val);
+
+                                exportData.push({
+                                    "Tên nhân viên": userObj.HoTen || maNV,
+                                    "CCHN": userObj.CCHN || "",
+                                    "Ngày chấm công":
+                                        `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`,
+
+                                    "Ký hiệu Sáng": reasons.kyHieuSang,
+                                    "Lý do Sáng": reasons.sang,
+
+                                    "Ký hiệu Chiều": reasons.kyHieuChieu,
+                                    "Lý do Chiều": reasons.chieu,
+
+                                    "Ký hiệu bổ sung": reasons.kyHieuBoSung || "",
+                                    "Ký hiệu gốc đầy đủ": val,
+                                    "Ghi chú (Lỗi xuất)": reasons.error
+                                });
+                            });
+                        });
                     });
+
+                    current.setMonth(current.getMonth() + 1);
                 }
 
-                targetUsers.forEach(u => {
-                    const maNV = String(u.MaNV);
-                    let currentParentMk = getParentKhoaInfo(getPrimaryKhoa(u.MaKhoa)).ma;
-                    let targetMk = approvedOwnership[`${m}_${y}_${maNV}`] || currentParentMk;
-                    if (!allowedParentKhoas.includes(targetMk)) return;
-
-                    let val = '';
-                    let joinDate = parseEmployeeDate(u.NgayVaoLam, false);
-                    let leaveDate = parseEmployeeDate(u.NgayNghi, true);
-
-                    if (currDate >= joinDate && currDate < leaveDate) {
-                        if (cachedSavedMonths[monthKey] && cachedSavedMonths[monthKey][maNV] && cachedSavedMonths[monthKey][maNV].days[d]) {
-                            val = cachedSavedMonths[monthKey][maNV].days[d];
-                        }
-
-                        if (!val || val.trim() === '') {
-                            let shiftToday = shiftsCache[`${y}-${m}-${d}`] && shiftsCache[`${y}-${m}-${d}`][maNV];
-                            let prevD = new Date(currDate);
-                            prevD.setDate(prevD.getDate() - 1);
-                            let py = prevD.getFullYear();
-                            let pm = prevD.getMonth() + 1;
-                            let pd = prevD.getDate();
-                            let shiftYesterday = shiftsCache[`${py}-${pm}-${pd}`] && shiftsCache[`${py}-${pm}-${pd}`][maNV];
-
-                            if (shiftToday) {
-                                val = shiftToday;
-                            } else if (shiftYesterday === 'T24') {
-                                val = 'Rt';
-                            } else if (isHoliday(d, m, y, maNV)) {
-                                val = 'L';
-                            } else if (dw === 0 || dw === 6) {
-                                val = dw === 0 ? 'CN' : 'T7';
-                            } else {
-                                val = '+';
-                            }
-                        }
-                    }
-
-                    if (val && val !== '') {
-                        let reasons = getMorningAfternoonReasons(val);
-                        exportData.push({
-                            "Tên nhân viên": u.HoTen,
-                            "CCHN": u.CCHN || "",
-                            "Ngày chấm công": `${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}-${y}`,
-                            "Lý do Sáng": reasons.sang,
-                            "Lý do Chiều": reasons.chieu
-                        });
-                    }
-                });
-
-                currDate.setDate(currDate.getDate() + 1);
+            } catch (error) {
+                console.error("Lỗi tải dữ liệu xuất Excel:", error);
+                showToast("Không thể tải dữ liệu chấm công từ máy chủ!", "error");
+                return;
             }
 
             if (exportData.length === 0) {
-                showToast("Không phát sinh dữ liệu chấm công nào trong khoảng thời gian này.", "warning");
+                showToast("Không phát sinh dữ liệu chấm công nào để xuất trong khoảng thời gian này.", "warning");
                 return;
             }
 
@@ -3763,7 +3793,18 @@
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "ChamCong");
 
-                const wscols = [{ wch: 25 }, { wch: 15 }, { wch: 18 }, { wch: 25 }, { wch: 25 }];
+                const wscols = [
+                    { wch: 25 }, // Tên nhân viên
+                    { wch: 15 }, // CCHN
+                    { wch: 18 }, // Ngày chấm công
+                    { wch: 15 }, // Ký hiệu sáng
+                    { wch: 30 }, // Lý do sáng
+                    { wch: 15 }, // Ký hiệu chiều
+                    { wch: 30 }, // Lý do chiều
+                    { wch: 20 }, // Ký hiệu bổ sung
+                    { wch: 25 }, // Ký hiệu gốc đầy đủ
+                    { wch: 35 }  // Ghi chú lỗi
+                ];
                 worksheet['!cols'] = wscols;
 
                 const nameStart = `${String(dStart.getDate()).padStart(2, '0')}${String(dStart.getMonth() + 1).padStart(2, '0')}${dStart.getFullYear()}`;
