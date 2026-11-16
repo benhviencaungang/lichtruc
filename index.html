@@ -1110,13 +1110,9 @@
 
                     <div class="mt-8 flex justify-end pr-12 text-sm pb-8 relative z-10">
                         <div class="text-center relative flex flex-col items-center">
-                            <input type="text"
-                                class="signer-name text-center font-bold outline-none w-64 text-sm bg-transparent pb-0 m-0"
-                                style="line-height: 1.2;" value="TL.GIÁM ĐỐC" placeholder="Chức danh...">
-                            <input type="text"
-                                class="signer-name text-center font-bold outline-none w-64 text-sm bg-transparent pb-0 m-0"
-                                style="line-height: 1.2;" value="PTP. KẾ HOẠCH TỔNG HỢP" placeholder="Chức danh phụ...">
-
+                        <input type="text" id="signer-position"
+                            class="signer-name text-center font-bold outline-none w-64 text-sm bg-transparent pb-0 m-0"
+                            style="line-height: 1.2;" value="TRƯỞNG PHÒNG KẾ HOẠCH TỔNG HỢP" placeholder="Chức danh...">
                             <!-- KHU VỰC KÝ TÊN VÀ ĐÓNG DẤU -->
                             <div class="h-28 mt-2 w-64 flex flex-col items-center justify-center relative">
                                 <!-- Chữ ký cá nhân (Nằm Dưới - z-10) -->
@@ -3095,24 +3091,45 @@
             document.getElementById('profile-confirm-pw').value = "";
         }
 
-        function checkSignerName(name) {
-            const sigImg = document.getElementById('personal-signature');
-            const searchName = name.trim().toLowerCase();
+        
+            function checkSignerName(name) {
+                    const sigImg = document.getElementById('personal-signature');
+                    const positionInput = document.getElementById('signer-position');
 
-            const config = (MOCK_DB.cauHinhKySo || []).find(c => c.TenNguoiKy && c.TenNguoiKy.toLowerCase() === searchName);
+                    // Chuẩn hóa tên, không phân biệt chữ hoa, chữ thường và dấu tiếng Việt
+                    const normalizeName = value => (value || '')
+                        .trim()
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/đ/g, 'd');
 
-            if (config && config.HinhChuKy) {
-                sigImg.src = config.HinhChuKy;
-                sigImg.classList.remove('hidden');
-            }
-            else if (searchName === 'sơn thị chanh trịa' || searchName === 'son thi chanh tria') {
-                sigImg.src = 'sonthichanhtria.png';
-                sigImg.classList.remove('hidden');
-            }
-            else {
-                sigImg.classList.add('hidden');
-            }
-        }
+                    const searchName = normalizeName(name);
+
+                    const signerConfig = {
+                        'son thi chanh tria': {
+                            position: 'PHÓ PHÒNG KẾ HOẠCH TỔNG HỢP',
+                            signature: 'sonthichanhtria.png'
+                        },
+                        'nguyen thanh hung': {
+                            position: 'TRƯỞNG PHÒNG KẾ HOẠCH TỔNG HỢP',
+                            signature: 'nguyenthanhhung.png'
+                        }
+                    };
+
+                    const signer = signerConfig[searchName];
+
+                    if (signer) {
+                        positionInput.value = signer.position;
+                        sigImg.src = signer.signature;
+                        sigImg.classList.remove('hidden');
+                        sigImg.style.display = '';
+                    } else {
+                        positionInput.value = '';
+                        sigImg.classList.add('hidden');
+                    }
+                }
+
 
         async function toggleStamp() {
             const stamp = document.getElementById('official-stamp');
