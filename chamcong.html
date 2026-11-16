@@ -3688,7 +3688,103 @@
                 return res;
             }
 
+            function getAttendanceConclusion(reasons) {
+                const normalize = (value) => String(value || '')
+                    .trim()
+                    .toUpperCase()
+                    .replace(/Đ/g, 'D');
 
+                const sang = normalize(reasons.kyHieuSang);
+                const chieu = normalize(reasons.kyHieuChieu);
+
+                // Nhóm ký hiệu được tính là ĐI LÀM
+                const WORK_SYMBOLS = [
+                    '+', '-', 'LT', 'LT/2', 'LLK', 'LLK/2', 'T12N', 'T24'
+                ];
+
+                // Nhóm ký hiệu được tính là NGHỈ
+                const LEAVE_SYMBOLS = [
+                    'O', 'O/2',
+                    'Ô', 'Ô/2',
+                    'CÔ', 'CÔ/2',
+                    'P', 'P/2',
+                    'NB', 'NB/2',
+                    'NBL', 'NBL/2',
+                    'L', 'L/2',
+                    'LK', 'LK/2',
+                    'HS',
+                    'KL', 'KL/2',
+                    'PT', 'PC',
+                    'H', 'H/2',
+                    'CT', 'CT/2',
+                    'RT', 'RT/2', 'RT12',
+                    'T12D'
+                ];
+
+                // Xác định trạng thái từng buổi
+                function isLeave(symbol) {
+                    if (!symbol) return null;
+
+                    if (LEAVE_SYMBOLS.includes(symbol)) return true;
+                    if (WORK_SYMBOLS.includes(symbol)) return false;
+
+                    // Ký hiệu chưa xác định: không tự động kết luận nghỉ
+                    return null;
+                }
+
+                let nghiSang = isLeave(sang);
+                let nghiChieu = isLeave(chieu);
+
+                // Trường hợp chỉ có một ký hiệu nửa ngày
+                if (sang && !chieu) {
+
+                    // Làm 1 buổi: mặc định buổi sáng làm, chiều nghỉ
+                    if (sang === '-') {
+                        nghiSang = false;
+                        nghiChieu = true;
+                    }
+
+                    // Nghỉ nửa ngày: mặc định nghỉ buổi sáng, chiều làm
+                    else if (sang.endsWith('/2')) {
+                        nghiSang = true;
+                        nghiChieu = false;
+                    }
+
+                    // T24: trực 24 giờ, tính làm nguyên ngày
+                    else if (sang === 'T24') {
+                        nghiSang = false;
+                        nghiChieu = false;
+                    }
+
+                    // Ký hiệu nguyên ngày áp dụng cho cả hai buổi
+                    else {
+                        nghiChieu = nghiSang;
+                    }
+                }
+
+                // Nếu thiếu dữ liệu hoặc có ký hiệu chưa xác định
+                if (nghiSang === null || nghiChieu === null) {
+                    return 'Kiểm tra';
+                }
+
+                // Cả hai buổi đều nghỉ
+                if (nghiSang && nghiChieu) {
+                    return 'Ngày';
+                }
+
+                // Sáng nghỉ, chiều làm
+                if (nghiSang && !nghiChieu) {
+                    return 'Sáng';
+                }
+
+                // Sáng làm, chiều nghỉ
+                if (!nghiSang && nghiChieu) {
+                    return 'Chiều';
+                }
+
+                // Cả hai buổi đều làm
+                return 'Loại';
+            }
             let exportData = [];
 
             try {
@@ -3768,7 +3864,9 @@
 
                                     "Ký hiệu bổ sung": reasons.kyHieuBoSung || "",
                                     "Ký hiệu gốc đầy đủ": val,
-                                    "Ghi chú (Lỗi xuất)": reasons.error
+                                    "Ghi chú (Lỗi xuất)": reasons.error,
+                                    "Kết luận": getAttendanceConclusion(reasons)
+
                                 });
                             });
                         });
@@ -3803,7 +3901,8 @@
                     { wch: 30 }, // Lý do chiều
                     { wch: 20 }, // Ký hiệu bổ sung
                     { wch: 25 }, // Ký hiệu gốc đầy đủ
-                    { wch: 35 }  // Ghi chú lỗi
+                    { wch: 35 },  // Ghi chú lỗi
+                    { wch: 16 } // Kết luận
                 ];
                 worksheet['!cols'] = wscols;
 
