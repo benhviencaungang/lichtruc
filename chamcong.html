@@ -463,6 +463,18 @@
         <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-end">
             <div id="approval-controls"
                 class="flex items-center space-x-2 bg-slate-50 p-1.5 rounded-lg border border-slate-200 transition-all">
+                <!-- NÚT BẬT/TẮT TOOL CHO KHOA (CHỈ KHTH THẤY) -->
+                <button id="btn-toggle-hard-edit" onclick="toggleHardEditMaster()"
+                    class="hidden px-4 py-2 bg-slate-600 text-white rounded-lg flex items-center shadow hover:bg-slate-700 transition font-medium whitespace-nowrap shrink-0"
+                    title="Cho phép các Admin Khoa sử dụng Tool Sửa Cứng">
+                    <i data-lucide="lock" class="w-4 h-4 mr-2"></i> Khóa sửa cứng
+                </button>
+                <!-- NÚT MỞ TOOL SỬA CÔNG CỨNG -->
+                <button id="btn-open-hard-edit" onclick="openHardEditModal()"
+                    class="hidden px-4 py-2 bg-yellow-600 text-white rounded-lg flex items-center shadow hover:bg-yellow-700 transition font-medium whitespace-nowrap shrink-0"
+                    title="Sửa công trực tiếp cả khi đã duyệt">
+                    <i data-lucide="edit-3" class="w-4 h-4 mr-2"></i> Tool Sửa Công
+                </button>
                 <span id="badge-status"
                     class="px-2 py-1 rounded text-xs font-bold bg-slate-200 text-slate-600 whitespace-nowrap">Chưa
                     lưu</span>
@@ -1079,6 +1091,81 @@
                 <button onclick="closeGuideModal()"
                     class="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg hover:bg-slate-300 transition shadow-sm">Đã
                     hiểu / Đóng</button>
+            </div>
+        </div>
+    </div>
+    <!-- MODAL TOOL SỬA CHẤM CÔNG CỨNG -->
+    <div id="hard-edit-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 z-[120] flex items-center justify-center fade-in no-print font-sans backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+            <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-200 flex justify-between items-center">
+                <div>
+                    <h3 class="font-bold text-lg text-yellow-800 flex items-center">
+                        <i data-lucide="edit-3" class="w-5 h-5 mr-2"></i> Tool Sửa Chấm Công (Sửa Cứng)
+                    </h3>
+                    <p class="text-xs text-yellow-700 mt-1">Can thiệp trực tiếp vào CSDL. Có tác dụng ngay cả khi bảng đã
+                        được phê duyệt.</p>
+                </div>
+                <button onclick="closeHardEditModal()"
+                    class="text-yellow-600 hover:text-red-600 bg-white rounded p-1 shadow-sm transition"><i data-lucide="x"
+                        class="w-5 h-5"></i></button>
+            </div>
+    
+            <div class="p-6 space-y-5 bg-slate-50">
+                <!-- Chọn nhân viên & Ngày -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Chọn ngày cần sửa</label>
+                        <input type="date" id="he-date" onchange="loadHardEditCurrentValue()"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-yellow-500 text-sm shadow-sm bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Nhân viên</label>
+                        <select id="he-nv" onchange="loadHardEditCurrentValue()"
+                            class="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:border-yellow-500 text-sm shadow-sm bg-white font-medium">
+                            <!-- Render via JS -->
+                        </select>
+                    </div>
+                </div>
+    
+                <!-- Hiển thị công hiện tại -->
+                <div
+                    class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between shadow-inner">
+                    <span class="text-sm font-medium text-slate-700">Dữ liệu công hiện tại:</span>
+                    <span id="he-current-val"
+                        class="text-lg font-bold text-blue-700 bg-white px-3 py-1 rounded shadow-sm border border-blue-100">--</span>
+                </div>
+    
+                <!-- Chọn công mới -->
+                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                    <label class="block text-sm font-bold text-slate-700 mb-3 text-center border-b pb-2">CHỌN KÝ HIỆU
+                        MỚI</label>
+                    <div class="flex gap-4">
+                        <div class="w-1/2 flex flex-col">
+                            <label class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Sáng / Nguyên
+                                Ngày</label>
+                            <select id="he-sang" onchange="handleHardEditMorningChange()"
+                                class="border border-slate-300 rounded-lg p-2 outline-none focus:border-yellow-500 text-sm font-medium bg-slate-50 cursor-pointer shadow-sm">
+                            </select>
+                        </div>
+                        <div class="w-1/2 flex flex-col">
+                            <label class="text-xs font-bold text-slate-500 mb-1 uppercase tracking-wide">Ca Chiều</label>
+                            <select id="he-chieu"
+                                class="border border-slate-300 rounded-lg p-2 outline-none focus:border-yellow-500 text-sm font-medium bg-slate-50 cursor-pointer shadow-sm disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                                <option value="">-- Không cần --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="p-4 border-t border-slate-200 bg-white flex justify-end space-x-3 shrink-0">
+                <button onclick="closeHardEditModal()"
+                    class="px-5 py-2 text-sm bg-slate-100 text-slate-700 font-medium rounded-lg hover:bg-slate-200 transition">Hủy</button>
+                <button onclick="saveHardEditValue()"
+                    class="px-5 py-2 text-sm text-white bg-yellow-600 hover:bg-yellow-700 font-bold rounded-lg shadow-md transition flex items-center">
+                    <i data-lucide="save" class="w-4 h-4 mr-2"></i> Lưu Ghi Đè Lên DB
+                </button>
             </div>
         </div>
     </div>
@@ -2066,6 +2153,9 @@
                 if (btnLeaveConfig) btnLeaveConfig.classList.add('hidden');
                 if (btnHolidayConfig) btnHolidayConfig.classList.add('hidden');
             }
+
+            // GỌI HÀM NÀY ĐỂ RENDER TOOL SỬA KHI LOAD XONG KHOA
+            checkHardEditPermission();
         }
 
         function checkAuth() {
@@ -3922,21 +4012,27 @@
         let tempLeaveConfig = { khoa: [], caNhan: {} };
 
         function parseLeaveConfig(raw) {
-            let config = { khoa: [], caNhan: {} };
-            if (!raw) return config;
+                // Khai báo thêm allowHardEdit mặc định là false
+                let config = { khoa: [], caNhan: {}, allowHardEdit: false };
+                if (!raw) return config;
 
-            if (Array.isArray(raw)) {
-                config.khoa = raw.map(String).map(s => s.trim().toUpperCase());
-            } else if (typeof raw === 'object') {
-                if (raw.khoa !== undefined || raw.caNhan !== undefined) {
-                    config.khoa = Array.isArray(raw.khoa) ? raw.khoa : [];
-                    config.caNhan = raw.caNhan || {};
-                } else {
-                    config.caNhan = raw;
+                if (Array.isArray(raw)) {
+                    config.khoa = raw.map(String).map(s => s.trim().toUpperCase());
+                } else if (typeof raw === 'object') {
+                    if (raw.khoa !== undefined || raw.caNhan !== undefined) {
+                        config.khoa = Array.isArray(raw.khoa) ? raw.khoa : [];
+                        config.caNhan = raw.caNhan || {};
+                    } else {
+                        config.caNhan = raw;
+                    }
+
+                    // QUAN TRỌNG: Giữ lại cấu hình bật/tắt Tool Sửa Cứng từ DB
+                    if (raw.allowHardEdit !== undefined) {
+                        config.allowHardEdit = raw.allowHardEdit;
+                    }
                 }
+                return config;
             }
-            return config;
-        }
 
         function getCurrentLeaveConfig() {
             let raw = MOCK_DB.cauHinhPhep;
@@ -4800,6 +4896,254 @@
             document.getElementById('guide-modal').classList.add('hidden');
         }
         // Thay thế sự kiện window.onload cũ thành:
+        // ==============================================================
+            // TOOL SỬA CHẤM CÔNG CỨNG (Bypass trạng thái "Đã duyệt")
+            // ==============================================================
+
+            function checkHardEditPermission() {
+                const btnToggle = document.getElementById('btn-toggle-hard-edit');
+                const btnOpen = document.getElementById('btn-open-hard-edit');
+                if (!btnToggle || !btnOpen) return;
+
+                const isAdminKHTH = currentUser && currentUser.Role === 'Admin_KHTH';
+                const currentConfig = getCurrentLeaveConfig();
+                const isEnabled = currentConfig.allowHardEdit === true;
+
+                if (isAdminKHTH) {
+                    btnToggle.classList.remove('hidden');
+                    btnToggle.innerHTML = isEnabled
+                        ? `<i data-lucide="unlock" class="w-4 h-4 mr-2"></i> Đang Bật: Khoa Được Sửa`
+                        : `<i data-lucide="lock" class="w-4 h-4 mr-2"></i> Đang Tắt: Khóa Sửa Cứng`;
+
+                    btnToggle.className = isEnabled
+                        ? "px-4 py-2 bg-pink-600 text-white rounded-lg flex items-center shadow hover:bg-pink-700 transition font-medium whitespace-nowrap shrink-0"
+                        : "px-4 py-2 bg-slate-600 text-white rounded-lg flex items-center shadow hover:bg-slate-700 transition font-medium whitespace-nowrap shrink-0";
+
+                    btnOpen.classList.remove('hidden'); // KHTH luôn thấy nút Sửa Công
+                } else if (currentUser && currentUser.Role === 'Admin_Khoa') {
+                    btnToggle.classList.add('hidden');
+                    if (isEnabled) btnOpen.classList.remove('hidden');
+                    else btnOpen.classList.add('hidden');
+                }
+                lucide.createIcons();
+            }
+
+            async function toggleHardEditMaster() {
+                if (!currentUser || currentUser.Role !== 'Admin_KHTH') return;
+
+                let currentConfig = getCurrentLeaveConfig();
+                currentConfig.allowHardEdit = !currentConfig.allowHardEdit;
+
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Đang thay đổi quyền sửa cứng...";
+
+                try {
+                    await syncWithGAS('sync_CauHinhPhep', currentConfig);
+                    MOCK_DB.cauHinhPhep = JSON.parse(JSON.stringify(currentConfig));
+                    showToast(currentConfig.allowHardEdit ? "Đã BẬT quyền sửa cứng cho Admin Khoa" : "Đã TẮT quyền sửa cứng", "success");
+                } catch (e) {
+                    showToast("Lỗi đồng bộ cấu hình!", "error");
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    checkHardEditPermission();
+                }
+            }
+
+            function openHardEditModal() {
+                const nvSelect = document.getElementById('he-nv');
+                nvSelect.innerHTML = '';
+
+                const isAdminAll = isGlobalAdmin();
+                let allowedParentKhoas = isAdminAll
+                    ? MOCK_DB.khoa.map(k => k.MaKhoa)
+                    : currentUser.KhoaList.map(mk => getParentKhoaInfo(mk).ma);
+
+                let availableUsers = MOCK_DB.users.filter(u => {
+                    if (u.ChucDanh === 'Quản lý') return false;
+                    let userKhoas = u.MaKhoa ? u.MaKhoa.split(',').map(s => s.trim()) : [];
+                    return userKhoas.some(mk => allowedParentKhoas.includes(getParentKhoaInfo(mk).ma));
+                });
+
+                // Sắp xếp Alphabet
+                availableUsers.sort((a, b) => {
+                    let nA = getTenString(a.HoTen), nB = getTenString(b.HoTen);
+                    let cmp = nA.ten.localeCompare(nB.ten, 'vi');
+                    return cmp !== 0 ? cmp : nA.hoDem.localeCompare(nB.hoDem, 'vi');
+                });
+
+                availableUsers.forEach(u => {
+                    const mkGoc = getPrimaryKhoa(u.MaKhoa);
+                    const tenK = MOCK_DB.khoa.find(k => k.MaKhoa === mkGoc)?.TenKhoa || mkGoc;
+                    nvSelect.innerHTML += `<option value="${u.MaNV}">${u.HoTen} - (${tenK})</option>`;
+                });
+
+                document.getElementById('he-date').value = getVNFormatYYYYMMDD();
+
+                renderShiftOptions(document.getElementById('he-sang'), 'all', availableUsers[0]?.MaNV);
+                document.getElementById('he-sang').value = '';
+                handleHardEditMorningChange();
+
+                document.getElementById('hard-edit-modal').classList.remove('hidden');
+                loadHardEditCurrentValue();
+                lucide.createIcons();
+            }
+
+            function closeHardEditModal() {
+                document.getElementById('hard-edit-modal').classList.add('hidden');
+            }
+
+            function handleHardEditMorningChange() {
+                const spSang = document.getElementById('he-sang');
+                const spChieu = document.getElementById('he-chieu');
+                const maNV = document.getElementById('he-nv').value;
+                const sangVal = spSang.value;
+
+                if (sangVal === '' || HALF_DAY_SYMBOLS.includes(sangVal)) {
+                    spChieu.disabled = false;
+                    renderShiftOptions(spChieu, 'half', maNV);
+                } else {
+                    spChieu.disabled = true;
+                    spChieu.innerHTML = '<option value="">-- Không cần --</option>';
+                }
+            }
+
+            async function loadHardEditCurrentValue() {
+                const dateVal = document.getElementById('he-date').value;
+                const maNV = document.getElementById('he-nv').value;
+                const lblCurrent = document.getElementById('he-current-val');
+
+                if (!dateVal || !maNV) {
+                    lblCurrent.innerText = "--";
+                    return;
+                }
+
+                const [year, month, day] = dateVal.split('-').map(Number);
+                const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                if (!user) return;
+
+                const parentMaKhoa = getParentKhoaInfo(getPrimaryKhoa(user.MaKhoa)).ma;
+
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Đang tải dữ liệu ngày...";
+
+                try {
+                    // Tải trực tiếp từ Server để lấy bản ghi mới nhất
+                    const { data, error } = await _supabase.from('BangChamCong')
+                        .select('DuLieu')
+                        .eq('Nam', year)
+                        .eq('Thang', month)
+                        .eq('MaKhoa', parentMaKhoa)
+                        .single();
+
+                    if (!error && data && data.DuLieu) {
+                        let jsonData = JSON.parse(data.DuLieu);
+                        if (jsonData[maNV] && jsonData[maNV].days[day]) {
+                            lblCurrent.innerText = jsonData[maNV].days[day];
+                            lblCurrent.className = "text-lg font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded shadow-sm border border-blue-200";
+                        } else {
+                            lblCurrent.innerText = "(Trống)";
+                            lblCurrent.className = "text-lg font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded shadow-sm border border-slate-200";
+                        }
+                    } else {
+                        lblCurrent.innerText = "Chưa có bảng chấm công tháng này";
+                        lblCurrent.className = "text-sm font-medium text-orange-600 bg-orange-100 px-3 py-1 rounded shadow-sm";
+                    }
+                } catch (e) {
+                    lblCurrent.innerText = "Lỗi kết nối DB";
+                } finally {
+                    document.getElementById('loading-screen').classList.add('hidden');
+
+                    // Cập nhật lại list ca lỡ nv là người Khơ-me
+                    const currentSang = document.getElementById('he-sang').value;
+                    renderShiftOptions(document.getElementById('he-sang'), 'all', maNV);
+                    document.getElementById('he-sang').value = currentSang;
+                }
+            }
+
+            async function saveHardEditValue() {
+                const dateVal = document.getElementById('he-date').value;
+                const maNV = document.getElementById('he-nv').value;
+                const sangVal = document.getElementById('he-sang').value;
+                const chieuVal = document.getElementById('he-chieu').value;
+
+                if (!dateVal || !maNV) return showToast("Vui lòng chọn đủ Ngày và Nhân viên", "warning");
+
+                const [year, month, day] = dateVal.split('-').map(Number);
+                const user = MOCK_DB.users.find(u => String(u.MaNV) === String(maNV));
+                const parentMaKhoa = getParentKhoaInfo(getPrimaryKhoa(user.MaKhoa)).ma;
+
+                // Xử lý ghép ký hiệu
+                const isSangHalf = HALF_DAY_SYMBOLS.includes(sangVal);
+                const isChieuHalf = chieuVal !== '';
+                let allowSingleHalfDay = (sangVal === 'LT/2' || chieuVal === 'LT/2');
+
+                if ((isSangHalf && !chieuVal) || (!sangVal && isChieuHalf)) {
+                    if (!allowSingleHalfDay) {
+                        return showToast("Phải chọn công cho CẢ 2 BUỔI khi chấm nửa ngày (trừ LT/2)!", "error");
+                    }
+                }
+
+                let finalVal = sangVal;
+                if (chieuVal && sangVal) finalVal = `${sangVal}; ${chieuVal}`;
+                else if (chieuVal && !sangVal) finalVal = `; ${chieuVal}`;
+
+                if (!confirm(`Xác nhận GHI ĐÈ dữ liệu của NV ${user.HoTen} ngày ${day}/${month}/${year} thành: [ ${finalVal || 'TRỐNG'} ] ?\nHành động này bỏ qua trạng thái bảng.`)) return;
+
+                document.getElementById('loading-screen').classList.remove('hidden');
+                document.getElementById('loading-text').innerText = "Đang tiến hành ghi đè dữ liệu...";
+
+                try {
+                    // 1. Lấy dữ liệu DB mới nhất
+                    const maBang = `BCC_${parentMaKhoa}_${month}_${year}`;
+                    const { data, error } = await _supabase.from('BangChamCong').select('*').eq('MaBang', maBang).single();
+
+                    let jsonDBCurrent = {};
+                    let isExist = false;
+
+                    if (!error && data) {
+                        isExist = true;
+                        if (data.DuLieu) jsonDBCurrent = JSON.parse(data.DuLieu);
+                    }
+
+                    // 2. Chỉnh sửa JSON
+                    if (!jsonDBCurrent[maNV]) jsonDBCurrent[maNV] = { days: {}, note: "" };
+
+                    if (finalVal === "") {
+                        delete jsonDBCurrent[maNV].days[day];
+                    } else {
+                        jsonDBCurrent[maNV].days[day] = finalVal;
+                    }
+
+                    const newJsonString = JSON.stringify(jsonDBCurrent);
+
+                    // 3. Upsert lại vào DB
+                    const bangObj = {
+                        MaBang: maBang,
+                        MaKhoa: parentMaKhoa,
+                        Thang: month,
+                        Nam: year,
+                        TrangThai: isExist ? data.TrangThai : 'Nháp',
+                        DuLieu: newJsonString
+                    };
+
+                    const { error: upsertError } = await _supabase.from('BangChamCong').upsert(bangObj);
+
+                    if (upsertError) throw upsertError;
+
+                    showToast("Đã sửa cứng thành công! Tự động tải lại bảng...", "success");
+                    closeHardEditModal();
+
+                    // Reload data to reflect changes
+                    if (parseInt(document.getElementById('sel-month').value) === month && parseInt(document.getElementById('sel-year').value) === year) {
+                        await loadDataFromGAS();
+                    }
+
+                } catch (err) {
+                    console.error("Lỗi khi sửa cứng:", err);
+                    showToast("Lỗi hệ thống khi cố gắng ghi đè!", "error");
+                    document.getElementById('loading-screen').classList.add('hidden');
+                }
+            }
         window.onload = () => {
             document.getElementById('loading-screen').classList.remove('hidden');
             if (checkAuth()) {
