@@ -990,8 +990,9 @@
             const isKHTH_Account = currentUser.Role === 'Admin_KHTH';
             const isKeToan = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
 
+            // THAY BẰNG ĐOẠN MỚI (bỏ chặn TAIVU và TAICHINHKETOAN):
             if (isKHTH_Account || isKeToan) {
-                dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && k.MaKhoa !== 'TAIVU' && k.MaKhoa !== 'TAICHINHKETOAN' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
+                dsKhoa = dsKhoa.filter(k => k.MaKhoa !== 'KHTH' && !k.MaKhoa.includes('TCHC') && !k.MaKhoa.includes('TOCHUCHANHCHANH'));
             } else {
                 dsKhoa = dsKhoa.filter(k => currentUser.KhoaList.includes(k.MaKhoa));
             }
@@ -1172,9 +1173,10 @@
             if (status === 'Trả lại') status = 'KHTH trả lại';
 
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
+            const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
             const isKHTH = isGlobalAdmin();
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
-            const isOwner = currentUser.KhoaList.includes(maKhoa);
+            const isOwner = currentUser.KhoaList.includes(maKhoa) || (isTCKT && (maKhoa === 'TAICHINHKETOAN' || maKhoa === 'TAIVU'));
 
            // ==========================================
             // QUẢN LÝ NÚT IN: CHỈ ĐƯỢC IN KHI TCKT "ĐÃ CHỐT"
@@ -1206,7 +1208,7 @@
                     btnSend.classList.replace('bg-orange-600', 'bg-blue-600');
                     btnSend.classList.replace('hover:bg-orange-700', 'hover:bg-blue-700');
                 }
-                if (isOwner && !isTCKT) {
+                if (isOwner && !isStrictKHTH) {
                     btnSend.classList.remove('hidden');
                     // Khoa được phép lưu dữ liệu
                     btnSaveData.classList.remove('hidden');
@@ -1215,6 +1217,7 @@
                     // Khoa được phép Đồng bộ lại dữ liệu gốc nếu có sự thay đổi
                     btnResetData.classList.remove('hidden');
                 }
+
             }
             else if (status === 'Chờ KHTH duyệt' || status === 'TCKT trả lại') {
                 badge.textContent = status === 'Chờ KHTH duyệt' ? "Chờ KHTH Duyệt" : "TCKT Trả Lại (Chờ xử lý)";
@@ -1686,18 +1689,16 @@
             const noteData = parseGhiChu(phieu ? phieu.GhiChu : "");
             const savedRates = noteData.rates || {};
 
-            const isGlobalKHTH = isGlobalAdmin();
             const isStrictKHTH = currentUser.Role === 'Admin_KHTH';
+            const isKHTH = isGlobalAdmin();
             const isTCKT = currentUser.Role === 'Admin_Khoa' && currentUser.KhoaList.includes('TAICHINHKETOAN');
+            const isOwner = currentUser.KhoaList.includes(maKhoa) || (isTCKT && (maKhoa === 'TAICHINHKETOAN' || maKhoa === 'TAIVU'));
 
             // Chỉ TCKT được hiển thị tiền. KHTH và Khoa phòng chỉ được hiển thị khi trạng thái là 'Đã chốt'
             const canViewMoney = isTCKT || status === 'Đã chốt';
 
-
             // XÁC ĐỊNH QUYỀN TRÊN GIAO DIỆN & IN ẤN THEO LOGIC MỚI
-            // Khoa chỉ được sửa ngày khi đang là bản nháp / hoặc bị từ chối
-            const isKhoaDrafting = currentUser.KhoaList.includes(maKhoa) && !isTCKT && !isStrictKHTH && (status === 'Nháp' || status === 'KHTH trả lại');
-            // TCKT được sửa đơn giá khi chờ chốt
+            const isKhoaDrafting = isOwner && !isStrictKHTH && (status === 'Nháp' || status === 'KHTH trả lại');
             const isTCKTChecking = isTCKT && (status === 'Chờ TCKT chốt' || status === 'Đã chốt');
 
             // NẾU ĐANG BẤM NÚT "IN", TẤT CẢ QUYỀN SỬA ĐỀU PHẢI TẮT LÀM FALSE ĐỂ GIAO DIỆN TRỞ VỀ CHUẨN IN
